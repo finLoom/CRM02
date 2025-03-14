@@ -19,6 +19,7 @@ import {
 import LeadList from '../components/leads/LeadList';
 import LeadForm from '../components/leads/LeadForm';
 import { LeadService } from '../services/LeadService';
+import LeadImport from '../components/leads/LeadImport';
 
 const containerStyles = mergeStyles({
   padding: '20px'
@@ -87,6 +88,16 @@ const LeadsPage = () => {
     }
   };
 
+  // import leads
+  const handleImportComplete = () => {
+    // Refresh leads after import
+    setSelectedView(prevView => {
+      const temp = 'temp';
+      setTimeout(() => setSelectedView(prevView), 0);
+      return temp;
+    });
+  };
+
   // Delete leads
   const confirmDelete = async () => {
     try {
@@ -152,6 +163,8 @@ const LeadsPage = () => {
           <PivotItem headerText="Nurturing" itemKey="Nurturing" />
           <PivotItem headerText="Disqualified" itemKey="Disqualified" />
         </Pivot>
+        
+        <LeadImport onImportComplete={handleImportComplete} />
         
         <LeadList
           selectedView={selectedView}

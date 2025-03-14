@@ -144,7 +144,32 @@ export const LeadService = {
       console.error(`Error fetching leads assigned to ${assignee}:`, error);
       throw error;
     }
+  },
+
+  /**
+   * import leads from an Excel file
+   * @
+   * 
+   */
+  importLeads: async (leadData) => {
+    try {
+      const response = await fetch(`${API_URL}/import`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(leadData),
+      });
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error importing leads:', error);
+      throw error;
+    }
   }
+
 };
 
 export default LeadService;
