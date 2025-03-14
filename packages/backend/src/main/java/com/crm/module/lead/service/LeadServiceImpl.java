@@ -7,8 +7,13 @@ import main.java.com.crm.module.lead.mapper.LeadMapper;
 import main.java.com.crm.module.lead.repository.LeadRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +31,24 @@ public class LeadServiceImpl implements LeadService {
             createDummyLeads();
         }
     }
-    
+
+    @Autowired
+    private DataSource dataSource;
+
+
+
+    @PostConstruct
+    public void printDatabaseInfo() {
+        try {
+            Connection conn = dataSource.getConnection();
+            System.out.println("DATABASE PRODUCT: " + conn.getMetaData().getDatabaseProductName());
+            System.out.println("DATABASE URL: " + conn.getMetaData().getURL());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     /**
      * Create dummy leads for testing
      */
