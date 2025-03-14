@@ -8,5 +8,6 @@ main\java\com\crm\module\lead\mapper\LeadMapperImpl.class
 main\java\com\crm\module\lead\entity\Lead$LeadBuilder.class
 main\java\com\crm\module\lead\mapper\LeadMapper.class
 main\java\com\crm\module\lead\service\LeadService.class
+main\java\com\crm\module\lead\repository\LeadRepository.class
 main\java\com\crm\module\lead\service\LeadServiceImpl.class
 main\java\com\crm\module\common\exception\GlobalExceptionHandler.class

@@ -5,6 +5,7 @@ C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\config\JpaConfig.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\common\exception\ResourceNotFoundException.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\mapper\LeadMapperImpl.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\entity\Lead.java
+C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\repository\LeadRepository.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\dto\LeadDto.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\controller\LeadController.java
 C:\Apps\Anto\CRM02\packages\backend\src\main\java\com\crm\module\lead\mapper\LeadMapper.java
