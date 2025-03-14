@@ -292,3 +292,242 @@ The reporting module is designed to be easily extended:
 3. **Adding New Export Formats:**
    - Extend the ExportTools component with new export methods
    - Add new format options to the export dialog
+
+
+
+
+
+
+# Enterprise CRM System
+
+This is an enterprise-grade CRM system built with React (Frontend) and Spring Boot (Backend), designed as a modular and scalable application to manage customer relationships effectively.
+
+## Architecture
+
+The application follows a modern architecture with a clear separation of concerns:
+
+### Frontend (React with Fluent UI)
+- React 18 with functional components and hooks
+- Microsoft Fluent UI for enterprise-grade UI components
+- React Router for navigation
+- Context API for state management
+- Service-based architecture for API communication
+
+### Backend (Spring Boot)
+- Spring Boot REST API
+- Java with clear domain-driven design principles
+- DTOs for data transfer
+- Repository pattern for data access
+- Modular structure with separate domains
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16+ for frontend
+- Java 17+ and Maven for backend
+- Git
+
+### Running the Application
+
+#### Backend (Spring Boot)
+1. Navigate to the backend folder:
+   ```
+   cd packages/backend
+   ```
+
+2. Run the Spring Boot application:
+   ```
+   mvn spring-boot:run
+   ```
+
+3. The API will be available at http://localhost:8080
+
+#### Frontend (React)
+1. Navigate to the frontend folder:
+   ```
+   cd packages/frontend
+   ```
+
+2. Install dependencies:
+   ```
+   npm install
+   ```
+
+3. Start the development server:
+   ```
+   npm start
+   ```
+
+4. The application will be available at http://localhost:3000
+
+## Project Structure
+
+### Frontend Structure
+```
+packages/frontend/
+├── public/             # Static assets
+├── src/
+│   ├── components/     # Reusable UI components
+│   │   ├── common/     # Shared components
+│   │   ├── contacts/   # Contact-related components
+│   │   ├── dashboard/  # Dashboard components
+│   │   ├── layout/     # Layout components
+│   │   ├── leads/      # Lead management components
+│   │   ├── opportunities/ # Opportunity management
+│   │   └── reports/    # Reporting components
+│   ├── contexts/       # React contexts for state
+│   ├── pages/          # Page components
+│   ├── services/       # API services
+│   ├── styles/         # Global styles
+│   ├── utils/          # Utility functions
+│   ├── App.jsx         # Main app component
+│   └── index.js        # Entry point
+└── package.json
+```
+
+### Backend Structure
+```
+packages/backend/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── crm/
+│   │   │           ├── config/        # Configuration
+│   │   │           ├── module/        # Domain modules
+│   │   │           │   ├── common/    # Shared components
+│   │   │           │   ├── lead/      # Lead domain
+│   │   │           │   │   ├── controller/
+│   │   │           │   │   ├── dto/
+│   │   │           │   │   ├── entity/
+│   │   │           │   │   ├── mapper/
+│   │   │           │   │   └── service/
+│   │   │           │   └── ... other domains
+│   │   │           └── CrmApplication.java
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+└── pom.xml
+```
+
+## Features
+
+### Current Features
+- Dashboard with KPIs and data visualization
+- Lead Management
+  - List, create, update, and delete leads
+  - Filter leads by status
+  - Search functionality
+  - Form validation
+- Contact Management
+  - Store and manage customer information
+  - Contact history tracking
+- Opportunity Management
+  - Track sales pipeline
+  - Manage deals and sales stages
+  - Probability and forecasting
+- Task Management
+  - Create and assign tasks
+  - Due date tracking
+  - Status management
+- Reports
+  - Sales performance
+  - Lead conversion
+  - Activity metrics
+
+### Technical Implementation
+
+#### Frontend Components
+- **Layout Components**: Provides the application shell with navigation
+- **LeadList Component**: Displays leads with filtering and sorting
+- **LeadForm Component**: Handles lead creation and editing
+- **Dashboard Components**: Visualizes KPIs and important metrics
+- **Service Layer**: Handles API communication with the backend
+
+#### Backend API Endpoints
+- **Lead API**: `/api/leads`
+  - GET `/api/leads` - Fetch all leads
+  - GET `/api/leads/{id}` - Get lead by ID
+  - POST `/api/leads` - Create new lead
+  - PUT `/api/leads/{id}` - Update lead
+  - DELETE `/api/leads/{id}` - Delete lead
+  - GET `/api/leads/status/{status}` - Filter leads by status
+  - GET `/api/leads/assignee/{assignee}` - Filter leads by assignee
+
+## Connecting Frontend to Backend
+
+The frontend connects to the backend through service layers that encapsulate API calls. For example, the `LeadService.js` provides methods to interact with the Lead API endpoints.
+
+```javascript
+// Example service method to fetch leads
+const getAllLeads = async () => {
+  try {
+    const response = await fetch('http://localhost:8080/api/leads');
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    throw error;
+  }
+};
+```
+
+Components then use these services to fetch and manipulate data:
+
+```javascript
+// Example usage in a component
+useEffect(() => {
+  const fetchLeads = async () => {
+    try {
+      const data = await LeadService.getAllLeads();
+      setLeads(data);
+    } catch (error) {
+      setError('Failed to fetch leads');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  fetchLeads();
+}, []);
+```
+
+## Roadmap
+
+### Upcoming Features
+- Authentication and user management
+- Email integration
+- File attachments for leads and opportunities
+- Advanced reporting and analytics
+- Mobile responsiveness
+- Custom fields configuration
+- Workflow automation
+- Calendar integration
+- Product catalog
+- Quote generation
+
+## Development Guidelines
+
+### Code Style
+- Use functional components with hooks for React
+- Follow clean code principles
+- Document API endpoints and services
+- Implement proper error handling
+
+### Git Workflow
+- Create feature branches from `main`
+- Use descriptive commit messages
+- Create pull requests for code review
+- Merge to `main` after approval
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add some amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a pull request
+
+   
