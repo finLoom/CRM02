@@ -1,0 +1,22 @@
+{
+    "version":  "1.0.0",
+    "name":  "crm-monorepo",
+    "scripts":  {
+                    "build:frontend":  "npm run build --workspace=frontend",
+                    "lint":  "npm run lint --workspaces",
+                    "build:backend":  "npm run build --workspace=backend",
+                    "start:backend":  "npm run start --workspace=backend",
+                    "build":  "npm run build --workspaces",
+                    "start":  "npm run start:frontend",
+                    "test":  "npm run test --workspaces",
+                    "start:frontend":  "npm run start --workspace=frontend"
+                },
+    "devDependencies":  {
+                            "concurrently":  "^8.2.0",
+                            "lerna":  "^7.1.5"
+                        },
+    "workspaces":  [
+                       "packages/*"
+                   ],
+    "private":  true
+}
