@@ -4,7 +4,7 @@ Express API server
 
 ## Getting Started
 
-`ash
+bash
 # Install dependencies
 npm install
 
