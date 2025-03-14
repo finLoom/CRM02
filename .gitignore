@@ -11,6 +11,17 @@ node_modules
 /lib
 /dist
 
+
+# Java compiled files
+*.jar
+!gradle-wrapper.jar
+!maven-wrapper.jar
+
+# Maven build output
+target/
+*/target/
+**/target/
+
 # Maven build output
 target/
 out/
