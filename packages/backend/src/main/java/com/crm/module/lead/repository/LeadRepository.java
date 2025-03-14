@@ -11,4 +11,5 @@ import java.util.List;
 public interface LeadRepository extends JpaRepository<Lead, Long> {
     List<Lead> findByStatus(String status);
     List<Lead> findByAssignedTo(String assignee);
+
 }
