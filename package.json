@@ -1,22 +1,29 @@
 {
-    "version":  "1.0.0",
-    "name":  "crm-monorepo",
-    "scripts":  {
-                    "build:frontend":  "npm run build --workspace=frontend",
-                    "lint":  "npm run lint --workspaces",
-                    "build:backend":  "npm run build --workspace=backend",
-                    "start:backend":  "npm run start --workspace=backend",
-                    "build":  "npm run build --workspaces",
-                    "start":  "npm run start:frontend",
-                    "test":  "npm run test --workspaces",
-                    "start:frontend":  "npm run start --workspace=frontend"
-                },
-    "devDependencies":  {
-                            "concurrently":  "^8.2.0",
-                            "lerna":  "^7.1.5"
-                        },
-    "workspaces":  [
-                       "packages/*"
-                   ],
-    "private":  true
+    "version": "1.0.0",
+    "name": "crm-monorepo",
+    "scripts": {
+        "build:frontend": "npm run build --workspace=frontend",
+        "build:backend": "npm run build --workspace=backend",
+        "build": "npm run build --workspaces",
+        "start:frontend": "npm run start --workspace=frontend",
+        "start:backend": "npm run start --workspace=backend",
+        "start": "npm run start:frontend",
+        "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+        "test": "npm run test --workspaces",
+        "lint": "npm run lint --workspaces",
+        "clean": "npm run clean --workspaces",
+        "update-deps": "npm update --workspaces",
+        "reinstall": "rimraf node_modules && npm install"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.0",
+        "lerna": "^7.1.5",
+        "rimraf": "^5.0.1"
+    },
+    "workspaces": [
+        "packages/*"
+    ],
+
+    
+    "private": true
 }
