@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// src/pages/OpportunitiesPage.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Stack,
   Text,
@@ -19,39 +21,18 @@ import {
   SpinnerSize,
   Panel,
   PanelType,
-  TextField,
-  Dropdown,
-  DatePicker,
-  Label,
-  Separator,
+  MessageBar,
+  MessageBarType,
   Pivot,
-  PivotItem,
-  ProgressIndicator
+  PivotItem
 } from '@fluentui/react';
 import { formatDistanceToNow } from 'date-fns';
+import OpportunityService from '../services/OpportunityService';
+import OpportunityForm from '../components/opportunities/OpportunityForm';
 
-// Sample data
-const opportunitiesData = [
-  { id: 1, name: 'Enterprise Software License', company: 'Acme Corp', contact: 'John Smith', stage: 'Qualification', status: 'Open', value: 45000, probability: 30, closeDate: new Date(2023, 7, 15), assignedTo: 'Jane Cooper', lastActivity: new Date(2023, 6, 15), created: new Date(2023, 6, 10) },
-  { id: 2, name: 'Consulting Services', company: 'XYZ Industries', contact: 'Sarah Johnson', stage: 'Proposal', status: 'Open', value: 12800, probability: 50, closeDate: new Date(2023, 6, 30), assignedTo: 'Jane Cooper', lastActivity: new Date(2023, 6, 14), created: new Date(2023, 6, 8) },
-  { id: 3, name: 'Hardware Upgrade', company: 'Global Tech', contact: 'Michael Brown', stage: 'Negotiation', status: 'Open', value: 28000, probability: 75, closeDate: new Date(2023, 6, 25), assignedTo: 'Robert Fox', lastActivity: new Date(2023, 6, 12), created: new Date(2023, 6, 5) },
-  { id: 4, name: 'Support Contract', company: 'Local Services', contact: 'Emily Davis', stage: 'Discovery', status: 'Open', value: 5600, probability: 20, closeDate: new Date(2023, 8, 10), assignedTo: 'Jane Cooper', lastActivity: new Date(2023, 6, 8), created: new Date(2023, 6, 1) },
-  { id: 5, name: 'Cloud Migration', company: 'Big Enterprises', contact: 'Robert Wilson', stage: 'Proposal', status: 'Open', value: 32000, probability: 45, closeDate: new Date(2023, 7, 5), assignedTo: 'Robert Fox', lastActivity: new Date(2023, 6, 7), created: new Date(2023, 5, 29) },
-  { id: 6, name: 'Software Subscription', company: 'Tech Innovations', contact: 'Lisa Anderson', stage: 'Closed Won', status: 'Closed', value: 18500, probability: 100, closeDate: new Date(2023, 6, 1), assignedTo: 'Jane Cooper', lastActivity: new Date(2023, 6, 1), created: new Date(2023, 5, 20) },
-  { id: 7, name: 'Training Package', company: 'Smart Solutions', contact: 'David Martinez', stage: 'Closed Lost', status: 'Closed', value: 9500, probability: 0, closeDate: new Date(2023, 5, 25), assignedTo: 'Robert Fox', lastActivity: new Date(2023, 5, 25), created: new Date(2023, 5, 10) }
-];
-
-const opportunityColumns = [
-  { key: 'name', name: 'Name', fieldName: 'name', minWidth: 150, maxWidth: 200, isResizable: true },
-  { key: 'company', name: 'Company', fieldName: 'company', minWidth: 100, maxWidth: 150, isResizable: true },
-  { key: 'contact', name: 'Contact', fieldName: 'contact', minWidth: 100, maxWidth: 150, isResizable: true },
-  { key: 'stage', name: 'Stage', fieldName: 'stage', minWidth: 100, maxWidth: 120, isResizable: true },
-  { key: 'value', name: 'Value', fieldName: 'value', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `$${item.value.toLocaleString()}` },
-  { key: 'probability', name: 'Probability', fieldName: 'probability', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `${item.probability}%` },
-  { key: 'closeDate', name: 'Close Date', fieldName: 'closeDate', minWidth: 100, maxWidth: 120, isResizable: true, onRender: (item) => item.closeDate ? item.closeDate.toLocaleDateString() : '' },
-  { key: 'assignedTo', name: 'Assigned To', fieldName: 'assignedTo', minWidth: 120, maxWidth: 150, isResizable: true },
-  { key: 'lastActivity', name: 'Last Activity', fieldName: 'lastActivity', minWidth: 100, maxWidth: 140, isResizable: true, onRender: (item) => item.lastActivity ? formatDistanceToNow(item.lastActivity, { addSuffix: true }) : '' }
-];
+const containerStyles = mergeStyles({
+  padding: '20px'
+});
 
 const stageOptions = [
   { key: 'Discovery', text: 'Discovery' },
@@ -62,53 +43,90 @@ const stageOptions = [
   { key: 'Closed Lost', text: 'Closed Lost' }
 ];
 
-const assigneeOptions = [
-  { key: 'Jane Cooper', text: 'Jane Cooper' },
-  { key: 'Robert Fox', text: 'Robert Fox' }
-];
-
-const containerStyles = mergeStyles({
-  padding: '20px'
-});
-
 const OpportunitiesPage = () => {
-  const [opportunities, setOpportunities] = useState(opportunitiesData);
+  const navigate = useNavigate();
+  
+  const [opportunities, setOpportunities] = useState([]);
   const [selectedOpportunities, setSelectedOpportunities] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [filteredOpportunities, setFilteredOpportunities] = useState(opportunities);
+  const [filteredOpportunities, setFilteredOpportunities] = useState([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isOpportunityPanelOpen, setIsOpportunityPanelOpen] = useState(false);
   const [currentOpportunity, setCurrentOpportunity] = useState(null);
   const [selectedView, setSelectedView] = useState('all');
+  
+  // Debug state
+  const [debug, setDebug] = useState({ dataSource: 'Loading...' });
 
-  // Create a Selection instance to track selected items
+  // Selection configuration
   const selection = new Selection({
     onSelectionChanged: () => {
       setSelectedOpportunities(selection.getSelection());
     }
   });
 
-  React.useEffect(() => {
-    // Filter opportunities based on search text and selected view
-    let filtered = opportunities.filter(opportunity => {
-      const searchLower = searchText.toLowerCase();
-      return (
-        opportunity.name.toLowerCase().includes(searchLower) ||
-        opportunity.company.toLowerCase().includes(searchLower) ||
-        opportunity.contact.toLowerCase().includes(searchLower)
-      );
-    });
+  // Load opportunities from API
+  useEffect(() => {
+    fetchOpportunities();
+  }, []);
 
-    // Apply view filters
+  const fetchOpportunities = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // Log attempt to fetch data
+      console.log('Attempting to fetch opportunities from backend...');
+      const response = await OpportunityService.getAllOpportunities();
+      
+      // Log successful response
+      console.log('Received opportunities from backend:', response.data);
+      setDebug({ dataSource: 'Backend API', count: response.data.length });
+      
+      setOpportunities(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching opportunities:', err);
+      setDebug({ dataSource: 'Error - using static data', error: err.message });
+      
+      // Fallback to static data for development purposes
+      setError('Failed to load opportunities from backend. Using static data instead.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter opportunities based on search and selected view
+  useEffect(() => {
+    if (!opportunities.length) {
+      setFilteredOpportunities([]);
+      return;
+    }
+    
+    let filtered = opportunities;
+    
+    // Apply search filter
+    if (searchText) {
+      const searchLower = searchText.toLowerCase();
+      filtered = filtered.filter(opportunity => {
+        return (
+          opportunity.name?.toLowerCase().includes(searchLower) ||
+          opportunity.accountName?.toLowerCase().includes(searchLower) ||
+          opportunity.contactName?.toLowerCase().includes(searchLower)
+        );
+      });
+    }
+    
+    // Apply view filter
     if (selectedView === 'open') {
-      filtered = filtered.filter(opp => opp.status === 'Open');
+      filtered = filtered.filter(opp => !opp.stage?.startsWith('Closed'));
     } else if (selectedView === 'closed-won') {
       filtered = filtered.filter(opp => opp.stage === 'Closed Won');
     } else if (selectedView === 'closed-lost') {
       filtered = filtered.filter(opp => opp.stage === 'Closed Lost');
     }
-
+    
     setFilteredOpportunities(filtered);
   }, [opportunities, searchText, selectedView]);
 
@@ -118,27 +136,40 @@ const OpportunitiesPage = () => {
 
   const handleCreateNew = () => {
     setCurrentOpportunity({
-      id: opportunities.length > 0 ? Math.max(...opportunities.map(o => o.id)) + 1 : 1,
       name: '',
-      company: '',
-      contact: '',
+      accountName: '',
+      contactName: '',
       stage: 'Discovery',
-      status: 'Open',
-      value: 0,
+      amount: 0,
       probability: 20,
       closeDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default to 30 days from now
+      type: 'New Business',
+      leadSource: '',
       assignedTo: 'Jane Cooper',
-      lastActivity: new Date(),
-      created: new Date()
+      nextStep: '',
+      description: ''
     });
     setIsOpportunityPanelOpen(true);
   };
 
   const handleEdit = () => {
     if (selectedOpportunities.length === 1) {
-      setCurrentOpportunity(selectedOpportunities[0]);
+      // Create a shallow copy of the selected opportunity to edit
+      const opportunityToEdit = { ...selectedOpportunities[0] };
+      
+      // Convert string date to Date object for DatePicker
+      if (opportunityToEdit.closeDate && typeof opportunityToEdit.closeDate === 'string') {
+        opportunityToEdit.closeDate = new Date(opportunityToEdit.closeDate);
+      }
+      
+      setCurrentOpportunity(opportunityToEdit);
       setIsOpportunityPanelOpen(true);
     }
+  };
+
+  const handleDetailsClick = (item) => {
+    // Navigate to detail view
+    navigate(`/opportunities/${item.id}`);
   };
 
   const handleDelete = () => {
@@ -147,11 +178,18 @@ const OpportunitiesPage = () => {
     }
   };
 
-  const confirmDelete = () => {
-    const selectedIds = selectedOpportunities.map(opportunity => opportunity.id);
-    setOpportunities(opportunities.filter(opportunity => !selectedIds.includes(opportunity.id)));
-    setIsDeleteDialogOpen(false);
-    selection.setAllSelected(false);
+  const confirmDelete = async () => {
+    try {
+      const selectedIds = selectedOpportunities.map(opportunity => opportunity.id);
+      await OpportunityService.deleteMultipleOpportunities(selectedIds);
+      // Refresh the opportunities list
+      fetchOpportunities();
+      setIsDeleteDialogOpen(false);
+      selection.setAllSelected(false);
+    } catch (err) {
+      console.error('Error deleting opportunities:', err);
+      setError('Failed to delete opportunities. Please try again later.');
+    }
   };
 
   const closePanel = () => {
@@ -159,20 +197,23 @@ const OpportunitiesPage = () => {
     setCurrentOpportunity(null);
   };
 
-  const saveOpportunity = () => {
-    if (currentOpportunity) {
-      // Check if this is an edit or create operation
-      const isNewOpportunity = !opportunities.some(o => o.id === currentOpportunity.id);
-      
-      if (isNewOpportunity) {
-        // Add new opportunity
-        setOpportunities([...opportunities, currentOpportunity]);
-      } else {
+  const saveOpportunity = async () => {
+    if (!currentOpportunity) return;
+    
+    try {
+      if (currentOpportunity.id) {
         // Update existing opportunity
-        setOpportunities(opportunities.map(o => o.id === currentOpportunity.id ? currentOpportunity : o));
+        await OpportunityService.updateOpportunity(currentOpportunity.id, currentOpportunity);
+      } else {
+        // Create new opportunity
+        await OpportunityService.createOpportunity(currentOpportunity);
       }
-      
+      // Refresh the opportunities list
+      fetchOpportunities();
       closePanel();
+    } catch (err) {
+      console.error('Error saving opportunity:', err);
+      setError('Failed to save opportunity. Please try again later.');
     }
   };
 
@@ -183,30 +224,17 @@ const OpportunitiesPage = () => {
     });
   };
 
-  // Update status when stage changes
-  React.useEffect(() => {
-    if (currentOpportunity) {
-      const isClosedStage = ['Closed Won', 'Closed Lost'].includes(currentOpportunity.stage);
-      if (isClosedStage && currentOpportunity.status !== 'Closed') {
-        updateOpportunityField('status', 'Closed');
-      } else if (!isClosedStage && currentOpportunity.status !== 'Open') {
-        updateOpportunityField('status', 'Open');
-      }
-      
-      // Also update probability based on stage
-      let newProbability = currentOpportunity.probability;
-      if (currentOpportunity.stage === 'Discovery') newProbability = 20;
-      else if (currentOpportunity.stage === 'Qualification') newProbability = 40;
-      else if (currentOpportunity.stage === 'Proposal') newProbability = 60;
-      else if (currentOpportunity.stage === 'Negotiation') newProbability = 80;
-      else if (currentOpportunity.stage === 'Closed Won') newProbability = 100;
-      else if (currentOpportunity.stage === 'Closed Lost') newProbability = 0;
-      
-      if (newProbability !== currentOpportunity.probability) {
-        updateOpportunityField('probability', newProbability);
-      }
-    }
-  }, [currentOpportunity?.stage]);
+  const opportunityColumns = [
+    { key: 'name', name: 'Name', fieldName: 'name', minWidth: 150, maxWidth: 200, isResizable: true },
+    { key: 'accountName', name: 'Account', fieldName: 'accountName', minWidth: 100, maxWidth: 150, isResizable: true },
+    { key: 'contactName', name: 'Contact', fieldName: 'contactName', minWidth: 100, maxWidth: 150, isResizable: true },
+    { key: 'stage', name: 'Stage', fieldName: 'stage', minWidth: 100, maxWidth: 120, isResizable: true },
+    { key: 'amount', name: 'Amount', fieldName: 'amount', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `$${item.amount?.toLocaleString() || 0}` },
+    { key: 'probability', name: 'Probability', fieldName: 'probability', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `${item.probability || 0}%` },
+    { key: 'closeDate', name: 'Close Date', fieldName: 'closeDate', minWidth: 100, maxWidth: 120, isResizable: true, onRender: (item) => item.closeDate ? new Date(item.closeDate).toLocaleDateString() : '' },
+    { key: 'assignedTo', name: 'Assigned To', fieldName: 'assignedTo', minWidth: 120, maxWidth: 150, isResizable: true },
+    { key: 'updatedAt', name: 'Last Updated', fieldName: 'updatedAt', minWidth: 100, maxWidth: 140, isResizable: true, onRender: (item) => item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true }) : '' }
+  ];
 
   const commandBarItems = [
     {
@@ -233,21 +261,9 @@ const OpportunitiesPage = () => {
 
   const commandBarFarItems = [
     {
-      key: 'import',
-      text: 'Import',
-      iconProps: { iconName: 'Upload' },
-      onClick: () => console.log('Import clicked')
-    },
-    {
-      key: 'export',
-      text: 'Export',
-      iconProps: { iconName: 'Download' },
-      onClick: () => console.log('Export clicked')
-    },
-    {
       key: 'refresh',
       iconProps: { iconName: 'Refresh' },
-      onClick: () => console.log('Refresh clicked')
+      onClick: fetchOpportunities
     }
   ];
 
@@ -266,6 +282,20 @@ const OpportunitiesPage = () => {
           <PivotItem headerText="Closed Won" itemKey="closed-won" />
           <PivotItem headerText="Closed Lost" itemKey="closed-lost" />
         </Pivot>
+        
+        {/* Debug info - can be removed in production */}
+        {debug && (
+          <MessageBar messageBarType={MessageBarType.info} isMultiline={false} onDismiss={() => setDebug(null)}>
+            Data source: {debug.dataSource} {debug.count ? `(${debug.count} records)` : ''}
+            {debug.error && ` - Error: ${debug.error}`}
+          </MessageBar>
+        )}
+        
+        {error && (
+          <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
+            {error}
+          </MessageBar>
+        )}
         
         <Stack horizontal horizontalAlign="space-between">
           <SearchBox
@@ -296,13 +326,14 @@ const OpportunitiesPage = () => {
               selection={selection}
               selectionPreservedOnEmptyClick={true}
               selectionMode={SelectionMode.multiple}
-              onItemInvoked={(item) => {
-                setCurrentOpportunity(item);
-                setIsOpportunityPanelOpen(true);
-              }}
+              onItemInvoked={handleDetailsClick}
               styles={{ root: { opacity: isLoading ? 0.6 : 1 } }}
             />
           </MarqueeSelection>
+          
+          {!isLoading && filteredOpportunities.length === 0 && (
+            <MessageBar>No opportunities found. {searchText ? 'Try adjusting your search criteria.' : 'Create a new opportunity to get started.'}</MessageBar>
+          )}
         </div>
       </Stack>
 
@@ -333,172 +364,12 @@ const OpportunitiesPage = () => {
         type={PanelType.medium}
       >
         {currentOpportunity && (
-          <Stack tokens={{ childrenGap: 16 }} style={{ padding: '20px 0' }}>
-            <Pivot>
-              <PivotItem headerText="Opportunity Details">
-                <Stack tokens={{ childrenGap: 16 }} style={{ padding: '16px 0' }}>
-                  <TextField
-                    label="Opportunity Name"
-                    required
-                    value={currentOpportunity.name}
-                    onChange={(_, val) => updateOpportunityField('name', val)}
-                  />
-                  
-                  <TextField
-                    label="Company"
-                    value={currentOpportunity.company}
-                    onChange={(_, val) => updateOpportunityField('company', val)}
-                  />
-                  
-                  <TextField
-                    label="Contact"
-                    value={currentOpportunity.contact}
-                    onChange={(_, val) => updateOpportunityField('contact', val)}
-                  />
-                  
-                  <Dropdown
-                    label="Stage"
-                    selectedKey={currentOpportunity.stage}
-                    options={stageOptions}
-                    onChange={(_, option) => updateOpportunityField('stage', option.key)}
-                  />
-                  
-                  <Stack horizontal tokens={{ childrenGap: 8 }}>
-                    <Stack.Item grow={1}>
-                      <TextField
-                        label="Value"
-                        type="number"
-                        prefix="$"
-                        value={currentOpportunity.value?.toString() || '0'}
-                        onChange={(_, val) => updateOpportunityField('value', Number(val) || 0)}
-                      />
-                    </Stack.Item>
-                    <Stack.Item grow={1}>
-                      <TextField
-                        label="Probability"
-                        type="number"
-                        suffix="%"
-                        value={currentOpportunity.probability?.toString() || '0'}
-                        onChange={(_, val) => updateOpportunityField('probability', Number(val) || 0)}
-                        disabled={['Closed Won', 'Closed Lost'].includes(currentOpportunity.stage)}
-                      />
-                    </Stack.Item>
-                  </Stack>
-                  
-                  <DatePicker
-                    label="Expected Close Date"
-                    value={currentOpportunity.closeDate}
-                    onSelectDate={(date) => updateOpportunityField('closeDate', date)}
-                  />
-                  
-                  <Dropdown
-                    label="Assigned To"
-                    selectedKey={currentOpportunity.assignedTo}
-                    options={assigneeOptions}
-                    onChange={(_, option) => updateOpportunityField('assignedTo', option.key)}
-                  />
-                </Stack>
-              </PivotItem>
-              
-              <PivotItem headerText="Notes & Activities">
-                <Stack tokens={{ childrenGap: 16 }} style={{ padding: '16px 0' }}>
-                  <Label>Recent Activities</Label>
-                  <div style={{ color: '#605e5c', fontStyle: 'italic' }}>
-                    No activities recorded yet.
-                  </div>
-                  
-                  <Separator />
-                  
-                  <TextField
-                    label="Add a Note"
-                    multiline
-                    rows={4}
-                    placeholder="Enter your notes here..."
-                  />
-                  
-                  <PrimaryButton 
-                    text="Add Note" 
-                    styles={{ root: { width: 'auto', alignSelf: 'flex-start' } }}
-                  />
-                </Stack>
-              </PivotItem>
-
-              <PivotItem headerText="Sales Process">
-                <Stack tokens={{ childrenGap: 16 }} style={{ padding: '16px 0' }}>
-                  <Text variant="medium">Pipeline Stage</Text>
-                  
-                  <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 8 }}>
-                    <Stack.Item grow={1}>
-                      <ProgressIndicator 
-                        percentComplete={
-                          currentOpportunity.stage === 'Discovery' ? 0.16 :
-                          currentOpportunity.stage === 'Qualification' ? 0.32 :
-                          currentOpportunity.stage === 'Proposal' ? 0.48 :
-                          currentOpportunity.stage === 'Negotiation' ? 0.64 :
-                          currentOpportunity.stage === 'Closed Won' ? 1 :
-                          currentOpportunity.stage === 'Closed Lost' ? 1 : 0
-                        }
-                      />
-                    </Stack.Item>
-                    <Text>{currentOpportunity.stage}</Text>
-                  </Stack>
-                  
-                  <Separator />
-                  
-                  <Stack tokens={{ childrenGap: 12 }}>
-                    <Text variant="medium">Key Milestones</Text>
-                    
-                    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: '#0078d4' }} />
-                      <Stack>
-                        <Text>Opportunity Created</Text>
-                        <Text variant="small" style={{ color: '#605e5c' }}>
-                          {currentOpportunity.created ? formatDistanceToNow(currentOpportunity.created, { addSuffix: true }) : ''}
-                        </Text>
-                      </Stack>
-                    </Stack>
-                    
-                    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: currentOpportunity.stage !== 'Discovery' ? '#0078d4' : '#d2d0ce' }} />
-                      <Stack>
-                        <Text>Discovery Call</Text>
-                        <Text variant="small" style={{ color: '#605e5c' }}>
-                          {currentOpportunity.stage !== 'Discovery' ? 'Completed' : 'Pending'}
-                        </Text>
-                      </Stack>
-                    </Stack>
-                    
-                    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: ['Proposal', 'Negotiation', 'Closed Won'].includes(currentOpportunity.stage) ? '#0078d4' : '#d2d0ce' }} />
-                      <Stack>
-                        <Text>Proposal Sent</Text>
-                        <Text variant="small" style={{ color: '#605e5c' }}>
-                          {['Proposal', 'Negotiation', 'Closed Won'].includes(currentOpportunity.stage) ? 'Completed' : 'Pending'}
-                        </Text>
-                      </Stack>
-                    </Stack>
-                    
-                    <Stack horizontal tokens={{ childrenGap: 12 }} verticalAlign="center">
-                      <div style={{ width: 16, height: 16, borderRadius: '50%', backgroundColor: ['Closed Won'].includes(currentOpportunity.stage) ? '#0078d4' : '#d2d0ce' }} />
-                      <Stack>
-                        <Text>Deal Closed</Text>
-                        <Text variant="small" style={{ color: '#605e5c' }}>
-                          {['Closed Won'].includes(currentOpportunity.stage) ? 'Completed' : 'Pending'}
-                        </Text>
-                      </Stack>
-                    </Stack>
-                  </Stack>
-                </Stack>
-              </PivotItem>
-            </Pivot>
-            
-            <Separator />
-            
-            <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 8 }}>
-              <DefaultButton onClick={closePanel} text="Cancel" />
-              <PrimaryButton onClick={saveOpportunity} text="Save" />
-            </Stack>
-          </Stack>
+          <OpportunityForm
+            opportunity={currentOpportunity}
+            onUpdate={(field, value) => updateOpportunityField(field, value)}
+            onSave={saveOpportunity}
+            onCancel={closePanel}
+          />
         )}
       </Panel>
     </div>

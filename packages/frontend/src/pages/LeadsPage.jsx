@@ -20,6 +20,7 @@ import LeadList from '../components/leads/LeadList';
 import LeadForm from '../components/leads/LeadForm';
 import { LeadService } from '../services/LeadService';
 import LeadImport from '../components/leads/LeadImport';
+import * as XLSX from "xlsx";
 
 const containerStyles = mergeStyles({
   padding: '20px'
@@ -165,7 +166,7 @@ const LeadsPage = () => {
         </Pivot>
         
         <LeadImport onImportComplete={handleImportComplete} />
-        
+
         <LeadList
           selectedView={selectedView}
           onCreateLead={handleCreateLead}
