@@ -32,7 +32,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { FluentProvider, webLightTheme } from '@fluentui/react-components';
-import { initializeIcons, registerIcons } from '@fluentui/react';
+import { initializeIcons } from '@fluentui/react';
 import Layout from './shared/components/layout/Layout';
 
 // Import pages directly instead of through routes file for now
@@ -55,16 +55,7 @@ import SettingsPage from './pages/SettingsPage';
 // Initialize Fluent UI icons
 initializeIcons();
 
-// Register additional icons
-registerIcons({
-  icons: {
-    'SubtaskSolid': {
-      code: '\uF777', // This is the Unicode character code for the SubtaskSolid icon
-      fontFace: { fontFamily: 'FabricMDL2Icons' }
-    },
-    // Add other custom icons here if needed
-  }
-});
+
 
 function App() {
   return (
