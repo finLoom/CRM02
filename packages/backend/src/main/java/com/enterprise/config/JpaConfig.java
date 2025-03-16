@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 @Configuration
-@EnableJpaRepositories(basePackages = "com.enterprise.module")
+@EnableJpaRepositories(basePackages = {"com.enterprise.module", "com.enterprise.core"})
 @EnableJpaAuditing
 @EnableTransactionManagement
 public class JpaConfig {
@@ -30,7 +30,7 @@ public class JpaConfig {
     public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
         LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
         em.setDataSource(dataSource);
-        em.setPackagesToScan("com.enterprise.module");
+        em.setPackagesToScan("com.enterprise.module", "com.enterprise.core");
 
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
         em.setJpaVendorAdapter(vendorAdapter);

@@ -46,34 +46,47 @@ A modern CRM system built with React and Microsoft Fluent UI, designed to be a s
 ## Project Structure
 
 ```
-fluent-crm/
-├── public/
-│   ├── index.html
-│   ├── favicon.ico
-├── src/
+src/
+├── modules/
+│   ├── tasks/
+│   │   ├── components/
+│   │   │   ├── TaskList.jsx
+│   │   │   ├── TaskDetail.jsx
+│   │   │   └── TaskForm.jsx
+│   │   ├── hooks/
+│   │   │   └── useTaskActions.js
+│   │   ├── pages/
+│   │   │   ├── TasksPage.jsx
+│   │   │   ├── TaskDetailPage.jsx
+│   │   │   └── TaskFormPage.jsx
+│   │   ├── services/
+│   │   │   └── TaskService.js
+│   │   └── index.js (exports all components, hooks, etc.)
+│   ├── leads/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── services/
+│   │   └── index.js
+│   └── contacts/
+│       └── ...similar structure
+├── shared/
 │   ├── components/
 │   │   ├── layout/
-│   │   │   ├── TopBar.jsx
+│   │   │   ├── Layout.jsx
 │   │   │   ├── SideBar.jsx
-│   │   │   └── Layout.jsx
-│   │   ├── dashboard/
-│   │   ├── contacts/
-│   │   ├── leads/
-│   │   ├── opportunities/
-│   │   ├── tasks/
+│   │   │   └── TopBar.jsx
 │   │   └── common/
-│   ├── pages/
-│   │   ├── DashboardPage.jsx
-│   │   ├── ContactsPage.jsx
-│   │   ├── LeadsPage.jsx
-│   │   ├── OpportunitiesPage.jsx
-│   │   ├── TasksPage.jsx
-│   │   └── SettingsPage.jsx
-│   ├── styles/
-│   │   └── globalStyles.css
-│   ├── App.jsx
-│   └── index.js
-└── package.json
+│   │       ├── DataTable.jsx
+│   │       └── FormControls.jsx
+│   ├── hooks/
+│   │   └── useQueryParams.js
+│   └── utils/
+│       └── formatters.js
+└── routes/
+    ├── index.js
+    ├── taskRoutes.js
+    ├── leadRoutes.js
+    └── contactRoutes.js
 ```
 
 ## Getting Started

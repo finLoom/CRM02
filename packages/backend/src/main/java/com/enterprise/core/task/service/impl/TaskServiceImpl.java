@@ -19,6 +19,7 @@ import com.enterprise.core.user.entity.User;
 import com.enterprise.core.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ public class TaskServiceImpl implements TaskService {
     public TaskDto createTask(TaskCreateDto taskCreateDto, Long createdById) {
         // Get the user who is creating the task
         User createdBy = userRepository.findById(createdById)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + createdById));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", createdById));
 
         // Create a new task entity
         Task task = new Task();
@@ -61,21 +62,21 @@ public class TaskServiceImpl implements TaskService {
         // Set the assigned user if specified
         if (taskCreateDto.getAssignedToId() != null) {
             User assignedTo = userRepository.findById(taskCreateDto.getAssignedToId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskCreateDto.getAssignedToId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", taskCreateDto.getAssignedToId()));
             task.setAssignedTo(assignedTo);
         }
 
         // Set the team if specified
         if (taskCreateDto.getTeamId() != null) {
             Team team = teamRepository.findById(taskCreateDto.getTeamId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + taskCreateDto.getTeamId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Team", "id", taskCreateDto.getTeamId()));
             task.setTeam(team);
         }
 
         // Set the parent task if specified
         if (taskCreateDto.getParentTaskId() != null) {
             Task parentTask = taskRepository.findById(taskCreateDto.getParentTaskId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Parent task not found with id: " + taskCreateDto.getParentTaskId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Parent task", "id", taskCreateDto.getParentTaskId()));
             task.setParentTask(parentTask);
         }
 
@@ -104,14 +105,14 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public TaskDto getTaskById(Long id) {
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
         return taskMapper.toDto(task);
     }
 
     @Override
     public TaskDto updateTask(Long id, TaskDto taskDto) {
         Task existingTask = taskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", id));
 
         // Update basic properties
         existingTask.setTitle(taskDto.getTitle());
@@ -129,7 +130,7 @@ public class TaskServiceImpl implements TaskService {
         // Update assigned user if changed
         if (taskDto.getAssignedToId() != null) {
             User assignedTo = userRepository.findById(taskDto.getAssignedToId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + taskDto.getAssignedToId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("User", "id", taskDto.getAssignedToId()));
             existingTask.setAssignedTo(assignedTo);
         } else {
             existingTask.setAssignedTo(null);
@@ -138,7 +139,7 @@ public class TaskServiceImpl implements TaskService {
         // Update team if changed
         if (taskDto.getTeamId() != null) {
             Team team = teamRepository.findById(taskDto.getTeamId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + taskDto.getTeamId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Team", "id", taskDto.getTeamId()));
             existingTask.setTeam(team);
         } else {
             existingTask.setTeam(null);
@@ -153,7 +154,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public void deleteTask(Long id) {
         if (!taskRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Task not found with id: " + id);
+            throw new ResourceNotFoundException("Task", "id", id);
         }
 
         // Check for subtasks
@@ -165,8 +166,6 @@ public class TaskServiceImpl implements TaskService {
                 deleteTask(subtask.getId());
             }
         }
-
-        // File continuation: backend/src/main/java/com/enterprise/core/task/service/impl/TaskServiceImpl.java
 
         // Delete the task
         taskRepository.deleteById(id);
@@ -183,7 +182,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public Page<TaskDto> getTasksByAssignedUser(Long userId, Pageable pageable) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         return taskRepository.findByAssignedTo(user, pageable)
                 .map(taskMapper::toDto);
@@ -193,7 +192,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional(readOnly = true)
     public Page<TaskDto> getTasksByTeam(Long teamId, Pageable pageable) {
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + teamId));
+                .orElseThrow(() -> new ResourceNotFoundException("Team", "id", teamId));
 
         return taskRepository.findByTeam(team, pageable)
                 .map(taskMapper::toDto);
@@ -257,10 +256,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskDto assignTaskToUser(Long taskId, Long userId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
         task.setAssignedTo(user);
 
@@ -271,10 +270,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskDto assignTaskToTeam(Long taskId, Long teamId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new ResourceNotFoundException("Team not found with id: " + teamId));
+                .orElseThrow(() -> new ResourceNotFoundException("Team", "id", teamId));
 
         task.setTeam(team);
 
@@ -285,7 +284,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskDto updateTaskStatus(Long taskId, TaskStatus status) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         task.setStatus(status);
 
@@ -301,12 +300,10 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.toDto(updatedTask);
     }
 
-    // File continuation: backend/src/main/java/com/enterprise/core/task/service/impl/TaskServiceImpl.java
-
     @Override
     public TaskDto updateTaskCompletion(Long taskId, Integer percentage) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         // Validate percentage range
         if (percentage < 0 || percentage > 100) {
@@ -332,7 +329,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskDto addRelatedObjectToTask(Long taskId, String objectType, Long objectId, String relationshipType) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         TaskRelatedObject relatedObject = new TaskRelatedObject();
         relatedObject.setTask(task);
@@ -350,10 +347,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskDto removeRelatedObjectFromTask(Long taskId, Long relatedObjectId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task", "id", taskId));
 
         TaskRelatedObject relatedObject = taskRelatedObjectRepository.findById(relatedObjectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Related object not found with id: " + relatedObjectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Related object", "id", relatedObjectId));
 
         // Ensure the related object belongs to the specified task
         if (!relatedObject.getTask().getId().equals(taskId)) {
@@ -374,7 +371,6 @@ public class TaskServiceImpl implements TaskService {
                 .map(taskMapper::toDto);
     }
 
-    // In TaskServiceImpl.java
     @Override
     @Transactional(readOnly = true)
     public Page<TaskDto> searchTasks(String query, Pageable pageable) {
@@ -382,7 +378,7 @@ public class TaskServiceImpl implements TaskService {
         // This is a placeholder for a more sophisticated search implementation
 
         // For now, filter by title or description containing the query
-        List<TaskDto> filteredTasks = taskRepository.findAll(pageable)
+        List<TaskDto> filteredTasks = taskRepository.findAll()
                 .stream()
                 .map(taskMapper::toDto)
                 .filter(taskDto ->
@@ -392,7 +388,14 @@ public class TaskServiceImpl implements TaskService {
                 )
                 .collect(Collectors.toList());
 
+        // Paginate the filtered results
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filteredTasks.size());
+
+        // Create a sublist for the current page
+        List<TaskDto> pageContent = filteredTasks.subList(start, end);
+
         // Convert the filtered list back to a Page
-        return new org.springframework.data.domain.PageImpl<>(filteredTasks, pageable, filteredTasks.size());
+        return new PageImpl<>(pageContent, pageable, filteredTasks.size());
     }
 }
