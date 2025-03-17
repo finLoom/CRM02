@@ -1,0 +1,1677 @@
+{
+  ".gitignore": {
+    "size": 849,
+    "type": "unknown"
+  },
+  ".idea": {
+    ".gitignore": {
+      "size": 50,
+      "type": "unknown"
+    },
+    "compiler.xml": {
+      "size": 958,
+      "type": ".xml"
+    },
+    "CRM02.iml": {
+      "size": 344,
+      "type": ".iml"
+    },
+    "encodings.xml": {
+      "size": 314,
+      "type": ".xml"
+    },
+    "jarRepositories.xml": {
+      "size": 864,
+      "type": ".xml"
+    },
+    "misc.xml": {
+      "size": 641,
+      "type": ".xml"
+    },
+    "modules.xml": {
+      "size": 269,
+      "type": ".xml"
+    },
+    "vcs.xml": {
+      "size": 167,
+      "type": ".xml"
+    },
+    "workspace.xml": {
+      "size": 10758,
+      "type": ".xml"
+    }
+  },
+  "backup": {
+    "be_src.zip": {
+      "size": 15991,
+      "type": ".zip"
+    }
+  },
+  "package-lock.json": {
+    "size": 1735608,
+    "type": ".json"
+  },
+  "package.json": {
+    "size": 972,
+    "type": ".json"
+  },
+  "packages": {
+    "backend": {
+      "logs": {
+        "crm-application.log.2025-03-14.0.gz": {
+          "size": 8181,
+          "type": ".gz"
+        },
+        "crm-application.log.2025-03-15.0.gz": {
+          "size": 32342,
+          "type": ".gz"
+        }
+      },
+      "package.json": {
+        "size": 967,
+        "type": ".json"
+      },
+      "pom.xml": {
+        "size": 4418,
+        "type": ".xml"
+      },
+      "README.md": {
+        "size": 308,
+        "type": ".md"
+      },
+      "src": {
+        "index.js": {
+          "size": 471,
+          "type": ".js"
+        },
+        "main": {
+          "java": {
+            "com": {
+              "enterprise": {
+                "config": {
+                  "DatabaseDiagnosticConfig.java": {
+                    "size": 2185,
+                    "type": ".java"
+                  },
+                  "DataSourceConfig.java": {
+                    "size": 2843,
+                    "type": ".java"
+                  },
+                  "JpaConfig.java": {
+                    "size": 2865,
+                    "type": ".java"
+                  },
+                  "RepositoryConfig.java": {
+                    "size": 554,
+                    "type": ".java"
+                  },
+                  "SecurityConfig.java": {
+                    "size": 861,
+                    "type": ".java"
+                  }
+                },
+                "core": {
+                  "common": {
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "exception": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "task": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "mapper": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "team": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "user": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  }
+                },
+                "CrmApplication.java": {
+                  "size": 324,
+                  "type": ".java"
+                },
+                "module": {
+                  "common": {
+                    "exception": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "contact": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "mapper": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "lead": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "mapper": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "opportunity": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "entity": {
+                      "info": "Max depth reached"
+                    },
+                    "mapper": {
+                      "info": "Max depth reached"
+                    },
+                    "repository": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  },
+                  "user": {
+                    "controller": {
+                      "info": "Max depth reached"
+                    },
+                    "dto": {
+                      "info": "Max depth reached"
+                    },
+                    "service": {
+                      "info": "Max depth reached"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "resources": {
+            "application-dev.properties": {
+              "size": 355,
+              "type": ".properties"
+            },
+            "application-prod.properties": {
+              "size": 334,
+              "type": ".properties"
+            },
+            "application.properties": {
+              "size": 2103,
+              "type": ".properties"
+            }
+          }
+        }
+      },
+      "target": {
+        "classes": {
+          "application-dev.properties": {
+            "size": 355,
+            "type": ".properties"
+          },
+          "application-prod.properties": {
+            "size": 334,
+            "type": ".properties"
+          },
+          "application.properties": {
+            "size": 2103,
+            "type": ".properties"
+          },
+          "com": {
+            "enterprise": {
+              "config": {
+                "DatabaseDiagnosticConfig.class": {
+                  "size": 3237,
+                  "type": ".class"
+                },
+                "DataSourceConfig.class": {
+                  "size": 3498,
+                  "type": ".class"
+                },
+                "JpaConfig.class": {
+                  "size": 3532,
+                  "type": ".class"
+                },
+                "RepositoryConfig.class": {
+                  "size": 677,
+                  "type": ".class"
+                },
+                "SecurityConfig.class": {
+                  "size": 3350,
+                  "type": ".class"
+                }
+              },
+              "core": {
+                "common": {
+                  "dto": {
+                    "ApiResponse.class": {
+                      "size": 2236,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "BaseEntity.class": {
+                      "size": 3468,
+                      "type": ".class"
+                    }
+                  },
+                  "exception": {
+                    "ResourceNotFoundException.class": {
+                      "size": 1055,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "BaseService.class": {
+                      "size": 6202,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "task": {
+                  "controller": {
+                    "TaskController.class": {
+                      "size": 14293,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "TaskCreateDto$TaskCreateDtoBuilder.class": {
+                      "size": 4354,
+                      "type": ".class"
+                    },
+                    "TaskCreateDto.class": {
+                      "size": 9098,
+                      "type": ".class"
+                    },
+                    "TaskDto$TaskDtoBuilder.class": {
+                      "size": 6988,
+                      "type": ".class"
+                    },
+                    "TaskDto.class": {
+                      "size": 17528,
+                      "type": ".class"
+                    },
+                    "TaskRelatedObjectCreateDto$TaskRelatedObjectCreateDtoBuilder.class": {
+                      "size": 2095,
+                      "type": ".class"
+                    },
+                    "TaskRelatedObjectCreateDto.class": {
+                      "size": 3653,
+                      "type": ".class"
+                    },
+                    "TaskRelatedObjectDto$TaskRelatedObjectDtoBuilder.class": {
+                      "size": 2337,
+                      "type": ".class"
+                    },
+                    "TaskRelatedObjectDto.class": {
+                      "size": 4262,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "Task.class": {
+                      "size": 13840,
+                      "type": ".class"
+                    },
+                    "TaskModule.class": {
+                      "size": 1365,
+                      "type": ".class"
+                    },
+                    "TaskPriority.class": {
+                      "size": 1322,
+                      "type": ".class"
+                    },
+                    "TaskRelatedObject.class": {
+                      "size": 3936,
+                      "type": ".class"
+                    },
+                    "TaskStatus.class": {
+                      "size": 1380,
+                      "type": ".class"
+                    }
+                  },
+                  "mapper": {
+                    "TaskMapper.class": {
+                      "size": 5287,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "TaskRelatedObjectRepository.class": {
+                      "size": 1541,
+                      "type": ".class"
+                    },
+                    "TaskRepository.class": {
+                      "size": 5455,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "impl": {
+                      "info": "Max depth reached"
+                    },
+                    "TaskService.class": {
+                      "size": 3894,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "team": {
+                  "controller": {
+                    "TeamController.class": {
+                      "size": 9110,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "TeamCreateDto$TeamCreateDtoBuilder.class": {
+                      "size": 3091,
+                      "type": ".class"
+                    },
+                    "TeamCreateDto.class": {
+                      "size": 6275,
+                      "type": ".class"
+                    },
+                    "TeamDto$TeamDtoBuilder.class": {
+                      "size": 4367,
+                      "type": ".class"
+                    },
+                    "TeamDto.class": {
+                      "size": 9076,
+                      "type": ".class"
+                    },
+                    "TeamMemberDto$TeamMemberDtoBuilder.class": {
+                      "size": 2370,
+                      "type": ".class"
+                    },
+                    "TeamMemberDto.class": {
+                      "size": 4552,
+                      "type": ".class"
+                    },
+                    "TeamUpdateDto$TeamUpdateDtoBuilder.class": {
+                      "size": 2819,
+                      "type": ".class"
+                    },
+                    "TeamUpdateDto.class": {
+                      "size": 5582,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "Team.class": {
+                      "size": 6825,
+                      "type": ".class"
+                    },
+                    "TeamType.class": {
+                      "size": 1422,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "TeamRepository.class": {
+                      "size": 2960,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "impl": {
+                      "info": "Max depth reached"
+                    },
+                    "TeamService.class": {
+                      "size": 2365,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "user": {
+                  "controller": {
+                    "UserController.class": {
+                      "size": 5245,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "UserCreateDto$UserCreateDtoBuilder.class": {
+                      "size": 2567,
+                      "type": ".class"
+                    },
+                    "UserCreateDto.class": {
+                      "size": 5720,
+                      "type": ".class"
+                    },
+                    "UserDto$UserDtoBuilder.class": {
+                      "size": 3494,
+                      "type": ".class"
+                    },
+                    "UserDto.class": {
+                      "size": 7618,
+                      "type": ".class"
+                    },
+                    "UserUpdateDto$UserUpdateDtoBuilder.class": {
+                      "size": 2676,
+                      "type": ".class"
+                    },
+                    "UserUpdateDto.class": {
+                      "size": 5515,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "User.class": {
+                      "size": 6883,
+                      "type": ".class"
+                    },
+                    "UserRole.class": {
+                      "size": 1294,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "UserRepository.class": {
+                      "size": 1615,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "impl": {
+                      "info": "Max depth reached"
+                    },
+                    "UserService.class": {
+                      "size": 1128,
+                      "type": ".class"
+                    }
+                  }
+                }
+              },
+              "CrmApplication.class": {
+                "size": 726,
+                "type": ".class"
+              },
+              "module": {
+                "common": {
+                  "exception": {
+                    "GlobalExceptionHandler.class": {
+                      "size": 1792,
+                      "type": ".class"
+                    },
+                    "ResourceNotFoundException.class": {
+                      "size": 482,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "contact": {
+                  "controller": {
+                    "ContactController.class": {
+                      "size": 5036,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "ContactDto$ContactDtoBuilder.class": {
+                      "size": 4608,
+                      "type": ".class"
+                    },
+                    "ContactDto.class": {
+                      "size": 11334,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "Contact$ContactBuilder.class": {
+                      "size": 4581,
+                      "type": ".class"
+                    },
+                    "Contact.class": {
+                      "size": 12083,
+                      "type": ".class"
+                    }
+                  },
+                  "mapper": {
+                    "ContactMapper.class": {
+                      "size": 580,
+                      "type": ".class"
+                    },
+                    "ContactMapperImpl.class": {
+                      "size": 4639,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "ContactRepository.class": {
+                      "size": 726,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "ContactService.class": {
+                      "size": 1019,
+                      "type": ".class"
+                    },
+                    "ContactServiceImpl.class": {
+                      "size": 7364,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "lead": {
+                  "controller": {
+                    "LeadController.class": {
+                      "size": 4834,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "LeadDto$LeadDtoBuilder.class": {
+                      "size": 3570,
+                      "type": ".class"
+                    },
+                    "LeadDto.class": {
+                      "size": 7856,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "Lead$LeadBuilder.class": {
+                      "size": 3540,
+                      "type": ".class"
+                    },
+                    "Lead.class": {
+                      "size": 8437,
+                      "type": ".class"
+                    }
+                  },
+                  "mapper": {
+                    "LeadMapper.class": {
+                      "size": 529,
+                      "type": ".class"
+                    },
+                    "LeadMapperImpl.class": {
+                      "size": 3855,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "LeadRepository.class": {
+                      "size": 697,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "LeadService.class": {
+                      "size": 934,
+                      "type": ".class"
+                    },
+                    "LeadServiceImpl.class": {
+                      "size": 7640,
+                      "type": ".class"
+                    }
+                  }
+                },
+                "opportunity": {
+                  "controller": {
+                    "OpportunityController.class": {
+                      "size": 6650,
+                      "type": ".class"
+                    }
+                  },
+                  "dto": {
+                    "OpportunityDto$OpportunityDtoBuilder.class": {
+                      "size": 4751,
+                      "type": ".class"
+                    },
+                    "OpportunityDto.class": {
+                      "size": 10867,
+                      "type": ".class"
+                    }
+                  },
+                  "entity": {
+                    "Opportunity$OpportunityBuilder.class": {
+                      "size": 4718,
+                      "type": ".class"
+                    },
+                    "Opportunity.class": {
+                      "size": 11442,
+                      "type": ".class"
+                    }
+                  },
+                  "mapper": {
+                    "OpportunityMapper.class": {
+                      "size": 648,
+                      "type": ".class"
+                    },
+                    "OpportunityMapperImpl.class": {
+                      "size": 5257,
+                      "type": ".class"
+                    }
+                  },
+                  "repository": {
+                    "OpportunityRepository.class": {
+                      "size": 803,
+                      "type": ".class"
+                    }
+                  },
+                  "service": {
+                    "OpportunityService.class": {
+                      "size": 1420,
+                      "type": ".class"
+                    },
+                    "OpportunityServiceImpl.class": {
+                      "size": 12169,
+                      "type": ".class"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "generated-sources": {
+          "annotations": {}
+        },
+        "maven-archiver": {
+          "pom.properties": {
+            "size": 66,
+            "type": ".properties"
+          }
+        },
+        "maven-status": {
+          "maven-compiler-plugin": {
+            "compile": {
+              "default-compile": {
+                "createdFiles.lst": {
+                  "size": 4447,
+                  "type": ".lst"
+                },
+                "inputFiles.lst": {
+                  "size": 7777,
+                  "type": ".lst"
+                }
+              }
+            }
+          }
+        },
+        "user-service-0.0.1-SNAPSHOT.jar": {
+          "size": 59093368,
+          "type": ".jar"
+        },
+        "user-service-0.0.1-SNAPSHOT.jar.original": {
+          "size": 158685,
+          "type": ".original"
+        }
+      }
+    },
+    "common": {
+      "package.json": {
+        "size": 612,
+        "type": ".json"
+      },
+      "README.md": {
+        "size": 19361,
+        "type": ".md"
+      },
+      "src": {
+        "constants": {},
+        "types": {},
+        "utils": {}
+      },
+      "tsconfig.json": {
+        "size": 258,
+        "type": ".json"
+      }
+    },
+    "documentation": {
+      "ai-prompt.md": {
+        "size": 0,
+        "type": ".md"
+      },
+      "Architecture": {
+        "fluent-crm-vision-statement.md": {
+          "size": 3026,
+          "type": ".md"
+        },
+        "git-branching-guide.md": {
+          "size": 3055,
+          "type": ".md"
+        },
+        "Project Architecture - Modern.md": {
+          "size": 4082,
+          "type": ".md"
+        }
+      },
+      "featureList.md": {
+        "size": 3311,
+        "type": ".md"
+      },
+      "implementation-summary.md": {
+        "size": 744,
+        "type": ".md"
+      },
+      "Notes.md": {
+        "size": 3989,
+        "type": ".md"
+      },
+      "Prompt": {
+        "backend-continuity-prompt.md": {
+          "size": 21700,
+          "type": ".md"
+        },
+        "features-continuity-document.md": {
+          "size": 8678,
+          "type": ".md"
+        },
+        "frontend-continuity-prompt.md": {
+          "size": 13287,
+          "type": ".md"
+        },
+        "Project-Instructions.md": {
+          "size": 1467,
+          "type": ".md"
+        },
+        "Project-vision-statement.md": {
+          "size": 3026,
+          "type": ".md"
+        },
+        "token-optimization-strategies.md": {
+          "size": 4357,
+          "type": ".md"
+        }
+      },
+      "Task and Team Management Implementation Summary.md": {
+        "size": 9813,
+        "type": ".md"
+      }
+    },
+    "frontend": {
+      "package.json": {
+        "size": 1387,
+        "type": ".json"
+      },
+      "public": {
+        "assets": {
+          "logo.svg": {
+            "size": 31,
+            "type": ".svg"
+          }
+        },
+        "favicon.ico": {
+          "size": 34,
+          "type": ".ico"
+        },
+        "index.html": {
+          "size": 1753,
+          "type": ".html"
+        },
+        "logo192.png": {
+          "size": 1314,
+          "type": ".png"
+        },
+        "manifest.json": {
+          "size": 571,
+          "type": ".json"
+        },
+        "robots.txt": {
+          "size": 68,
+          "type": ".txt"
+        },
+        "svg-to-image.html": {
+          "size": 445,
+          "type": ".html"
+        }
+      },
+      "README.md": {
+        "size": 16640,
+        "type": ".md"
+      },
+      "src": {
+        "app": {
+          "App.jsx": {
+            "size": 623,
+            "type": ".jsx"
+          },
+          "AppProviders.jsx": {
+            "size": 1016,
+            "type": ".jsx"
+          },
+          "ErrorBoundary.jsx": {
+            "size": 2449,
+            "type": ".jsx"
+          }
+        },
+        "common": {
+          "DataTable.jsx": {
+            "size": 9742,
+            "type": ".jsx"
+          }
+        },
+        "components": {
+          "common": {
+            "Notification.jsx": {
+              "size": 39,
+              "type": ".jsx"
+            },
+            "ProfileMenu.jsx": {
+              "size": 38,
+              "type": ".jsx"
+            },
+            "SearchBar.jsx": {
+              "size": 36,
+              "type": ".jsx"
+            }
+          },
+          "contacts": {},
+          "dashboard": {
+            "ActivityFeed.jsx": {
+              "size": 39,
+              "type": ".jsx"
+            },
+            "Dashboard.jsx": {
+              "size": 12929,
+              "type": ".jsx"
+            },
+            "SalesStats.jsx": {
+              "size": 37,
+              "type": ".jsx"
+            },
+            "TasksSummary.jsx": {
+              "size": 39,
+              "type": ".jsx"
+            }
+          },
+          "layout": {
+            "Layout.jsx": {
+              "size": 831,
+              "type": ".jsx"
+            },
+            "SideBar.jsx": {
+              "size": 3354,
+              "type": ".jsx"
+            },
+            "TopBar.jsx": {
+              "size": 4191,
+              "type": ".jsx"
+            }
+          },
+          "leads": {},
+          "opportunities": {
+            "detail": {
+              "OpportunityActivitiesNotes.jsx": {
+                "size": 755,
+                "type": ".jsx"
+              },
+              "OpportunityEditPanel.jsx": {
+                "size": 836,
+                "type": ".jsx"
+              },
+              "OpportunityHeader.jsx": {
+                "size": 1461,
+                "type": ".jsx"
+              },
+              "OpportunityMilestones.jsx": {
+                "size": 2518,
+                "type": ".jsx"
+              },
+              "OpportunityOverview.jsx": {
+                "size": 2101,
+                "type": ".jsx"
+              },
+              "OpportunitySalesProcess.jsx": {
+                "size": 614,
+                "type": ".jsx"
+              },
+              "OpportunitySalesProgress.jsx": {
+                "size": 2715,
+                "type": ".jsx"
+              }
+            },
+            "OpportunityDetail.jsx": {
+              "size": 5323,
+              "type": ".jsx"
+            },
+            "OpportunityForm.jsx": {
+              "size": 6060,
+              "type": ".jsx"
+            },
+            "OpportunityList.jsx": {
+              "size": 17628,
+              "type": ".jsx"
+            }
+          },
+          "reports": {
+            "ExportTools.jsx": {
+              "size": 9150,
+              "type": ".jsx"
+            },
+            "report-types": {
+              "ContactsReport.jsx": {
+                "size": 0,
+                "type": ".jsx"
+              },
+              "LeadsReport.jsx": {
+                "size": 0,
+                "type": ".jsx"
+              },
+              "OpportunitiesReport.jsx": {
+                "size": 0,
+                "type": ".jsx"
+              },
+              "SalesReport.jsx": {
+                "size": 7144,
+                "type": ".jsx"
+              }
+            },
+            "ReportBuilder.jsx": {
+              "size": 7825,
+              "type": ".jsx"
+            },
+            "ReportChart.jsx": {
+              "size": 5055,
+              "type": ".jsx"
+            },
+            "ReportViewer.jsx": {
+              "size": 2592,
+              "type": ".jsx"
+            },
+            "SavedReportsList.jsx": {
+              "size": 6418,
+              "type": ".jsx"
+            }
+          },
+          "tasks": {},
+          "teams": {
+            "TeamsList.jsx": {
+              "size": 13308,
+              "type": ".jsx"
+            }
+          }
+        },
+        "config": {
+          "constants.js": {
+            "size": 4118,
+            "type": ".js"
+          },
+          "environment.js": {
+            "size": 3479,
+            "type": ".js"
+          },
+          "icons.js": {
+            "size": 3013,
+            "type": ".js"
+          },
+          "themeConfig.js": {
+            "size": 3940,
+            "type": ".js"
+          }
+        },
+        "contexts": {
+          "AuthContext.jsx": {
+            "size": 38,
+            "type": ".jsx"
+          },
+          "NotificationContext.jsx": {
+            "size": 0,
+            "type": ".jsx"
+          },
+          "ThemeContext.jsx": {
+            "size": 2788,
+            "type": ".jsx"
+          }
+        },
+        "hooks": {
+          "useAppInitializer.js": {
+            "size": 934,
+            "type": ".js"
+          },
+          "useAuth.js": {
+            "size": 1022,
+            "type": ".js"
+          },
+          "useNotification.js": {
+            "size": 2009,
+            "type": ".js"
+          },
+          "useQueryParams.js": {
+            "size": 378,
+            "type": ".js"
+          },
+          "useTheme.js": {
+            "size": 952,
+            "type": ".js"
+          }
+        },
+        "index.js": {
+          "size": 748,
+          "type": ".js"
+        },
+        "modules": {
+          "contacts": {
+            "components": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "hooks": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "index.js": {
+              "size": 29,
+              "type": ".js"
+            },
+            "pages": {
+              "ContactDetail.jsx": {
+                "size": 7647,
+                "type": ".jsx"
+              },
+              "ContactForm.jsx": {
+                "size": 4932,
+                "type": ".jsx"
+              },
+              "ContactImport.jsx": {
+                "size": 9873,
+                "type": ".jsx"
+              },
+              "ContactList.jsx": {
+                "size": 8499,
+                "type": ".jsx"
+              },
+              "ContactMerge.jsx": {
+                "size": 12005,
+                "type": ".jsx"
+              },
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "services": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "utils": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            }
+          },
+          "dashboard": {
+            "ActivityFeed.jsx": {
+              "size": 39,
+              "type": ".jsx"
+            },
+            "components": {
+              "LeadSourceBreakdown.jsx": {
+                "size": 5662,
+                "type": ".jsx"
+              },
+              "MarketingCampaignsList.jsx": {
+                "size": 0,
+                "type": ".jsx"
+              }
+            },
+            "Dashboard.jsx": {
+              "size": 12929,
+              "type": ".jsx"
+            },
+            "pages": {
+              "CampaignPerformanceChart.jsx": {
+                "size": 8949,
+                "type": ".jsx"
+              },
+              "ChannelPerformanceList.jsx": {
+                "size": 5444,
+                "type": ".jsx"
+              },
+              "DashboardPage.jsx": {
+                "size": 16975,
+                "type": ".jsx"
+              },
+              "MarketingDashboardPage.jsx": {
+                "size": 14514,
+                "type": ".jsx"
+              },
+              "SalesPerformancePage.jsx": {
+                "size": 18506,
+                "type": ".jsx"
+              }
+            },
+            "SalesStats.jsx": {
+              "size": 37,
+              "type": ".jsx"
+            },
+            "TasksSummary.jsx": {
+              "size": 39,
+              "type": ".jsx"
+            }
+          },
+          "leads": {
+            "components": {
+              "index.js": {
+                "size": 254,
+                "type": ".js"
+              },
+              "LeadDetail.jsx": {
+                "size": 6770,
+                "type": ".jsx"
+              },
+              "LeadForm.jsx": {
+                "size": 4959,
+                "type": ".jsx"
+              },
+              "LeadImport.jsx": {
+                "size": 2786,
+                "type": ".jsx"
+              },
+              "LeadList.jsx": {
+                "size": 6779,
+                "type": ".jsx"
+              }
+            },
+            "hooks": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "index.js": {
+              "size": 169,
+              "type": ".js"
+            },
+            "pages": {
+              "index.js": {
+                "size": 210,
+                "type": ".js"
+              },
+              "LeadDetailPage.jsx": {
+                "size": 280,
+                "type": ".jsx"
+              },
+              "LeadFormPage.jsx": {
+                "size": 270,
+                "type": ".jsx"
+              },
+              "LeadsPage.jsx": {
+                "size": 26417,
+                "type": ".jsx"
+              }
+            },
+            "services": {
+              "index.js": {
+                "size": 95,
+                "type": ".js"
+              },
+              "LeadService.js": {
+                "size": 4628,
+                "type": ".js"
+              }
+            },
+            "utils": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            }
+          },
+          "new_module": {
+            "components": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "hooks": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "index.js": {
+              "size": 29,
+              "type": ".js"
+            },
+            "pages": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "services": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "utils": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            }
+          },
+          "new_module - Copy (3)": {
+            "components": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "hooks": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "index.js": {
+              "size": 29,
+              "type": ".js"
+            },
+            "pages": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "services": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            },
+            "utils": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            }
+          },
+          "tasks": {
+            "components": {
+              "index.js": {
+                "size": 256,
+                "type": ".js"
+              },
+              "TaskDetail.jsx": {
+                "size": 24798,
+                "type": ".jsx"
+              },
+              "TaskForm.jsx": {
+                "size": 15154,
+                "type": ".jsx"
+              },
+              "TaskList.jsx": {
+                "size": 18146,
+                "type": ".jsx"
+              },
+              "TaskTreeView.jsx": {
+                "size": 13955,
+                "type": ".jsx"
+              }
+            },
+            "hooks": {
+              "index.js": {
+                "size": 14,
+                "type": ".js"
+              }
+            },
+            "index.js": {
+              "size": 209,
+              "type": ".js"
+            },
+            "pages": {
+              "index.js": {
+                "size": 210,
+                "type": ".js"
+              },
+              "TaskDetailPage.jsx": {
+                "size": 1194,
+                "type": ".jsx"
+              },
+              "TaskFormPage.jsx": {
+                "size": 1262,
+                "type": ".jsx"
+              },
+              "TasksPage.jsx": {
+                "size": 4159,
+                "type": ".jsx"
+              },
+              "TaskTreeViewPage.jsx": {
+                "size": 6891,
+                "type": ".jsx"
+              }
+            },
+            "services": {
+              "index.js": {
+                "size": 95,
+                "type": ".js"
+              },
+              "TaskService.js": {
+                "size": 7632,
+                "type": ".js"
+              }
+            },
+            "utils": {
+              "index.js": {
+                "size": 29,
+                "type": ".js"
+              }
+            }
+          }
+        },
+        "pages": {
+          "ContactDetailPage.jsx": {
+            "size": 236,
+            "type": ".jsx"
+          },
+          "ContactFormPage.jsx": {
+            "size": 3204,
+            "type": ".jsx"
+          },
+          "ContactsPage.jsx": {
+            "size": 11962,
+            "type": ".jsx"
+          },
+          "DashboardPage.jsx": {
+            "size": 12929,
+            "type": ".jsx"
+          },
+          "OpportunitiesPage.jsx": {
+            "size": 12958,
+            "type": ".jsx"
+          },
+          "OpportunityDetailPage.jsx": {
+            "size": 265,
+            "type": ".jsx"
+          },
+          "ReportsPage.jsx": {
+            "size": 4853,
+            "type": ".jsx"
+          },
+          "SettingsPage.jsx": {
+            "size": 14239,
+            "type": ".jsx"
+          }
+        },
+        "router": {
+          "AppRouter.jsx": {
+            "size": 2049,
+            "type": ".jsx"
+          },
+          "routeConfig": {
+            "dashboardRoutes.js": {
+              "size": 1047,
+              "type": ".js"
+            },
+            "index.js": {
+              "size": 1081,
+              "type": ".js"
+            },
+            "RouteGuard - Copy (3).jsx": {
+              "size": 7,
+              "type": ".jsx"
+            },
+            "taskRoutes.js": {
+              "size": 2084,
+              "type": ".js"
+            }
+          },
+          "RouteGuard.jsx": {
+            "size": 978,
+            "type": ".jsx"
+          },
+          "routes": {
+            "authRoutes.js": {
+              "size": 1101,
+              "type": ".js"
+            },
+            "contactRoutes.js": {
+              "size": 1257,
+              "type": ".js"
+            },
+            "errorRoutes.js": {
+              "size": 925,
+              "type": ".js"
+            },
+            "index.js": {
+              "size": 2595,
+              "type": ".js"
+            },
+            "leadRoutes.js": {
+              "size": 1187,
+              "type": ".js"
+            },
+            "opportunityRoutes.js": {
+              "size": 1417,
+              "type": ".js"
+            },
+            "reportRoutes.js": {
+              "size": 1313,
+              "type": ".js"
+            },
+            "settingsRoutes.js": {
+              "size": 1619,
+              "type": ".js"
+            },
+            "taskRoutes.js": {
+              "size": 1366,
+              "type": ".js"
+            }
+          },
+          "routes.js": {
+            "size": 1292,
+            "type": ".js"
+          }
+        },
+        "routes.js": {
+          "size": 32,
+          "type": ".js"
+        },
+        "services": {
+          "api": {
+            "apiClient.js": {
+              "size": 3319,
+              "type": ".js"
+            }
+          },
+          "api.js": {
+            "size": 29,
+            "type": ".js"
+          },
+          "ContactService.js": {
+            "size": 1255,
+            "type": ".js"
+          },
+          "logging": {
+            "errorLoggingService.js": {
+              "size": 3612,
+              "type": ".js"
+            }
+          },
+          "mockData.js": {
+            "size": 34,
+            "type": ".js"
+          },
+          "notifications": {
+            "notificationService.js": {
+              "size": 3194,
+              "type": ".js"
+            }
+          },
+          "OpportunityService.js": {
+            "size": 1767,
+            "type": ".js"
+          },
+          "reportService.js": {
+            "size": 15857,
+            "type": ".js"
+          },
+          "TeamService.js": {
+            "size": 4864,
+            "type": ".js"
+          },
+          "UserService.js": {
+            "size": 6804,
+            "type": ".js"
+          }
+        },
+        "shared": {
+          "components": {
+            "common": {},
+            "layout": {
+              "Layout.jsx": {
+                "size": 831,
+                "type": ".jsx"
+              },
+              "SideBar.jsx": {
+                "size": 3354,
+                "type": ".jsx"
+              },
+              "TopBar.jsx": {
+                "size": 4191,
+                "type": ".jsx"
+              }
+            }
+          },
+          "hooks": {},
+          "utils": {}
+        },
+        "styles": {
+          "globalStyles.css": {
+            "size": 1386,
+            "type": ".css"
+          },
+          "theme.js": {
+            "size": 31,
+            "type": ".js"
+          }
+        },
+        "TestPage.jsx": {
+          "size": 338,
+          "type": ".jsx"
+        },
+        "utils": {
+          "componentScanner.js": {
+            "size": 9955,
+            "type": ".js"
+          },
+          "formatters.js": {
+            "size": 36,
+            "type": ".js"
+          },
+          "lazyUtils.js": {
+            "size": 2235,
+            "type": ".js"
+          },
+          "reportWebVitals.js": {
+            "size": 761,
+            "type": ".js"
+          },
+          "validators.js": {
+            "size": 36,
+            "type": ".js"
+          }
+        }
+      }
+    }
+  },
+  "projectStructureMapper.js": {
+    "size": 4132,
+    "type": ".js"
+  },
+  "Project_Overview.md": {
+    "size": 8542,
+    "type": ".md"
+  },
+  "README.md": {
+    "size": 1290,
+    "type": ".md"
+  },
+  "routingChecker.js": {
+    "size": 11129,
+    "type": ".js"
+  }
+}

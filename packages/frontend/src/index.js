@@ -1,7 +1,14 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles/globalStyles.css';
-import App from './App';
+import App from './app/App';
+import reportWebVitals from './utils/reportWebVitals';
+
+// Performance measurement in development
+if (process.env.NODE_ENV === 'development') {
+  const reportWebVitals = await import('./utils/reportWebVitals').then(m => m.default);
+  reportWebVitals(console.log);
+}
 
 const container = document.getElementById('root');
 

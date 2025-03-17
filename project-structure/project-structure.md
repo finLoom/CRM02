@@ -1,0 +1,561 @@
+# Project Structure
+
+- .gitignore
+- **.idea/**
+  - .gitignore
+  - compiler.xml
+  - CRM02.iml
+  - encodings.xml
+  - jarRepositories.xml
+  - misc.xml
+  - modules.xml
+  - vcs.xml
+  - workspace.xml
+- **backup/**
+  - be_src.zip
+- package-lock.json
+- package.json
+- **packages/**
+  - **backend/**
+    - **logs/**
+      - crm-application.log.2025-03-14.0.gz
+      - crm-application.log.2025-03-15.0.gz
+    - package.json
+    - pom.xml
+    - README.md
+    - **src/**
+      - index.js
+      - **main/**
+        - **java/**
+          - **com/**
+            - **enterprise/**
+              - **config/**
+                - DatabaseDiagnosticConfig.java
+                - DataSourceConfig.java
+                - JpaConfig.java
+                - RepositoryConfig.java
+                - SecurityConfig.java
+              - **core/**
+                - **common/**
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **exception/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **task/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **mapper/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **team/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **user/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+              - CrmApplication.java
+              - **module/**
+                - **common/**
+                  - **exception/**
+                    - *info: Max depth reached*
+                - **contact/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **mapper/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **lead/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **mapper/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **opportunity/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **entity/**
+                    - *info: Max depth reached*
+                  - **mapper/**
+                    - *info: Max depth reached*
+                  - **repository/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+                - **user/**
+                  - **controller/**
+                    - *info: Max depth reached*
+                  - **dto/**
+                    - *info: Max depth reached*
+                  - **service/**
+                    - *info: Max depth reached*
+        - **resources/**
+          - application-dev.properties
+          - application-prod.properties
+          - application.properties
+    - **target/**
+      - **classes/**
+        - application-dev.properties
+        - application-prod.properties
+        - application.properties
+        - **com/**
+          - **enterprise/**
+            - **config/**
+              - DatabaseDiagnosticConfig.class
+              - DataSourceConfig.class
+              - JpaConfig.class
+              - RepositoryConfig.class
+              - SecurityConfig.class
+            - **core/**
+              - **common/**
+                - **dto/**
+                  - ApiResponse.class
+                - **entity/**
+                  - BaseEntity.class
+                - **exception/**
+                  - ResourceNotFoundException.class
+                - **service/**
+                  - BaseService.class
+              - **task/**
+                - **controller/**
+                  - TaskController.class
+                - **dto/**
+                  - TaskCreateDto$TaskCreateDtoBuilder.class
+                  - TaskCreateDto.class
+                  - TaskDto$TaskDtoBuilder.class
+                  - TaskDto.class
+                  - TaskRelatedObjectCreateDto$TaskRelatedObjectCreateDtoBuilder.class
+                  - TaskRelatedObjectCreateDto.class
+                  - TaskRelatedObjectDto$TaskRelatedObjectDtoBuilder.class
+                  - TaskRelatedObjectDto.class
+                - **entity/**
+                  - Task.class
+                  - TaskModule.class
+                  - TaskPriority.class
+                  - TaskRelatedObject.class
+                  - TaskStatus.class
+                - **mapper/**
+                  - TaskMapper.class
+                - **repository/**
+                  - TaskRelatedObjectRepository.class
+                  - TaskRepository.class
+                - **service/**
+                  - **impl/**
+                    - *info: Max depth reached*
+                  - TaskService.class
+              - **team/**
+                - **controller/**
+                  - TeamController.class
+                - **dto/**
+                  - TeamCreateDto$TeamCreateDtoBuilder.class
+                  - TeamCreateDto.class
+                  - TeamDto$TeamDtoBuilder.class
+                  - TeamDto.class
+                  - TeamMemberDto$TeamMemberDtoBuilder.class
+                  - TeamMemberDto.class
+                  - TeamUpdateDto$TeamUpdateDtoBuilder.class
+                  - TeamUpdateDto.class
+                - **entity/**
+                  - Team.class
+                  - TeamType.class
+                - **repository/**
+                  - TeamRepository.class
+                - **service/**
+                  - **impl/**
+                    - *info: Max depth reached*
+                  - TeamService.class
+              - **user/**
+                - **controller/**
+                  - UserController.class
+                - **dto/**
+                  - UserCreateDto$UserCreateDtoBuilder.class
+                  - UserCreateDto.class
+                  - UserDto$UserDtoBuilder.class
+                  - UserDto.class
+                  - UserUpdateDto$UserUpdateDtoBuilder.class
+                  - UserUpdateDto.class
+                - **entity/**
+                  - User.class
+                  - UserRole.class
+                - **repository/**
+                  - UserRepository.class
+                - **service/**
+                  - **impl/**
+                    - *info: Max depth reached*
+                  - UserService.class
+            - CrmApplication.class
+            - **module/**
+              - **common/**
+                - **exception/**
+                  - GlobalExceptionHandler.class
+                  - ResourceNotFoundException.class
+              - **contact/**
+                - **controller/**
+                  - ContactController.class
+                - **dto/**
+                  - ContactDto$ContactDtoBuilder.class
+                  - ContactDto.class
+                - **entity/**
+                  - Contact$ContactBuilder.class
+                  - Contact.class
+                - **mapper/**
+                  - ContactMapper.class
+                  - ContactMapperImpl.class
+                - **repository/**
+                  - ContactRepository.class
+                - **service/**
+                  - ContactService.class
+                  - ContactServiceImpl.class
+              - **lead/**
+                - **controller/**
+                  - LeadController.class
+                - **dto/**
+                  - LeadDto$LeadDtoBuilder.class
+                  - LeadDto.class
+                - **entity/**
+                  - Lead$LeadBuilder.class
+                  - Lead.class
+                - **mapper/**
+                  - LeadMapper.class
+                  - LeadMapperImpl.class
+                - **repository/**
+                  - LeadRepository.class
+                - **service/**
+                  - LeadService.class
+                  - LeadServiceImpl.class
+              - **opportunity/**
+                - **controller/**
+                  - OpportunityController.class
+                - **dto/**
+                  - OpportunityDto$OpportunityDtoBuilder.class
+                  - OpportunityDto.class
+                - **entity/**
+                  - Opportunity$OpportunityBuilder.class
+                  - Opportunity.class
+                - **mapper/**
+                  - OpportunityMapper.class
+                  - OpportunityMapperImpl.class
+                - **repository/**
+                  - OpportunityRepository.class
+                - **service/**
+                  - OpportunityService.class
+                  - OpportunityServiceImpl.class
+      - **generated-sources/**
+        - **annotations/**
+      - **maven-archiver/**
+        - pom.properties
+      - **maven-status/**
+        - **maven-compiler-plugin/**
+          - **compile/**
+            - **default-compile/**
+              - createdFiles.lst
+              - inputFiles.lst
+      - user-service-0.0.1-SNAPSHOT.jar
+      - user-service-0.0.1-SNAPSHOT.jar.original
+  - **common/**
+    - package.json
+    - README.md
+    - **src/**
+      - **constants/**
+      - **types/**
+      - **utils/**
+    - tsconfig.json
+  - **documentation/**
+    - ai-prompt.md
+    - **Architecture/**
+      - fluent-crm-vision-statement.md
+      - git-branching-guide.md
+      - Project Architecture - Modern.md
+    - featureList.md
+    - implementation-summary.md
+    - Notes.md
+    - **Prompt/**
+      - backend-continuity-prompt.md
+      - features-continuity-document.md
+      - frontend-continuity-prompt.md
+      - Project-Instructions.md
+      - Project-vision-statement.md
+      - token-optimization-strategies.md
+    - Task and Team Management Implementation Summary.md
+  - **frontend/**
+    - package.json
+    - **public/**
+      - **assets/**
+        - logo.svg
+      - favicon.ico
+      - index.html
+      - logo192.png
+      - manifest.json
+      - robots.txt
+      - svg-to-image.html
+    - README.md
+    - **src/**
+      - **app/**
+        - App.jsx
+        - AppProviders.jsx
+        - ErrorBoundary.jsx
+      - **common/**
+        - DataTable.jsx
+      - **components/**
+        - **common/**
+          - Notification.jsx
+          - ProfileMenu.jsx
+          - SearchBar.jsx
+        - **contacts/**
+        - **dashboard/**
+          - ActivityFeed.jsx
+          - Dashboard.jsx
+          - SalesStats.jsx
+          - TasksSummary.jsx
+        - **layout/**
+          - Layout.jsx
+          - SideBar.jsx
+          - TopBar.jsx
+        - **leads/**
+        - **opportunities/**
+          - **detail/**
+            - OpportunityActivitiesNotes.jsx
+            - OpportunityEditPanel.jsx
+            - OpportunityHeader.jsx
+            - OpportunityMilestones.jsx
+            - OpportunityOverview.jsx
+            - OpportunitySalesProcess.jsx
+            - OpportunitySalesProgress.jsx
+          - OpportunityDetail.jsx
+          - OpportunityForm.jsx
+          - OpportunityList.jsx
+        - **reports/**
+          - ExportTools.jsx
+          - **report-types/**
+            - ContactsReport.jsx
+            - LeadsReport.jsx
+            - OpportunitiesReport.jsx
+            - SalesReport.jsx
+          - ReportBuilder.jsx
+          - ReportChart.jsx
+          - ReportViewer.jsx
+          - SavedReportsList.jsx
+        - **tasks/**
+        - **teams/**
+          - TeamsList.jsx
+      - **config/**
+        - constants.js
+        - environment.js
+        - icons.js
+        - themeConfig.js
+      - **contexts/**
+        - AuthContext.jsx
+        - NotificationContext.jsx
+        - ThemeContext.jsx
+      - **hooks/**
+        - useAppInitializer.js
+        - useAuth.js
+        - useNotification.js
+        - useQueryParams.js
+        - useTheme.js
+      - index.js
+      - **modules/**
+        - **contacts/**
+          - **components/**
+            - index.js
+          - **hooks/**
+            - index.js
+          - index.js
+          - **pages/**
+            - ContactDetail.jsx
+            - ContactForm.jsx
+            - ContactImport.jsx
+            - ContactList.jsx
+            - ContactMerge.jsx
+            - index.js
+          - **services/**
+            - index.js
+          - **utils/**
+            - index.js
+        - **dashboard/**
+          - ActivityFeed.jsx
+          - **components/**
+            - LeadSourceBreakdown.jsx
+            - MarketingCampaignsList.jsx
+          - Dashboard.jsx
+          - **pages/**
+            - CampaignPerformanceChart.jsx
+            - ChannelPerformanceList.jsx
+            - DashboardPage.jsx
+            - MarketingDashboardPage.jsx
+            - SalesPerformancePage.jsx
+          - SalesStats.jsx
+          - TasksSummary.jsx
+        - **leads/**
+          - **components/**
+            - index.js
+            - LeadDetail.jsx
+            - LeadForm.jsx
+            - LeadImport.jsx
+            - LeadList.jsx
+          - **hooks/**
+            - index.js
+          - index.js
+          - **pages/**
+            - index.js
+            - LeadDetailPage.jsx
+            - LeadFormPage.jsx
+            - LeadsPage.jsx
+          - **services/**
+            - index.js
+            - LeadService.js
+          - **utils/**
+            - index.js
+        - **new_module/**
+          - **components/**
+            - index.js
+          - **hooks/**
+            - index.js
+          - index.js
+          - **pages/**
+            - index.js
+          - **services/**
+            - index.js
+          - **utils/**
+            - index.js
+        - **new_module - Copy (3)/**
+          - **components/**
+            - index.js
+          - **hooks/**
+            - index.js
+          - index.js
+          - **pages/**
+            - index.js
+          - **services/**
+            - index.js
+          - **utils/**
+            - index.js
+        - **tasks/**
+          - **components/**
+            - index.js
+            - TaskDetail.jsx
+            - TaskForm.jsx
+            - TaskList.jsx
+            - TaskTreeView.jsx
+          - **hooks/**
+            - index.js
+          - index.js
+          - **pages/**
+            - index.js
+            - TaskDetailPage.jsx
+            - TaskFormPage.jsx
+            - TasksPage.jsx
+            - TaskTreeViewPage.jsx
+          - **services/**
+            - index.js
+            - TaskService.js
+          - **utils/**
+            - index.js
+      - **pages/**
+        - ContactDetailPage.jsx
+        - ContactFormPage.jsx
+        - ContactsPage.jsx
+        - DashboardPage.jsx
+        - OpportunitiesPage.jsx
+        - OpportunityDetailPage.jsx
+        - ReportsPage.jsx
+        - SettingsPage.jsx
+      - **router/**
+        - AppRouter.jsx
+        - **routeConfig/**
+          - dashboardRoutes.js
+          - index.js
+          - RouteGuard - Copy (3).jsx
+          - taskRoutes.js
+        - RouteGuard.jsx
+        - **routes/**
+          - authRoutes.js
+          - contactRoutes.js
+          - errorRoutes.js
+          - index.js
+          - leadRoutes.js
+          - opportunityRoutes.js
+          - reportRoutes.js
+          - settingsRoutes.js
+          - taskRoutes.js
+        - routes.js
+      - routes.js
+      - **services/**
+        - **api/**
+          - apiClient.js
+        - api.js
+        - ContactService.js
+        - **logging/**
+          - errorLoggingService.js
+        - mockData.js
+        - **notifications/**
+          - notificationService.js
+        - OpportunityService.js
+        - reportService.js
+        - TeamService.js
+        - UserService.js
+      - **shared/**
+        - **components/**
+          - **common/**
+          - **layout/**
+            - Layout.jsx
+            - SideBar.jsx
+            - TopBar.jsx
+        - **hooks/**
+        - **utils/**
+      - **styles/**
+        - globalStyles.css
+        - theme.js
+      - TestPage.jsx
+      - **utils/**
+        - componentScanner.js
+        - formatters.js
+        - lazyUtils.js
+        - reportWebVitals.js
+        - validators.js
+- projectStructureMapper.js
+- Project_Overview.md
+- README.md
+- routingChecker.js
