@@ -1,5 +1,9 @@
+// File: packages/frontend/src/config/icons.js
 import { registerIcons } from '@fluentui/react/lib/Styling';
 import { initializeIcons as initFluentIcons } from '@fluentui/react/lib/Icons';
+
+// Flag to track if icons have been initialized
+let iconsInitialized = false;
 
 /**
  * Custom icon set for the application
@@ -107,9 +111,54 @@ const statusIcons = {
 };
 
 /**
+ * Common icons that are needed but not registered by default
+ */
+const commonIcons = {
+  // Navigation icons
+  'GlobalNavButton': { code: '\uE700', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Search': { code: '\uE721', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Ringer': { code: '\uEA8F', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Help': { code: '\uE897', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  
+  // Module icons
+  'ViewDashboard': { code: '\uF246', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'FunnelChart': { code: '\uE9F2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'ContactList': { code: '\uEEBD', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'SplitObject': { code: '\uE9B2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'CheckList': { code: '\uE9D5', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'BarChart4': { code: '\uE922', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Settings': { code: '\uE713', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'TaskList': { code: '\uE644', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  
+  // Action icons
+  'Add': { code: '\uE710', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Delete': { code: '\uE74D', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Edit': { code: '\uE70F', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Refresh': { code: '\uE72C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Filter': { code: '\uE71C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'CheckMark': { code: '\uE73E', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'RemoveFilter': { code: '\uE71C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'More': { code: '\uE712', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'MoreVertical': { code: '\uF2BC', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'CircleRing': { code: '\uEA3A', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'StatusCircleCheckmark': { code: '\uF1A2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Info': { code: '\uE946', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'ChevronLeft': { code: '\uE76B', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'Back': { code: '\uE72B', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'AddTo': { code: '\uECC8', fontFace: { fontFamily: 'FabricMDL2Icons' } },
+  'ActivityFeed': { code: '\uF056', fontFace: { fontFamily: 'FabricMDL2Icons' } }
+};
+
+/**
  * Initialize all icons for the application
+ * This function ensures we only initialize icons once
  */
 export const initializeIcons = () => {
+  // Only initialize once to prevent duplicate registration warnings
+  if (iconsInitialized) {
+    return;
+  }
+
   // Initialize standard Fluent UI icons
   initFluentIcons();
 
@@ -117,10 +166,13 @@ export const initializeIcons = () => {
   registerIcons({
     icons: {
       ...customIcons,
-      ...statusIcons
+      ...statusIcons,
+      ...commonIcons
     }
   });
 
+  // Mark as initialized
+  iconsInitialized = true;
   console.log('Icons initialized');
 };
 

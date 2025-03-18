@@ -1,7 +1,7 @@
 It's actually a good practice to separate your core domain objects from module-specific implementations. This follows clean architecture principles:
 
 Keep com.enterprise.core.* for domain entities, interfaces, and core services
-Keep com.enterprise.module.* for module-specific implementations
+Keep com.enterprise.modules.* for module-specific implementations
 
 In this case, for UserService:
 

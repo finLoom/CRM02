@@ -7,7 +7,7 @@ I'm continuing work on my enterprise-level CRM system built with Java Spring Boo
 1. The CRM follows a modular architecture with reusable components that will be used across multiple applications.
 2. The backend is built as a monorepo with a clear separation between core domain objects and module-specific implementations.
 3. Core domain entities are in `com.enterprise.core.*` packages
-4. Module-specific implementations are in `com.enterprise.module.*` packages
+4. Module-specific implementations are in `com.enterprise.modules.*` packages
 
 ## Technology Stack
 
@@ -165,7 +165,7 @@ packages/backend/
 
 <!--
 Example:
-- 2025-03-16 | packages/backend/src/main/java/com/enterprise/module/email/entity/EmailTemplate.java | Created new email template entity
+- 2025-03-16 | packages/backend/src/main/java/com/enterprise/modules/email/entity/EmailTemplate.java | Created new email template entity
 - 2025-03-16 | packages/backend/src/main/java/com/enterprise/config/SecurityConfig.java | Updated security config to implement JWT
 -->
 

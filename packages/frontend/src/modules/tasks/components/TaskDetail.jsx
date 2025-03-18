@@ -33,7 +33,7 @@ import {
   TooltipHost,
   Link
 } from '@fluentui/react';
-import { format } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns'; // Add parseISO and isValid
 import TaskService from '../services/TaskService';
 import TeamService from '../../../services/TeamService';
 
@@ -177,6 +177,27 @@ const statusOptions = [
   { key: 'BLOCKED', text: 'Blocked' }
 ];
 
+// Safe date formatter function
+const formatDate = (dateString) => {
+  if (!dateString) return 'No date';
+
+  try {
+    // First try to parse as ISO string
+    const date = parseISO(dateString);
+
+    // Check if the date is valid
+    if (!isValid(date)) {
+      console.warn('Invalid date format:', dateString);
+      return 'Invalid date';
+    }
+
+    return format(date, 'MMMM dd, yyyy');
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'Invalid date';
+  }
+};
+
 /**
  * Component for displaying and managing a task's details.
  */
@@ -195,25 +216,25 @@ const TaskDetail = () => {
   const [editPanelOpen, setEditPanelOpen] = useState(false);
   const [editedTask, setEditedTask] = useState(null);
   const [saving, setSaving] = useState(false);
-  
+
   // Fetch task data
   useEffect(() => {
     const fetchTask = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         const response = await TaskService.getTaskById(id);
         setTask(response.data);
         setSelectedStatus(response.data.status);
-        
+
         // Fetch subtasks if task has a parent
         if (response.data.parentTaskId) {
           await fetchSubtasks(response.data.parentTaskId);
         } else {
           await fetchSubtasks(response.data.id);
         }
-        
+
         // Initialize edited task with current values
         setEditedTask({ ...response.data });
       } catch (err) {
@@ -223,14 +244,14 @@ const TaskDetail = () => {
         setLoading(false);
       }
     };
-    
+
     fetchTask();
   }, [id]);
-  
+
   // Fetch subtasks
   const fetchSubtasks = async (parentId) => {
     setSubtasksLoading(true);
-    
+
     try {
       const response = await TaskService.getSubtasks(parentId);
       setSubtasks(response.data);
@@ -240,7 +261,7 @@ const TaskDetail = () => {
       setSubtasksLoading(false);
     }
   };
-  
+
   // Command bar items
   const commandBarItems = [
     {
@@ -274,7 +295,7 @@ const TaskDetail = () => {
       onClick: () => navigate('/tasks')
     }
   ];
-  
+
   // Delete the task
   const deleteTask = async () => {
     try {
@@ -285,7 +306,7 @@ const TaskDetail = () => {
       setError('An error occurred while deleting the task. Please try again later.');
     }
   };
-  
+
   // Update task status
   const updateTaskStatus = async () => {
     try {
@@ -299,11 +320,11 @@ const TaskDetail = () => {
       setError('An error occurred while updating the task status. Please try again later.');
     }
   };
-  
+
   // Save edited task
   const saveEditedTask = async () => {
     setSaving(true);
-    
+
     try {
       await TaskService.updateTask(id, editedTask);
       // Refresh task data
@@ -317,7 +338,7 @@ const TaskDetail = () => {
       setSaving(false);
     }
   };
-  
+
   // Handle edited task field changes
   const handleEditChange = (field, value) => {
     setEditedTask({
@@ -401,24 +422,24 @@ const TaskDetail = () => {
                   <div className={styles.sectionTitle}>Description</div>
                   <Text>{task.description || 'No description provided.'}</Text>
                 </div>
-                
+
                 {/* Progress section */}
                 <div className={styles.mainSection}>
                   <Stack horizontal horizontalAlign="space-between">
                     <div className={styles.sectionTitle}>Progress</div>
                     <Text>{task.completionPercentage}% Complete</Text>
                   </Stack>
-                  <ProgressIndicator 
-                    percentComplete={task.completionPercentage / 100} 
+                  <ProgressIndicator
+                    percentComplete={task.completionPercentage / 100}
                     barHeight={8}
                     styles={{
-                      progressBar: { 
-                        backgroundColor: task.completionPercentage === 100 ? '#107c10' : '#0078d4' 
+                      progressBar: {
+                        backgroundColor: task.completionPercentage === 100 ? '#107c10' : '#0078d4'
                       }
                     }}
                   />
                 </div>
-                
+
                 {/* Subtasks section */}
                 <div className={styles.mainSection}>
                   <Stack horizontal horizontalAlign="space-between">
@@ -430,7 +451,7 @@ const TaskDetail = () => {
                       size={12}
                     />
                   </Stack>
-                  
+
                   {subtasksLoading ? (
                     <Spinner size={SpinnerSize.small} label="Loading subtasks..." />
                   ) : subtasks.length === 0 ? (
@@ -439,9 +460,9 @@ const TaskDetail = () => {
                     subtasks.map(subtask => (
                       <div key={subtask.id} className={styles.subtaskItem}>
                         <Stack horizontal verticalAlign="center">
-                          <Icon 
-                            iconName={subtask.status === 'COMPLETED' ? 'CheckMark' : 'CircleRing'} 
-                            style={{ 
+                          <Icon
+                            iconName={subtask.status === 'COMPLETED' ? 'CheckMark' : 'CircleRing'}
+                            style={{
                               marginRight: '8px',
                               color: subtask.status === 'COMPLETED' ? '#107c10' : '#8a8886'
                             }}
@@ -450,7 +471,7 @@ const TaskDetail = () => {
                             {subtask.title}
                           </Link>
                         </Stack>
-                        <div 
+                        <div
                           className={styles.subtaskStatus}
                           style={getStatusStyle(subtask.status)}
                         >
@@ -460,7 +481,7 @@ const TaskDetail = () => {
                     ))
                   )}
                 </div>
-                
+
                 {/* Related objects section */}
                 {task.relatedObjects && task.relatedObjects.length > 0 && (
                   <div className={styles.mainSection}>
@@ -474,45 +495,43 @@ const TaskDetail = () => {
                   </div>
                 )}
               </Stack.Item>
-              
+
               {/* Right column */}
               <Stack.Item grow={1}>
                 <div className={styles.mainSection}>
                   <div className={styles.sectionTitle}>Details</div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Status</div>
-                    <div 
+                    <div
                       className={styles.statusTag}
                       style={getStatusStyle(task.status)}
                     >
                       {task.status.replace('_', ' ')}
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Priority</div>
                     <div className={styles.infoValue}>{task.priority}</div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Due Date</div>
                     <div className={styles.infoValue}>
-                      {task.dueDate 
-                        ? format(new Date(task.dueDate), 'MMMM dd, yyyy')
-                        : 'No due date'}
+                      {task.dueDate ? formatDate(task.dueDate) : 'No due date'}
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Module</div>
                     <div className={styles.infoValue}>{task.module}</div>
                   </div>
                 </div>
-                
+
                 <div className={styles.mainSection}>
                   <div className={styles.sectionTitle}>Assignment</div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Assigned To</div>
                     {task.assignedToId ? (
@@ -524,14 +543,14 @@ const TaskDetail = () => {
                       <Text>Unassigned</Text>
                     )}
                   </div>
-                  
+
                   {task.teamId && (
                     <div className={styles.infoItem}>
                       <div className={styles.infoLabel}>Team</div>
                       <Text>{task.teamName}</Text>
                     </div>
                   )}
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Created By</div>
                     <Persona
@@ -540,36 +559,36 @@ const TaskDetail = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className={styles.mainSection}>
                   <div className={styles.sectionTitle}>Time Tracking</div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Estimated Hours</div>
                     <div className={styles.infoValue}>
                       {task.estimatedHours || 'Not specified'}
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Actual Hours</div>
                     <div className={styles.infoValue}>
                       {task.actualHours || 'Not recorded'}
                     </div>
                   </div>
-                  
+
                   <div className={styles.infoItem}>
                     <div className={styles.infoLabel}>Created</div>
                     <div className={styles.infoValue}>
-                      {format(new Date(task.createdAt), 'MMMM dd, yyyy')}
+                      {formatDate(task.createdAt)}
                     </div>
                   </div>
-                  
+
                   {task.completionDate && (
                     <div className={styles.infoItem}>
                       <div className={styles.infoLabel}>Completed</div>
                       <div className={styles.infoValue}>
-                        {format(new Date(task.completionDate), 'MMMM dd, yyyy')}
+                        {formatDate(task.completionDate)}
                       </div>
                     </div>
                   )}
@@ -577,7 +596,7 @@ const TaskDetail = () => {
               </Stack.Item>
             </Stack>
           </PivotItem>
-          
+
           <PivotItem headerText="Activity" itemIcon="ActivityFeed">
             {/* Activity feed content would go here */}
             <div className={styles.mainSection} style={{ marginTop: 16 }}>
@@ -658,7 +677,7 @@ const TaskDetail = () => {
               onChange={(_, value) => handleEditChange('title', value)}
               required
             />
-            
+
             <TextField
               label="Description"
               value={editedTask.description || ''}
@@ -666,7 +685,7 @@ const TaskDetail = () => {
               multiline
               rows={4}
             />
-            
+
             <DatePicker
               label="Due Date"
               value={editedTask.dueDate ? new Date(editedTask.dueDate) : null}
@@ -674,7 +693,7 @@ const TaskDetail = () => {
               placeholder="Select a date..."
               allowTextInput
             />
-            
+
             <Dropdown
               label="Priority"
               selectedKey={editedTask.priority}
@@ -686,7 +705,7 @@ const TaskDetail = () => {
                 { key: 'CRITICAL', text: 'Critical' }
               ]}
             />
-            
+
             <Dropdown
               label="Module"
               selectedKey={editedTask.module}
@@ -699,60 +718,58 @@ const TaskDetail = () => {
                 { key: 'GLOBAL', text: 'Global' }
               ]}
             />
-            
+
             <TextField
               label="Estimated Hours"
               type="number"
               value={editedTask.estimatedHours?.toString() || ''}
-// File continuation: frontend/src/components/tasks/TaskDetail.jsx
+              onChange={(_, value) => handleEditChange('estimatedHours', value ? parseFloat(value) : null)}
+              min={0}
+              step={0.5}
+            />
 
-onChange={(_, value) => handleEditChange('estimatedHours', value ? parseFloat(value) : null)}
-min={0}
-step={0.5}
-/>
+            <TextField
+              label="Actual Hours"
+              type="number"
+              value={editedTask.actualHours?.toString() || ''}
+              onChange={(_, value) => handleEditChange('actualHours', value ? parseFloat(value) : null)}
+              min={0}
+              step={0.5}
+            />
 
-<TextField
-label="Actual Hours"
-type="number"
-value={editedTask.actualHours?.toString() || ''}
-onChange={(_, value) => handleEditChange('actualHours', value ? parseFloat(value) : null)}
-min={0}
-step={0.5}
-/>
+            <Separator>Completion</Separator>
 
-<Separator>Completion</Separator>
-
-<Label>Completion Percentage</Label>
-<Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
-<Stack.Item grow={1}>
-  <ProgressIndicator 
-    percentComplete={editedTask.completionPercentage / 100} 
-    barHeight={8}
-    styles={{
-      progressBar: { 
-        backgroundColor: editedTask.completionPercentage === 100 ? '#107c10' : '#0078d4' 
-      }
-    }}
-  />
-</Stack.Item>
-<Stack.Item>
-  <TextField
-    type="number"
-    value={editedTask.completionPercentage?.toString() || '0'}
-    onChange={(_, value) => handleEditChange('completionPercentage', value ? parseInt(value) : 0)}
-    min={0}
-    max={100}
-    step={5}
-    styles={{ root: { width: 70 } }}
-    suffix="%"
-  />
-</Stack.Item>
-</Stack>
-</Stack>
-)}
-</Panel>
-</div>
-);
+            <Label>Completion Percentage</Label>
+            <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
+              <Stack.Item grow={1}>
+                <ProgressIndicator
+                  percentComplete={editedTask.completionPercentage / 100}
+                  barHeight={8}
+                  styles={{
+                    progressBar: {
+                      backgroundColor: editedTask.completionPercentage === 100 ? '#107c10' : '#0078d4'
+                    }
+                  }}
+                />
+              </Stack.Item>
+              <Stack.Item>
+                <TextField
+                  type="number"
+                  value={editedTask.completionPercentage?.toString() || '0'}
+                  onChange={(_, value) => handleEditChange('completionPercentage', value ? parseInt(value) : 0)}
+                  min={0}
+                  max={100}
+                  step={5}
+                  styles={{ root: { width: 70 } }}
+                  suffix="%"
+                />
+              </Stack.Item>
+            </Stack>
+          </Stack>
+        )}
+      </Panel>
+    </div>
+  );
 };
 
 export default TaskDetail;

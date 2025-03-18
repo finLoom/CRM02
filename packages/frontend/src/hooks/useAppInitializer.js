@@ -1,35 +1,24 @@
 import { useEffect } from 'react';
 import { initializeIcons } from '../config/icons';
+import { setupAxiosInterceptors } from '../services/api/apiClient';
 
 /**
- * Custom hook for initializing application settings and services
- * Runs once when the application starts
- *
- * @returns {void}
+ * Hook to handle application initialization tasks
+ * Runs setup code when the application loads
  */
 export const useAppInitializer = () => {
   useEffect(() => {
-    // Initialize icons
-    if (typeof initializeIcons === 'function') {
-      initializeIcons();
-    }
+    // Initialize UI icons
+    initializeIcons();
 
-    // Setup event listeners
-    const handleOnline = () => {
-      console.log('App is online');
-    };
+    // Set up API interceptors
+    setupAxiosInterceptors();
 
-    const handleOffline = () => {
-      console.log('App is offline');
-    };
+    // Set up event listeners or other initialization as needed
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    // Clean up effect
+    // Return cleanup function
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      // Clean up any event listeners or resources
     };
   }, []);
 };

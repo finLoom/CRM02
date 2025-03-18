@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageBar, MessageBarType, Stack, Text, PrimaryButton } from '@fluentui/react';
+import { MessageBar, MessageBarType, Stack, Text, PrimaryButton, DefaultButton } from '@fluentui/react';
 import { logError } from '../services/logging/errorLoggingService';
 
 /**
