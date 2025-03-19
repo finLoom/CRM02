@@ -49,8 +49,8 @@ Merging Multiple Branches
 
 To merge changes from multiple branches, you typically merge them one by one into your target branch (commonly main). Here’s how to do it:
 
-    Switch to Your Target Branch:
-    For example, if you want to merge changes into main:
+Switch to Your Target Branch:
+For example, if you want to merge changes into main:
 
     git checkout main
 
@@ -80,8 +80,8 @@ Once all merges are complete:
 
 Tips for a Smooth Merge Process
 
-    Resolve Conflicts Promptly:
-    If Git detects conflicts during a merge, it will mark them in the affected files. Open those files, fix the conflicts, and then:
+Resolve Conflicts Promptly:
+If Git detects conflicts during a merge, it will mark them in the affected files. Open those files, fix the conflicts, and then:
 
     git add <resolved-files>
     git commit
