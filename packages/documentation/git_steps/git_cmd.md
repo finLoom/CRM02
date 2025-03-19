@@ -24,8 +24,8 @@ Push your new branch to GitHub and set the upstream branch:
 Once you've made changes on your branch and committed them, here’s how to push those changes and then merge multiple branches.
 Pushing Your Changes
 
-    Stage Your Changes:
-    Add the files you want to commit:
+Stage Your Changes:
+Add the files you want to commit:
 
     git add .
 
@@ -84,4 +84,8 @@ Resolve Conflicts Promptly:
 If Git detects conflicts during a merge, it will mark them in the affected files. Open those files, fix the conflicts, and then:
 
     git add <resolved-files>
+
+or
+
+    git add .
     git commit
