@@ -18,7 +18,7 @@ import {
   FocusZoneDirection,
   Separator
 } from '@fluentui/react';
-import reportService, { reportTypes } from '../../services/reportService';
+import reportService, { reportTypes } from '../services/reportService';
 
 const sectionStyles = mergeStyles({
   backgroundColor: 'white',

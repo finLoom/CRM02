@@ -11,7 +11,7 @@ import {
   Spinner,
   SpinnerSize
 } from '@fluentui/react';
-import reportService, { getColumnsForReportType } from '../../services/reportService';
+import reportService, { getColumnsForReportType } from '../services/reportService';
 
 const sectionStyles = mergeStyles({
   backgroundColor: 'white',

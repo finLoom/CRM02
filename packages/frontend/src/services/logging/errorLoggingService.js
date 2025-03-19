@@ -1,3 +1,4 @@
+import React from 'react';
 import { showNotification } from '../notifications/notificationService';
 
 /**
@@ -119,8 +120,17 @@ const sendToRemoteLoggingService = async (errorData) => {
   }
 };
 
-export default {
-  logError,
-  logComponentError,
-  ErrorSeverity,
+//export default {
+//  logError,
+//  logComponentError,
+//  ErrorSeverity,
+//};
+
+
+const errorLoggingService = {
+  logError: (error) => {
+    console.error('Logging error:', error);
+  }
 };
+
+export default errorLoggingService;

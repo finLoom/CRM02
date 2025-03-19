@@ -11,7 +11,7 @@ import { RouteGuard } from './RouteGuard';
  * Renders all application routes with code splitting and authentication guards
  */
 const AppRouter = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   // Loading fallback for code splitting
   const renderLoader = () => (
@@ -40,6 +40,7 @@ const AppRouter = () => {
                   element={
                     <RouteGuard
                       isAuthenticated={isAuthenticated}
+                      loading={loading}
                       redirectPath="/login"
                     >
                       {route.element}
@@ -62,7 +63,13 @@ const AppRouter = () => {
           {/* Default redirect to dashboard or login based on auth status */}
           <Route
             path="*"
-            element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />}
+            element={
+              loading ? (
+                renderLoader()
+              ) : (
+                <Navigate to={isAuthenticated ? "/" : "/login"} replace />
+              )
+            }
           />
         </Routes>
       </Suspense>

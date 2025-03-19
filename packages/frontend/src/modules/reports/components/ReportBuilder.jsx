@@ -10,7 +10,7 @@ import {
   Separator
 } from '@fluentui/react';
 import PropTypes from 'prop-types';
-import reportService, { reportTypes, chartTypes, groupByOptions } from '../../services/reportService';
+import reportService, { reportTypes, chartTypes, groupByOptions } from '../services/reportService';
 
 const sectionStyles = mergeStyles({
   backgroundColor: 'white',

@@ -11,6 +11,11 @@ const DashboardPage = React.lazy(() => import('../../modules/dashboard/pages/Das
  */
 const dashboardRoutes = [
   {
+    path: '/',
+    element: <DashboardPage />,
+    requiresAuth: true
+  },
+  {
     path: '/dashboard',
     element: <DashboardPage />,
     exact: true

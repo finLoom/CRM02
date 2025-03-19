@@ -19,7 +19,7 @@ import {
 } from '@fluentui/react';
 import * as XLSX from 'exceljs';
 import { saveAs } from 'file-saver';
-import { reportTypes } from '../../services/reportService';
+import { reportTypes } from '../services/reportService';
 
 const exportDialogContentStyles = mergeStyles({
   padding: '20px 0'

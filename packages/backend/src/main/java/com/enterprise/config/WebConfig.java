@@ -5,10 +5,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
 
 /**
  * Web configuration for the application.
@@ -19,20 +20,7 @@ public class WebConfig implements WebMvcConfigurer {
     private static final Logger logger = LoggerFactory.getLogger(WebConfig.class);
 
     /**
-     * Configure CORS globally for all endpoints
-     */
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        logger.info("Configuring CORS mappings");
-        registry.addMapping("/**")
-                .allowedOrigins("http://localhost:3000") // Your frontend origin
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
-
-    /**
-     * CORS filter for more detailed configuration
+     * CORS filter configuration
      */
     @Bean
     public CorsFilter corsFilter() {
@@ -40,17 +28,20 @@ public class WebConfig implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow frontend origin
-        config.addAllowedOrigin("http://localhost:3000");
+        // Allow specified origins only - not using wildcards
+        config.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
 
-        // Allow cookies and authentication headers
+        // Allow credentials
         config.setAllowCredentials(true);
 
-        // Allow all headers
-        config.addAllowedHeader("*");
+        // Allow specific headers
+        config.setAllowedHeaders(Arrays.asList("Origin", "Content-Type", "Accept", "Authorization"));
 
-        // Allow all methods
-        config.addAllowedMethod("*");
+        // Allow specific methods
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+
+        // Set max age for preflight
+        config.setMaxAge(3600L);
 
         source.registerCorsConfiguration("/**", config);
         logger.info("CORS filter configured successfully");

@@ -4,13 +4,13 @@
  */
 
 // Import all route configuration files
-import dashboardRoutes from './dashboardRoutes';
+import dashboardRoutes from '../routes/dashboardRoutes';
 import leadRoutes from '../routes/leadRoutes';
 import contactRoutes from '../routes/contactRoutes';
 import taskRoutes from '../routes/taskRoutes';
 import opportunityRoutes from '../routes/opportunityRoutes';
-//import reportRoutes from '../routes/reportRoutes';
-//import settingsRoutes from '../routes/settingsRoutes';
+import reportRoutes from '../routes/reportRoutes';
+import settingsRoutes from '../routes/settingsRoutes';
 //import authRoutes from '../routes/authRoutes';
 //import errorRoutes from '../routes/errorRoutes';
 
@@ -20,10 +20,10 @@ export {
   leadRoutes,
   contactRoutes,
   taskRoutes,
-  opportunityRoutes
+  opportunityRoutes,
+  reportRoutes,
+  settingsRoutes
 //  ,
-//  reportRoutes,
-//  settingsRoutes,
 //  authRoutes,
 //  errorRoutes
 };
@@ -34,10 +34,10 @@ export const allRoutes = [
   ...leadRoutes,
   ...contactRoutes,
   ...taskRoutes,
-  ...opportunityRoutes
+  ...opportunityRoutes,
+  ...reportRoutes,
+  ...settingsRoutes
 //  ,
-//  ...reportRoutes,
-//  ...settingsRoutes,
 //  ...authRoutes,
 //  ...errorRoutes
 ];

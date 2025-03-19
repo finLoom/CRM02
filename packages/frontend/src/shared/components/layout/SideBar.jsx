@@ -77,7 +77,7 @@ const SideBar = ({ collapsed }) => {
       links: [
         {
           name: 'Dashboard',
-          url: '/',
+          url: '/dashboard',
           key: 'dashboard',
           iconProps: {
             iconName: 'ViewDashboard'
@@ -140,10 +140,10 @@ const SideBar = ({ collapsed }) => {
     navigate(item.url);
   };
 
-  // Determine the selected key based on current location
-  const selectedKey = navLinkGroups[0].links.find(
-    link => location.pathname === link.url
-  )?.key || 'dashboard';
+// Determine the selected key based on current location
+const selectedKey = navLinkGroups[0].links.find(
+  link => location.pathname === link.url
+)?.key || (location.pathname === '/' ? 'dashboard' : 'dashboard');
 
   return (
     <div className={sidebarStyles(collapsed)}>

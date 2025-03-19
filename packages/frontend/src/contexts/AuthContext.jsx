@@ -1,5 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 
+
+
 // Create the Auth Context
 export const AuthContext = createContext({
   isAuthenticated: false,
@@ -41,6 +43,29 @@ export const AuthProvider = ({ children }) => {
 
     checkAuth();
   }, []);
+
+
+// Add this useEffect to your AuthContext's AuthProvider component:
+
+// Auto-authenticate in development environment
+useEffect(() => {
+  if (process.env.NODE_ENV === 'development' && !isAuthenticated && !loading) {
+    // Only auto-login in development to make testing easier
+    console.log('Development mode: Auto-authentication enabled');
+
+    // Set a fake token
+    localStorage.setItem('auth_token', 'dev-auto-token');
+
+    // Update state
+    setIsAuthenticated(true);
+    setUser({
+      id: '999',
+      name: 'Dev Auto User',
+      email: 'dev@example.com',
+      role: 'admin'
+    });
+  }
+}, [isAuthenticated, loading]);
 
   // Login function
   const login = (credentials) => {

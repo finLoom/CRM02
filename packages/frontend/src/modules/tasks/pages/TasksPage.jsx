@@ -17,7 +17,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import TaskList from '../components/TaskList';
 import TaskFilterComponent from '../components/TaskFilterComponent';
 import UserService from '../../../services/UserService';
-import { fetchTasks, getTaskStats } from '../services/TaskService';
+import { fetchTasks } from '../services/TaskService';
 import { useQueryParams } from '../../../hooks/useQueryParams';
 
 // Styles for the component
@@ -42,28 +42,8 @@ const getStyles = (theme) => mergeStyleSets({
     overflow: 'auto',
     backgroundColor: theme.palette.neutralLighterAlt,
   },
-  statsContainer: {
-    display: 'flex',
-    gap: '16px',
+  commandBarContainer: {
     marginBottom: '12px',
-  },
-  statItem: {
-    backgroundColor: theme.palette.neutralLighter,
-    padding: '8px 16px',
-    borderRadius: '4px',
-    minWidth: '100px',
-    textAlign: 'center',
-  },
-  statValue: {
-    fontWeight: 'bold',
-    fontSize: '18px',
-  },
-  statLabel: {
-    fontSize: '12px',
-    color: theme.palette.neutralSecondary,
-  },
-  filterButton: {
-    marginLeft: '8px',
   }
 });
 
@@ -82,13 +62,6 @@ const TasksPage = () => {
   const [users, setUsers] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    overdue: 0,
-    dueToday: 0,
-    unassigned: 0
-  });
 
   // Parse query params for initial filter
   const initialFilter = {
@@ -177,16 +150,6 @@ const TasksPage = () => {
 
         const response = await fetchTasks(apiFilter);
         setTasks(response.data || []);
-
-        // Also fetch task statistics
-        const statsResponse = await getTaskStats();
-        setStats(statsResponse.data || {
-          total: 0,
-          completed: 0,
-          overdue: 0,
-          dueToday: 0,
-          unassigned: 0
-        });
       } catch (err) {
         console.error('Error loading tasks:', err);
       } finally {
@@ -317,31 +280,15 @@ const TasksPage = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <Breadcrumb items={breadcrumbItems} />
-        <Stack horizontal horizontalAlign="space-between">
-          <Text className={styles.title}>Tasks</Text>
-          <div className={styles.statsContainer}>
-            <div className={styles.statItem}>
-              <div className={styles.statValue}>{stats.total}</div>
-              <div className={styles.statLabel}>Total</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statValue}>{stats.dueToday}</div>
-              <div className={styles.statLabel}>Due Today</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statValue}>{stats.overdue}</div>
-              <div className={styles.statLabel}>Overdue</div>
-            </div>
-            <div className={styles.statItem}>
-              <div className={styles.statValue}>{stats.unassigned}</div>
-              <div className={styles.statLabel}>Unassigned</div>
-            </div>
-          </div>
-        </Stack>
-        <CommandBar
-          items={commandBarItems}
-          farItems={commandBarFarItems}
-        />
+        <Text className={styles.title}>Tasks</Text>
+
+        <div className={styles.commandBarContainer}>
+          <CommandBar
+            items={commandBarItems}
+            farItems={commandBarFarItems}
+          />
+        </div>
+
         <Pivot
           selectedKey={selectedKey}
           onLinkClick={handlePivotChange}
