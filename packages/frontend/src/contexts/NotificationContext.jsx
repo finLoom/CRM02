@@ -1,5 +1,7 @@
 import React, { createContext, useState, useCallback } from 'react';
-import { MessageBar, MessageBarType } from '@fluentui/react';
+import { makeStyles, tokens, shorthands } from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import { Dismiss20Regular } from '@fluentui/react-icons';
 
 // Create the Notification Context
 export const NotificationContext = createContext({
@@ -8,15 +10,48 @@ export const NotificationContext = createContext({
   notifications: []
 });
 
+const useStyles = makeStyles({
+  notificationsContainer: {
+    position: 'fixed',
+    top: tokens.spacingVerticalM,
+    right: tokens.spacingHorizontalM,
+    zIndex: 2000,
+    display: 'flex',
+    flexDirection: 'column',
+    ...shorthands.gap(tokens.spacingVerticalS),
+    maxWidth: '400px'
+  },
+  notification: {
+    boxShadow: tokens.shadow8,
+    ...shorthands.borderRadius(tokens.borderRadiusMedium),
+    overflow: 'hidden'
+  }
+});
+
 /**
  * NotificationProvider Component
  * Provides notification functionality to the app
  */
 export const NotificationProvider = ({ children }) => {
+  const styles = useStyles();
   const [notifications, setNotifications] = useState([]);
 
   // Generate a unique ID for each notification
   const generateId = () => `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Map notification type to Alert intent
+  const mapTypeToIntent = (type) => {
+    switch (type) {
+      case 'success':
+        return 'success';
+      case 'error':
+        return 'error';
+      case 'warning':
+        return 'warning';
+      default:
+        return 'info';
+    }
+  };
 
   // Show a notification
   const showNotification = useCallback((message, type = 'info', autoHideDuration = 5000) => {
@@ -26,10 +61,7 @@ export const NotificationProvider = ({ children }) => {
     const notification = {
       id,
       message,
-      type: type === 'success' ? MessageBarType.success :
-           type === 'error' ? MessageBarType.error :
-           type === 'warning' ? MessageBarType.warning :
-           MessageBarType.info,
+      type,
       timestamp: Date.now()
     };
 
@@ -55,26 +87,19 @@ export const NotificationProvider = ({ children }) => {
     <NotificationContext.Provider value={{ showNotification, hideNotification, notifications }}>
       {/* Render notifications */}
       {notifications.length > 0 && (
-        <div style={{
-          position: 'fixed',
-          top: 20,
-          right: 20,
-          zIndex: 2000,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 10,
-          maxWidth: 400
-        }}>
+        <div className={styles.notificationsContainer}>
           {notifications.map(notification => (
-            <MessageBar
-              key={notification.id}
-              messageBarType={notification.type}
-              isMultiline={false}
-              onDismiss={() => hideNotification(notification.id)}
-              dismissButtonAriaLabel="Close"
-            >
-              {notification.message}
-            </MessageBar>
+            <div key={notification.id} className={styles.notification}>
+              <Alert
+                intent={mapTypeToIntent(notification.type)}
+                action={{
+                  icon: <Dismiss20Regular />,
+                  onClick: () => hideNotification(notification.id)
+                }}
+              >
+                {notification.message}
+              </Alert>
+            </div>
           ))}
         </div>
       )}

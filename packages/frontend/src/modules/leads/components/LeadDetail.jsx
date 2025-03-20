@@ -2,53 +2,81 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Stack,
+  Button,
   Text,
-  DefaultButton,
-  PrimaryButton,
-  CommandBar,
   Spinner,
-  SpinnerSize,
-  MessageBar,
-  MessageBarType,
   Dialog,
-  DialogType,
-  DialogFooter,
-  Label,
-  Icon,
-  mergeStyleSets
-} from '@fluentui/react';
+  DialogTrigger,
+  DialogSurface,
+  DialogTitle,
+  DialogContent,
+  DialogBody,
+  DialogActions,
+  makeStyles,
+  tokens,
+  Label
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import {
+  EditRegular,
+  DeleteRegular,
+  ArrowHookUpLeftRegular
+} from '@fluentui/react-icons';
 import { LeadService } from '../services';
 
-// Styles
-const styles = mergeStyleSets({
+// Styles using makeStyles
+const useStyles = makeStyles({
   container: {
-    padding: '20px',
+    padding: tokens.spacingHorizontalL,
     maxWidth: '900px',
     margin: '0 auto'
   },
   header: {
-    marginBottom: '20px'
+    marginBottom: tokens.spacingVerticalL
   },
   section: {
-    marginBottom: '24px',
-    padding: '20px',
-    backgroundColor: 'white',
-    boxShadow: '0 1.6px 3.6px 0 rgba(0,0,0,0.132), 0 0.3px 0.9px 0 rgba(0,0,0,0.108)'
+    marginBottom: tokens.spacingVerticalXL,
+    padding: tokens.spacingHorizontalL,
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium
   },
   label: {
-    fontWeight: 'bold',
-    marginBottom: '4px'
+    fontWeight: tokens.fontWeightSemibold,
+    marginBottom: tokens.spacingVerticalXS
   },
   value: {
-    marginBottom: '16px'
+    marginBottom: tokens.spacingVerticalM
   },
   statusChip: {
-    padding: '4px 12px',
-    borderRadius: '16px',
+    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`,
+    borderRadius: tokens.borderRadiusCircular,
     display: 'inline-block',
-    fontWeight: 'bold',
-    marginBottom: '16px'
+    fontWeight: tokens.fontWeightSemibold,
+    marginBottom: tokens.spacingVerticalM
+  },
+  commandBar: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalM,
+    marginBottom: tokens.spacingVerticalM
+  },
+  flexRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: tokens.spacingHorizontalL
+  },
+  spinnerContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100%',
+    padding: tokens.spacingVerticalXXL
   }
 });
 
@@ -56,17 +84,17 @@ const styles = mergeStyleSets({
 const getStatusStyle = (status) => {
   switch (status) {
     case 'New':
-      return { backgroundColor: '#EFF6FC', color: '#0078D4' };
+      return { backgroundColor: tokens.colorPaletteBlueBackground1, color: tokens.colorPaletteBlueBackground3 };
     case 'Contacted':
-      return { backgroundColor: '#E5F2F0', color: '#0B6A5F' };
+      return { backgroundColor: tokens.colorPaletteTealBackground1, color: tokens.colorPaletteTealBackground3 };
     case 'Qualified':
-      return { backgroundColor: '#E8F4E5', color: '#107C10' };
+      return { backgroundColor: tokens.colorPaletteGreenBackground1, color: tokens.colorPaletteGreenBackground3 };
     case 'Nurturing':
-      return { backgroundColor: '#FFF8E7', color: '#8E562E' };
+      return { backgroundColor: tokens.colorPaletteYellowBackground1, color: tokens.colorPaletteYellowBackground3 };
     case 'Disqualified':
-      return { backgroundColor: '#FCF2F1', color: '#D13438' };
+      return { backgroundColor: tokens.colorPaletteRedBackground1, color: tokens.colorPaletteRedBackground3 };
     default:
-      return { backgroundColor: '#F3F2F1', color: '#605E5C' };
+      return { backgroundColor: tokens.colorNeutralBackground3, color: tokens.colorNeutralForeground3 };
   }
 };
 
@@ -76,18 +104,19 @@ const getStatusStyle = (status) => {
 const LeadDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const styles = useStyles();
 
   const [lead, setLead] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchLead = async () => {
       try {
         setLoading(true);
         const response = await LeadService.getLeadById(id);
-        setLead(response.data);
+        setLead(response.data || response); // Handle both { data: ... } and direct response
       } catch (err) {
         console.error('Error fetching lead:', err);
         setError('Failed to load lead data. Please try again.');
@@ -102,7 +131,7 @@ const LeadDetail = () => {
   const handleDelete = async () => {
     try {
       await LeadService.deleteLead(id);
-      setDeleteDialogOpen(false);
+      setIsDeleteDialogOpen(false);
       navigate('/leads');
     } catch (err) {
       console.error('Error deleting lead:', err);
@@ -110,133 +139,143 @@ const LeadDetail = () => {
     }
   };
 
-  const commandItems = [
-    {
-      key: 'edit',
-      text: 'Edit',
-      iconProps: { iconName: 'Edit' },
-      onClick: () => navigate(`/leads/${id}/edit`)
-    },
-    {
-      key: 'delete',
-      text: 'Delete',
-      iconProps: { iconName: 'Delete' },
-      onClick: () => setDeleteDialogOpen(true)
-    },
-    {
-      key: 'back',
-      text: 'Back to Leads',
-      iconProps: { iconName: 'Back' },
-      onClick: () => navigate('/leads')
-    }
-  ];
+  const handleGoBack = () => {
+    navigate('/leads');
+  };
+
+  const handleEdit = () => {
+    navigate(`/leads/${id}/edit`);
+  };
 
   if (loading) {
     return (
-      <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '100%' } }}>
-        <Spinner size={SpinnerSize.large} label="Loading lead details..." />
-      </Stack>
+      <div className={styles.spinnerContainer}>
+        <Spinner size="large" label="Loading lead details..." />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <MessageBar messageBarType={MessageBarType.error} isMultiline={false}>
+      <Alert intent="error">
         {error}
-      </MessageBar>
+      </Alert>
     );
   }
 
   if (!lead) {
     return (
-      <MessageBar messageBarType={MessageBarType.warning} isMultiline={false}>
+      <Alert intent="warning">
         Lead not found.
-      </MessageBar>
+      </Alert>
     );
   }
 
   return (
     <div className={styles.container}>
-      {/* Header with command bar */}
+      {/* Header */}
       <div className={styles.header}>
-        <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-          <Text variant="xxLarge">{`${lead.firstName} ${lead.lastName}`}</Text>
-          <div style={{ ...styles.statusChip, ...getStatusStyle(lead.status) }}>
+        <div className={styles.flexRow}>
+          <Text size={800} weight="semibold">
+            {`${lead.firstName} ${lead.lastName}`}
+          </Text>
+          <div
+            className={styles.statusChip}
+            style={getStatusStyle(lead.status)}
+          >
             {lead.status}
           </div>
-        </Stack>
-        <Text variant="medium">{lead.company}</Text>
-        <CommandBar items={commandItems} />
+        </div>
+        <Text size={400}>{lead.company}</Text>
+
+        {/* Command bar */}
+        <div className={styles.commandBar}>
+          <Button
+            icon={<EditRegular />}
+            onClick={handleEdit}
+            appearance="primary"
+          >
+            Edit
+          </Button>
+          <Dialog>
+            <DialogTrigger disableButtonEnhancement>
+              <Button
+                icon={<DeleteRegular />}
+                appearance="secondary"
+              >
+                Delete
+              </Button>
+            </DialogTrigger>
+            <DialogSurface>
+              <DialogBody>
+                <DialogTitle>Delete Lead</DialogTitle>
+                <DialogContent>
+                  {`Are you sure you want to delete ${lead.firstName} ${lead.lastName}? This action cannot be undone.`}
+                </DialogContent>
+                <DialogActions>
+                  <Button appearance="secondary" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+                  <Button appearance="primary" onClick={handleDelete}>Delete</Button>
+                </DialogActions>
+              </DialogBody>
+            </DialogSurface>
+          </Dialog>
+          <Button
+            icon={<ArrowHookUpLeftRegular />}
+            onClick={handleGoBack}
+          >
+            Back to Leads
+          </Button>
+        </div>
       </div>
 
       {/* Lead info section */}
       <div className={styles.section}>
-        <Text variant="large" as="h2" styles={{ root: { marginBottom: '16px' } }}>
+        <Text size={600} weight="semibold" as="h2" style={{ marginBottom: tokens.spacingVerticalM }}>
           Contact Information
         </Text>
 
-        <Stack horizontal tokens={{ childrenGap: 40 }}>
-          <Stack.Item grow={1}>
+        <div className={styles.grid}>
+          <div>
             <Label className={styles.label}>Email</Label>
             <Text className={styles.value}>{lead.email || 'N/A'}</Text>
 
             <Label className={styles.label}>Phone</Label>
             <Text className={styles.value}>{lead.phone || 'N/A'}</Text>
-          </Stack.Item>
+          </div>
 
-          <Stack.Item grow={1}>
+          <div>
             <Label className={styles.label}>Company</Label>
             <Text className={styles.value}>{lead.company || 'N/A'}</Text>
 
             <Label className={styles.label}>Assigned To</Label>
             <Text className={styles.value}>{lead.assignedTo || 'Unassigned'}</Text>
-          </Stack.Item>
-        </Stack>
+          </div>
+        </div>
       </div>
 
       {/* Lead details section */}
       <div className={styles.section}>
-        <Text variant="large" as="h2" styles={{ root: { marginBottom: '16px' } }}>
+        <Text size={600} weight="semibold" as="h2" style={{ marginBottom: tokens.spacingVerticalM }}>
           Lead Details
         </Text>
 
-        <Stack horizontal tokens={{ childrenGap: 40 }}>
-          <Stack.Item grow={1}>
+        <div className={styles.grid}>
+          <div>
             <Label className={styles.label}>Source</Label>
             <Text className={styles.value}>{lead.source || 'Unknown'}</Text>
 
             <Label className={styles.label}>Status</Label>
             <Text className={styles.value}>{lead.status}</Text>
-          </Stack.Item>
+          </div>
 
-          <Stack.Item grow={1}>
+          <div>
             <Label className={styles.label}>Estimated Value</Label>
             <Text className={styles.value}>
               {lead.estimatedValue ? `$${lead.estimatedValue.toLocaleString()}` : '$0'}
             </Text>
-          </Stack.Item>
-        </Stack>
+          </div>
+        </div>
       </div>
-
-      {/* Delete confirmation dialog */}
-      <Dialog
-        hidden={!deleteDialogOpen}
-        onDismiss={() => setDeleteDialogOpen(false)}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Delete Lead',
-          subText: `Are you sure you want to delete ${lead.firstName} ${lead.lastName}? This action cannot be undone.`
-        }}
-        modalProps={{
-          isBlocking: true,
-          styles: { main: { maxWidth: 450 } }
-        }}
-      >
-        <DialogFooter>
-          <PrimaryButton onClick={handleDelete} text="Delete" />
-          <DefaultButton onClick={() => setDeleteDialogOpen(false)} text="Cancel" />
-        </DialogFooter>
-      </Dialog>
     </div>
   );
 };

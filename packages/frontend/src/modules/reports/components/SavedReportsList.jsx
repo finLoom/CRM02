@@ -1,49 +1,83 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Stack,
+  makeStyles,
+  tokens,
+  Button,
   Text,
-  IconButton,
-  TextField,
-  PrimaryButton,
-  DefaultButton,
+  Input,
+  Field,
   Dialog,
-  DialogType,
-  DialogFooter,
-  mergeStyles,
-  MessageBar,
-  MessageBarType,
-  List,
-  FocusZone,
-  FocusZoneDirection,
-  Separator
-} from '@fluentui/react';
+  DialogSurface,
+  DialogBody,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider
+} from '@fluentui/react-components';
+import {
+  Alert
+} from '@fluentui/react-components/unstable';
+import {
+  OpenRegular,
+  DeleteRegular
+} from '@fluentui/react-icons';
 import reportService, { reportTypes } from '../services/reportService';
 
-const sectionStyles = mergeStyles({
-  backgroundColor: 'white',
-  boxShadow: '0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108)',
-  borderRadius: '2px',
-  padding: '20px',
-  marginBottom: '20px'
-});
-
-const reportItemStyles = mergeStyles({
-  display: 'flex',
-  alignItems: 'center',
-  padding: '8px',
-  cursor: 'pointer',
-  '&:hover': {
-    backgroundColor: '#f3f2f1'
+const useStyles = makeStyles({
+  section: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium,
+    padding: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  formContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  reportItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: tokens.spacingVerticalS,
+    borderRadius: tokens.borderRadiusMedium,
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground2
+    }
+  },
+  reportContent: {
+    flex: 1
+  },
+  reportActions: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  reportName: {
+    fontWeight: tokens.fontWeightSemibold
+  },
+  reportMeta: {
+    color: tokens.colorNeutralForeground3
+  },
+  alert: {
+    marginBottom: tokens.spacingVerticalM
+  },
+  listContainer: {
+    marginTop: tokens.spacingVerticalM,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXS
   }
 });
 
 /**
  * SavedReportsList component for managing saved reports
- * 
+ *
  * @component
  */
 const SavedReportsList = ({ onLoadReport }) => {
+  const styles = useStyles();
   const [savedReports, setSavedReports] = useState([]);
   const [currentReportName, setCurrentReportName] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
@@ -59,25 +93,25 @@ const SavedReportsList = ({ onLoadReport }) => {
   const saveReport = (reportConfig) => {
     if (!currentReportName.trim()) {
       setConfirmMessage({
-        type: MessageBarType.error,
+        type: 'error',
         message: 'Please enter a name for this report'
       });
       return;
     }
-    
+
     const newReport = reportService.saveReport({
       name: currentReportName,
       ...reportConfig,
       timestamp: new Date().toISOString()
     });
-    
+
     setSavedReports(reportService.getSavedReports());
     setCurrentReportName('');
     setConfirmMessage({
-      type: MessageBarType.success,
+      type: 'success',
       message: 'Report saved successfully'
     });
-    
+
     // Clear confirmation message after 3 seconds
     setTimeout(() => {
       setConfirmMessage(null);
@@ -104,12 +138,12 @@ const SavedReportsList = ({ onLoadReport }) => {
       setSavedReports(reportService.getSavedReports());
       setIsDeleteDialogOpen(false);
       setSelectedReport(null);
-      
+
       setConfirmMessage({
-        type: MessageBarType.success,
+        type: 'success',
         message: 'Report deleted successfully'
       });
-      
+
       // Clear confirmation message after 3 seconds
       setTimeout(() => {
         setConfirmMessage(null);
@@ -117,99 +151,107 @@ const SavedReportsList = ({ onLoadReport }) => {
     }
   };
 
-  // Render each report item
-  const renderReportItem = (item, index) => {
-    const reportTypeName = reportTypes.find(t => t.key === item.reportType)?.text || item.reportType;
-    const timestamp = new Date(item.timestamp).toLocaleString();
-    
-    return (
-      <div 
-        className={reportItemStyles} 
-        key={item.id} 
-        onClick={() => handleLoadReport(item)}
-        data-is-focusable={true}
-      >
-        <Stack.Item grow={1}>
-          <Text variant="mediumPlus">{item.name}</Text>
-          <Text variant="small" styles={{ root: { color: '#666' } }}>
-            {reportTypeName} • {timestamp}
-          </Text>
-        </Stack.Item>
-        <IconButton
-          iconProps={{ iconName: 'OpenFile' }}
-          title="Load Report"
-          onClick={() => handleLoadReport(item)}
-          styles={{ root: { marginRight: 8 } }}
-        />
-        <IconButton
-          iconProps={{ iconName: 'Delete' }}
-          title="Delete Report"
-          onClick={(e) => confirmDelete(item, e)}
-        />
-      </div>
-    );
-  };
-
   return (
-    <div className={sectionStyles}>
-      <Text variant="large" styles={{ root: { marginBottom: 16 } }}>Saved Reports</Text>
-      
+    <div className={styles.section}>
+      <Text size={500} weight="semibold">Saved Reports</Text>
+
       {confirmMessage && (
-        <MessageBar
-          messageBarType={confirmMessage.type}
-          isMultiline={false}
-          onDismiss={() => setConfirmMessage(null)}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { marginBottom: 16 } }}
+        <Alert
+          intent={confirmMessage.type === 'success' ? 'success' : 'error'}
+          action={{
+            onClick: () => setConfirmMessage(null)
+          }}
+          className={styles.alert}
         >
           {confirmMessage.message}
-        </MessageBar>
+        </Alert>
       )}
-      
-      <Stack tokens={{ childrenGap: 16 }}>
-        <TextField
-          label="Report Name"
-          value={currentReportName}
-          onChange={(_, value) => setCurrentReportName(value)}
-          placeholder="Enter a name to save the current report"
-        />
-        
-        <PrimaryButton
-          text="Save Current Report"
+
+      <div className={styles.formContainer}>
+        <Field label="Report Name">
+          <Input
+            value={currentReportName}
+            onChange={(_, data) => setCurrentReportName(data.value)}
+            placeholder="Enter a name to save the current report"
+          />
+        </Field>
+
+        <Button
+          appearance="primary"
           onClick={() => saveReport()}
           disabled={!currentReportName.trim()}
-        />
-        
-        <Separator />
-        
-        {savedReports.length > 0 ? (
-          <FocusZone direction={FocusZoneDirection.vertical}>
-            <List
-              items={savedReports}
-              onRenderCell={renderReportItem}
-            />
-          </FocusZone>
-        ) : (
-          <Text>No saved reports yet. Configure your report and save it to access it later.</Text>
-        )}
-      </Stack>
-      
-      <Dialog
-        hidden={!isDeleteDialogOpen}
-        onDismiss={() => setIsDeleteDialogOpen(false)}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Delete Report',
-          subText: `Are you sure you want to delete "${selectedReport?.name}"? This action cannot be undone.`
-        }}
-        modalProps={{
-          isBlocking: true
-        }}
-      >
-        <DialogFooter>
-          <PrimaryButton onClick={deleteReport} text="Delete" />
-          <DefaultButton onClick={() => setIsDeleteDialogOpen(false)} text="Cancel" />
-        </DialogFooter>
+        >
+          Save Current Report
+        </Button>
+
+        <Divider />
+
+        <div className={styles.listContainer}>
+          {savedReports.length > 0 ? (
+            savedReports.map((report) => {
+              const reportTypeName = reportTypes.find(t => t.key === report.reportType)?.text || report.reportType;
+              const timestamp = new Date(report.timestamp).toLocaleString();
+
+              return (
+                <div
+                  className={styles.reportItem}
+                  key={report.id}
+                  onClick={() => handleLoadReport(report)}
+                >
+                  <div className={styles.reportContent}>
+                    <Text className={styles.reportName}>{report.name}</Text>
+                    <Text size={200} className={styles.reportMeta}>
+                      {reportTypeName} • {timestamp}
+                    </Text>
+                  </div>
+                  <div className={styles.reportActions}>
+                    <Button
+                      icon={<OpenRegular />}
+                      size="small"
+                      appearance="subtle"
+                      title="Load Report"
+                      onClick={() => handleLoadReport(report)}
+                    />
+                    <Button
+                      icon={<DeleteRegular />}
+                      size="small"
+                      appearance="subtle"
+                      title="Delete Report"
+                      onClick={(e) => confirmDelete(report, e)}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <Text>No saved reports yet. Configure your report and save it to access it later.</Text>
+          )}
+        </div>
+      </div>
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={(_, data) => setIsDeleteDialogOpen(data.open)}>
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>Delete Report</DialogTitle>
+            <DialogContent>
+              Are you sure you want to delete "{selectedReport?.name}"? This action cannot be undone.
+            </DialogContent>
+            <DialogActions>
+              <Button
+                appearance="secondary"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={deleteReport}
+              >
+                Delete
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
     </div>
   );

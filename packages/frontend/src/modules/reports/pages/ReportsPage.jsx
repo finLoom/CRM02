@@ -5,9 +5,9 @@ import {
   TabList,
   Tab,
   Text,
-  Spinner,
-  MessageBar
+  Spinner
 } from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import ReportBuilder from '../components/ReportBuilder';
 import SavedReportsList from '../components/SavedReportsList';
 import SalesReport from '../components/reports/SalesReport';
@@ -40,6 +40,12 @@ const useStyles = makeStyles({
   },
   savedReports: {
     flex: 1
+  },
+  tabsContainer: {
+    marginBottom: tokens.spacingVerticalM
+  },
+  alert: {
+    marginBottom: tokens.spacingVerticalM
   }
 });
 
@@ -122,26 +128,30 @@ const ReportsPage = () => {
       case 'contacts':
         return <ContactsReport reportConfig={reportConfig} />;
       default:
-        return <MessageBar intent="error">Unknown report type</MessageBar>;
+        return <Alert intent="error">Unknown report type</Alert>;
     }
   };
 
   return (
     <div className={styles.page}>
-      <Text size={500} className={styles.pageTitle}>Reports</Text>
+      <Text size={600} weight="semibold" className={styles.pageTitle}>Reports</Text>
 
       {notification && (
-        <MessageBar
+        <Alert
           intent={notification.type === 'success' ? 'success' : 'info'}
-          onDismiss={() => setNotification(null)}
+          action={{
+            onClick: () => setNotification(null)
+          }}
+          className={styles.alert}
         >
           {notification.message}
-        </MessageBar>
+        </Alert>
       )}
 
       <TabList
         selectedValue={activeTab}
         onTabSelect={(_, data) => setActiveTab(data.value)}
+        className={styles.tabsContainer}
       >
         <Tab value="generate">Generate Report</Tab>
         <Tab value="scheduled">Scheduled Reports</Tab>
@@ -167,7 +177,7 @@ const ReportsPage = () => {
 
       {activeTab === 'scheduled' && (
         <div className={styles.section}>
-          <Text size={400}>Scheduled Reports</Text>
+          <Text size={500} weight="semibold">Scheduled Reports</Text>
           <Text>
             This feature is coming soon. You will be able to schedule recurring reports to be
             generated and sent via email.
@@ -177,7 +187,7 @@ const ReportsPage = () => {
 
       {activeTab === 'templates' && (
         <div className={styles.section}>
-          <Text size={400}>Report Templates</Text>
+          <Text size={500} weight="semibold">Report Templates</Text>
           <Text>
             This feature is coming soon. You will be able to create and save custom report templates.
           </Text>

@@ -1,67 +1,98 @@
-// packages/frontend/src/components/opportunities/detail/OpportunityOverview.jsx
+// packages/frontend/src/modules/opportunities/components/detail/OpportunityOverview.jsx
 import React from 'react';
 import {
+  makeStyles,
   Text,
-  Label,
-  mergeStyles
-} from '@fluentui/react';
+  tokens
+} from '@fluentui/react-components';
 
-const fieldContainerStyles = mergeStyles({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, 1fr)',
-  gap: '15px',
-  marginBottom: '20px'
+const useStyles = makeStyles({
+  container: {
+    marginTop: tokens.spacingVerticalL
+  },
+  gridContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: tokens.spacingHorizontalL + ' ' + tokens.spacingVerticalM,
+    marginBottom: tokens.spacingVerticalL,
+    '@media (max-width: 640px)': {
+      gridTemplateColumns: '1fr'
+    }
+  },
+  fieldContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXS
+  },
+  fieldLabel: {
+    color: tokens.colorNeutralForeground3,
+    fontWeight: tokens.fontWeightSemibold
+  },
+  fieldValue: {
+    color: tokens.colorNeutralForeground1
+  },
+  section: {
+    marginBottom: tokens.spacingVerticalL
+  },
+  sectionTitle: {
+    marginBottom: tokens.spacingVerticalS
+  },
+  description: {
+    marginTop: tokens.spacingVerticalS,
+    whiteSpace: 'pre-line'
+  }
 });
 
+/**
+ * Component for displaying opportunity overview details
+ * @param {Object} props Component props
+ * @param {Object} props.opportunity Opportunity data
+ * @returns {JSX.Element} OpportunityOverview component
+ */
 const OpportunityOverview = ({ opportunity }) => {
+  const styles = useStyles();
+
+  const fields = [
+    { label: 'Account', value: opportunity.accountName },
+    { label: 'Contact', value: opportunity.contactName },
+    { label: 'Amount', value: `$${opportunity.amount?.toLocaleString()}` },
+    { label: 'Probability', value: `${opportunity.probability}%` },
+    { label: 'Close Date', value: opportunity.closeDate ? new Date(opportunity.closeDate).toLocaleDateString() : 'Not set' },
+    { label: 'Stage', value: opportunity.stage },
+    { label: 'Type', value: opportunity.type || 'Not specified' },
+    { label: 'Lead Source', value: opportunity.leadSource || 'Not specified' },
+    { label: 'Assigned To', value: opportunity.assignedTo },
+    { label: 'Next Step', value: opportunity.nextStep || 'None' }
+  ];
+
   return (
-    <div style={{ marginTop: 20 }}>
-      <Text variant="large" block>Details</Text>
-      <div className={fieldContainerStyles}>
-        <div>
-          <Label>Account</Label>
-          <Text block>{opportunity.accountName}</Text>
-        </div>
-        <div>
-          <Label>Contact</Label>
-          <Text block>{opportunity.contactName}</Text>
-        </div>
-        <div>
-          <Label>Amount</Label>
-          <Text block>${opportunity.amount?.toLocaleString()}</Text>
-        </div>
-        <div>
-          <Label>Probability</Label>
-          <Text block>{opportunity.probability}%</Text>
-        </div>
-        <div>
-          <Label>Close Date</Label>
-          <Text block>{opportunity.closeDate ? new Date(opportunity.closeDate).toLocaleDateString() : 'Not set'}</Text>
-        </div>
-        <div>
-          <Label>Stage</Label>
-          <Text block>{opportunity.stage}</Text>
-        </div>
-        <div>
-          <Label>Type</Label>
-          <Text block>{opportunity.type || 'Not specified'}</Text>
-        </div>
-        <div>
-          <Label>Lead Source</Label>
-          <Text block>{opportunity.leadSource || 'Not specified'}</Text>
-        </div>
-        <div>
-          <Label>Assigned To</Label>
-          <Text block>{opportunity.assignedTo}</Text>
-        </div>
-        <div>
-          <Label>Next Step</Label>
-          <Text block>{opportunity.nextStep || 'None'}</Text>
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" className={styles.sectionTitle}>
+          Details
+        </Text>
+        <div className={styles.gridContainer}>
+          {fields.map((field, index) => (
+            <div key={index} className={styles.fieldContainer}>
+              <Text size={200} className={styles.fieldLabel}>
+                {field.label}
+              </Text>
+              <Text className={styles.fieldValue}>
+                {field.value}
+              </Text>
+            </div>
+          ))}
         </div>
       </div>
 
-      <Text variant="large" block>Description</Text>
-      <Text block style={{ marginTop: 8 }}>{opportunity.description || 'No description available.'}</Text>
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" className={styles.sectionTitle}>
+          Description
+        </Text>
+        <Text className={styles.description}>
+          {opportunity.description || 'No description available.'}
+        </Text>
+      </div>
     </div>
   );
 };

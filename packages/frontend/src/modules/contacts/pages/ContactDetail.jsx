@@ -1,46 +1,86 @@
-// packages/frontend/src/components/contacts/ContactDetail.jsx
+// packages/frontend/src/modules/contacts/pages/ContactDetail.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Stack,
-  Text,
-  DefaultButton,
+  Button,
   Spinner,
-  SpinnerSize,
-  MessageBar,
-  MessageBarType,
-  Separator,
-  Pivot,
-  PivotItem,
+  Text,
+  Divider,
+  TabList,
+  Tab,
+  makeStyles,
+  tokens,
   Label,
-  Panel,
-  PanelType,
-  mergeStyles
-} from '@fluentui/react';
+  Field,
+  useId,
+  Card,
+  CardHeader,
+  Title3,
+  Body1
+} from '@fluentui/react-components';
+import {
+  Alert
+} from '@fluentui/react-components/unstable';
+import {
+  Drawer,
+  DrawerHeader,
+  DrawerHeaderTitle,
+  DrawerBody
+} from '@fluentui/react-components/unstable';
 import ContactService from '../services/ContactService';
 import ContactForm from './ContactForm';
 
-const containerStyles = mergeStyles({
-  padding: '20px'
-});
-
-const fieldContainerStyles = mergeStyles({
-  display: 'grid',
-  gridTemplateColumns: 'repeat(2, 1fr)',
-  gap: '15px',
-  marginBottom: '20px'
+const useStyles = makeStyles({
+  container: {
+    padding: tokens.spacingHorizontalL
+  },
+  headerContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacingVerticalM
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  tabContent: {
+    marginTop: tokens.spacingVerticalL
+  },
+  sectionTitle: {
+    marginBottom: tokens.spacingVerticalS,
+    marginTop: tokens.spacingVerticalL
+  },
+  fieldContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  fieldGroup: {
+    marginBottom: tokens.spacingVerticalS
+  },
+  centeredContent: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '70vh'
+  }
 });
 
 const ContactDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const styles = useStyles();
+  const tabId = useId('tab');
 
   const [contact, setContact] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isEditPanelOpen, setIsEditPanelOpen] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [editedContact, setEditedContact] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('overview');
 
   // Fetch contact data
   useEffect(() => {
@@ -65,11 +105,11 @@ const ContactDetail = () => {
 
   const handleEditClick = () => {
     setEditedContact({...contact});
-    setIsEditPanelOpen(true);
+    setIsEditDrawerOpen(true);
   };
 
   const handleCancelEdit = () => {
-    setIsEditPanelOpen(false);
+    setIsEditDrawerOpen(false);
     setEditedContact(null);
   };
 
@@ -85,7 +125,7 @@ const ContactDetail = () => {
     try {
       const response = await ContactService.updateContact(id, editedContact);
       setContact(response.data);
-      setIsEditPanelOpen(false);
+      setIsEditDrawerOpen(false);
       setEditedContact(null);
     } catch (error) {
       console.error('Error updating contact:', error);
@@ -111,139 +151,144 @@ const ContactDetail = () => {
     navigate('/contacts');
   };
 
+  const onTabSelect = (event, data) => {
+    setSelectedTab(data.value);
+  };
+
   if (loading) {
     return (
-      <div className={containerStyles}>
-        <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '70vh' } }}>
-          <Spinner size={SpinnerSize.large} label="Loading contact details..." />
-        </Stack>
+      <div className={styles.container}>
+        <div className={styles.centeredContent}>
+          <Spinner size="large" label="Loading contact details..." />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={containerStyles}>
-        <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
-        <DefaultButton text="Back to Contacts" onClick={handleBackClick} styles={{ root: { marginTop: 20 } }} />
+      <div className={styles.container}>
+        <Alert intent="error">{error}</Alert>
+        <Button appearance="secondary" onClick={handleBackClick} style={{ marginTop: tokens.spacingVerticalM }}>
+          Back to Contacts
+        </Button>
       </div>
     );
   }
 
   if (!contact) {
     return (
-      <div className={containerStyles}>
-        <MessageBar messageBarType={MessageBarType.warning}>
-          Contact not found or has been deleted.
-        </MessageBar>
-        <DefaultButton text="Back to Contacts" onClick={handleBackClick} styles={{ root: { marginTop: 20 } }} />
+      <div className={styles.container}>
+        <Alert intent="warning">Contact not found or has been deleted.</Alert>
+        <Button appearance="secondary" onClick={handleBackClick} style={{ marginTop: tokens.spacingVerticalM }}>
+          Back to Contacts
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className={containerStyles}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <Stack horizontal horizontalAlign="space-between">
-          <Text variant="xxLarge">{contact.firstName} {contact.lastName}</Text>
-          <Stack horizontal tokens={{ childrenGap: 8 }}>
-            <DefaultButton text="Back" onClick={handleBackClick} />
-            <DefaultButton text="Edit" onClick={handleEditClick} />
-            <DefaultButton text="Delete" onClick={handleDeleteClick} />
-          </Stack>
-        </Stack>
+    <div className={styles.container}>
+      <div className={styles.headerContainer}>
+        <Title3>{contact.firstName} {contact.lastName}</Title3>
+        <div className={styles.buttonGroup}>
+          <Button appearance="secondary" onClick={handleBackClick}>Back</Button>
+          <Button appearance="secondary" onClick={handleEditClick}>Edit</Button>
+          <Button appearance="secondary" onClick={handleDeleteClick}>Delete</Button>
+        </div>
+      </div>
 
-        <Separator />
+      <Divider />
 
-        <Pivot>
-          <PivotItem headerText="Overview">
-            <div style={{ marginTop: 20 }}>
-              <Text variant="large" block>Contact Information</Text>
-              <div className={fieldContainerStyles}>
-                <div>
-                  <Label>Name</Label>
-                  <Text block>{contact.firstName} {contact.lastName}</Text>
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Text block>{contact.email || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Text block>{contact.phone || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Mobile</Label>
-                  <Text block>{contact.mobile || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Account</Label>
-                  <Text block>{contact.accountName || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Title</Label>
-                  <Text block>{contact.title || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Department</Label>
-                  <Text block>{contact.department || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Assigned To</Label>
-                  <Text block>{contact.assignedTo || 'Not specified'}</Text>
-                </div>
-              </div>
-
-              <Text variant="large" block>Address Information</Text>
-              <div className={fieldContainerStyles}>
-                <div>
-                  <Label>Mailing Street</Label>
-                  <Text block>{contact.mailingStreet || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Mailing City</Label>
-                  <Text block>{contact.mailingCity || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Mailing State</Label>
-                  <Text block>{contact.mailingState || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Mailing Zip</Label>
-                  <Text block>{contact.mailingZip || 'Not specified'}</Text>
-                </div>
-                <div>
-                  <Label>Mailing Country</Label>
-                  <Text block>{contact.mailingCountry || 'Not specified'}</Text>
-                </div>
-              </div>
-            </div>
-          </PivotItem>
-          
-          <PivotItem headerText="Related Opportunities">
-            <div style={{ marginTop: 20 }}>
-              <MessageBar>No related opportunities found.</MessageBar>
-            </div>
-          </PivotItem>
-        </Pivot>
-      </Stack>
-      
-      <Panel
-        isOpen={isEditPanelOpen}
-        onDismiss={handleCancelEdit}
-        headerText="Edit Contact"
-        type={PanelType.medium}
+      <TabList
+        selectedValue={selectedTab}
+        onTabSelect={onTabSelect}
+        id={tabId}
       >
-        {editedContact && (
-          <ContactForm
-            contact={editedContact}
-            onUpdate={handleUpdateField}
-            onSave={handleSaveEdit}
-            onCancel={handleCancelEdit}
-            isLoading={isSaving}
-          />
+        <Tab value="overview">Overview</Tab>
+        <Tab value="opportunities">Related Opportunities</Tab>
+      </TabList>
+
+      <div className={styles.tabContent} role="tabpanel" aria-labelledby={`${tabId}-tab-overview`}>
+        {selectedTab === 'overview' && (
+          <>
+            <Text className={styles.sectionTitle} weight="semibold" size={500}>Contact Information</Text>
+            <div className={styles.fieldContainer}>
+              <Field label="Name" className={styles.fieldGroup}>
+                <Body1>{contact.firstName} {contact.lastName}</Body1>
+              </Field>
+              <Field label="Email" className={styles.fieldGroup}>
+                <Body1>{contact.email || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Phone" className={styles.fieldGroup}>
+                <Body1>{contact.phone || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Mobile" className={styles.fieldGroup}>
+                <Body1>{contact.mobile || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Account" className={styles.fieldGroup}>
+                <Body1>{contact.accountName || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Title" className={styles.fieldGroup}>
+                <Body1>{contact.title || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Department" className={styles.fieldGroup}>
+                <Body1>{contact.department || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Assigned To" className={styles.fieldGroup}>
+                <Body1>{contact.assignedTo || 'Not specified'}</Body1>
+              </Field>
+            </div>
+
+            <Text className={styles.sectionTitle} weight="semibold" size={500}>Address Information</Text>
+            <div className={styles.fieldContainer}>
+              <Field label="Mailing Street" className={styles.fieldGroup}>
+                <Body1>{contact.mailingStreet || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Mailing City" className={styles.fieldGroup}>
+                <Body1>{contact.mailingCity || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Mailing State" className={styles.fieldGroup}>
+                <Body1>{contact.mailingState || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Mailing Zip" className={styles.fieldGroup}>
+                <Body1>{contact.mailingZip || 'Not specified'}</Body1>
+              </Field>
+              <Field label="Mailing Country" className={styles.fieldGroup}>
+                <Body1>{contact.mailingCountry || 'Not specified'}</Body1>
+              </Field>
+            </div>
+          </>
         )}
-      </Panel>
+
+        {selectedTab === 'opportunities' && (
+          <div style={{ marginTop: tokens.spacingVerticalL }}>
+            <Alert intent="info">No related opportunities found.</Alert>
+          </div>
+        )}
+      </div>
+
+      <Drawer
+        open={isEditDrawerOpen}
+        onOpenChange={(_, { open }) => !open && handleCancelEdit()}
+        position="end"
+        size="medium"
+      >
+        <DrawerHeader>
+          <DrawerHeaderTitle>Edit Contact</DrawerHeaderTitle>
+        </DrawerHeader>
+        <DrawerBody>
+          {editedContact && (
+            <ContactForm
+              contact={editedContact}
+              onUpdate={handleUpdateField}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+              isLoading={isSaving}
+            />
+          )}
+        </DrawerBody>
+      </Drawer>
     </div>
   );
 };

@@ -1,23 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Stack,
+  makeStyles,
+  tokens,
   Text,
   Dropdown,
-  DatePicker,
-  Toggle,
-  PrimaryButton,
-  mergeStyles,
-  Separator
-} from '@fluentui/react';
+  Field,
+  Button,
+  Divider,
+  Switch
+} from '@fluentui/react-components';
+import { DatePicker } from '@fluentui/react-datepicker-compat';
 import PropTypes from 'prop-types';
 import reportService, { reportTypes, chartTypes, groupByOptions } from '../services/reportService';
 
-const sectionStyles = mergeStyles({
-  backgroundColor: 'white',
-  boxShadow: '0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108)',
-  borderRadius: '2px',
-  padding: '20px',
-  marginBottom: '20px'
+const useStyles = makeStyles({
+  section: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium,
+    padding: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  formContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  row: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalL
+  },
+  formField: {
+    flex: 1
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: tokens.spacingVerticalL
+  }
 });
 
 // Default date range to prevent undefined errors
@@ -28,14 +48,16 @@ const getDefaultDateRange = () => ({
 
 /**
  * ReportBuilder component handles the UI for configuring report parameters
- * 
+ *
  * @component
  */
-const ReportBuilder = ({ 
-  onGenerateReport, 
-  isLoading, 
-  initialConfig = {} 
+const ReportBuilder = ({
+  onGenerateReport,
+  isLoading,
+  initialConfig = {}
 }) => {
+  const styles = useStyles();
+
   // Make sure initialConfig.dateRange is properly structured
   const safeInitialConfig = {
     ...initialConfig,
@@ -97,7 +119,7 @@ const ReportBuilder = ({
     const today = new Date();
     let startDate;
     let endDate = today;
-    
+
     switch(range) {
       case 'thisMonth':
         startDate = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -125,7 +147,7 @@ const ReportBuilder = ({
       default:
         return;
     }
-    
+
     setReportConfig(prevConfig => ({
       ...prevConfig,
       dateRange: { startDate, endDate }
@@ -148,82 +170,100 @@ const ReportBuilder = ({
   const endDate = dateRange.endDate || new Date();
 
   return (
-    <div className={sectionStyles}>
-      <Text variant="large" styles={{ root: { marginBottom: 16 } }}>Report Configuration</Text>
-      
-      <Stack tokens={{ childrenGap: 16 }}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
+    <div className={styles.section}>
+      <Text size={500} weight="semibold">Report Configuration</Text>
+
+      <div className={styles.formContainer}>
+        <div className={styles.row}>
+          <Field label="Report Type" className={styles.formField}>
             <Dropdown
-              label="Report Type"
-              selectedKey={reportConfig.reportType || 'sales'}
-              options={reportTypes}
-              onChange={(_, option) => handleConfigChange('reportType', option.key)}
-            />
-          </Stack.Item>
-          <Stack.Item grow={1}>
+              value={reportConfig.reportType || 'sales'}
+              onOptionSelect={(_, data) => handleConfigChange('reportType', data.optionValue)}
+            >
+              {reportTypes.map(option => (
+                <Dropdown.Option key={option.key} value={option.key}>
+                  {option.text}
+                </Dropdown.Option>
+              ))}
+            </Dropdown>
+          </Field>
+
+          <Field label="Group By" className={styles.formField}>
             <Dropdown
-              label="Group By"
-              selectedKey={reportConfig.groupBy || 'month'}
-              options={groupByOptions}
-              onChange={(_, option) => handleConfigChange('groupBy', option.key)}
-            />
-          </Stack.Item>
-        </Stack>
-        
-        <Dropdown
-          label="Date Range"
-          options={dateRangeOptions}
-          onChange={(_, option) => applyDateRange(option.key)}
-          defaultSelectedKey="lastMonth"
-        />
-        
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
+              value={reportConfig.groupBy || 'month'}
+              onOptionSelect={(_, data) => handleConfigChange('groupBy', data.optionValue)}
+            >
+              {groupByOptions.map(option => (
+                <Dropdown.Option key={option.key} value={option.key}>
+                  {option.text}
+                </Dropdown.Option>
+              ))}
+            </Dropdown>
+          </Field>
+        </div>
+
+        <Field label="Date Range">
+          <Dropdown
+            defaultValue="lastMonth"
+            onOptionSelect={(_, data) => applyDateRange(data.optionValue)}
+          >
+            {dateRangeOptions.map(option => (
+              <Dropdown.Option key={option.key} value={option.key}>
+                {option.text}
+              </Dropdown.Option>
+            ))}
+          </Dropdown>
+        </Field>
+
+        <div className={styles.row}>
+          <Field label="Start Date" className={styles.formField}>
             <DatePicker
-              label="Start Date"
               value={startDate}
               onSelectDate={(date) => handleDateRangeChange('startDate', date)}
             />
-          </Stack.Item>
-          <Stack.Item grow={1}>
+          </Field>
+          <Field label="End Date" className={styles.formField}>
             <DatePicker
-              label="End Date"
               value={endDate}
               onSelectDate={(date) => handleDateRangeChange('endDate', date)}
             />
-          </Stack.Item>
-        </Stack>
-        
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
-            <Toggle
-              label="Show Chart"
+          </Field>
+        </div>
+
+        <div className={styles.row}>
+          <Field label="Show Chart" className={styles.formField}>
+            <Switch
               checked={reportConfig.showChart !== undefined ? reportConfig.showChart : true}
-              onChange={(_, checked) => handleConfigChange('showChart', checked)}
+              onChange={(_, data) => handleConfigChange('showChart', data.checked)}
             />
-          </Stack.Item>
-          <Stack.Item grow={1}>
+          </Field>
+          <Field label="Chart Type" className={styles.formField}>
             <Dropdown
-              label="Chart Type"
-              selectedKey={reportConfig.chartType || 'line'}
-              options={chartTypes}
-              onChange={(_, option) => handleConfigChange('chartType', option.key)}
+              value={reportConfig.chartType || 'line'}
+              onOptionSelect={(_, data) => handleConfigChange('chartType', data.optionValue)}
               disabled={!reportConfig.showChart}
-            />
-          </Stack.Item>
-        </Stack>
-        
-        <Separator />
-        
-        <Stack horizontal horizontalAlign="end">
-          <PrimaryButton
-            text="Generate Report"
+            >
+              {chartTypes.map(option => (
+                <Dropdown.Option key={option.key} value={option.key}>
+                  {option.text}
+                </Dropdown.Option>
+              ))}
+            </Dropdown>
+          </Field>
+        </div>
+
+        <Divider />
+
+        <div className={styles.buttonContainer}>
+          <Button
+            appearance="primary"
             onClick={handleGenerateReport}
             disabled={isLoading}
-          />
-        </Stack>
-      </Stack>
+          >
+            Generate Report
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

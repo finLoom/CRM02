@@ -1,1 +1,2 @@
-//  placeholder index.js file
+// Export service
+export { default as opportunityService } from './OpportunityService';

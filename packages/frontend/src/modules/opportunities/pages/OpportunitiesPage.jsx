@@ -1,222 +1,205 @@
-// src/pages/OpportunitiesPage.jsx
-import React, { useState, useEffect } from 'react';
+// packages/frontend/src/modules/opportunities/pages/OpportunitiesPage.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Stack,
+  makeStyles,
   Text,
-  DetailsList,
-  DetailsListLayoutMode,
-  Selection,
-  SelectionMode,
-  MarqueeSelection,
-  CommandBar,
-  SearchBox,
-  Dialog,
-  DialogType,
-  DialogFooter,
-  PrimaryButton,
-  DefaultButton,
-  mergeStyles,
+  Button,
+  Input,
   Spinner,
-  SpinnerSize,
-  Panel,
-  PanelType,
-  MessageBar,
-  MessageBarType,
-  Pivot,
-  PivotItem
-} from '@fluentui/react';
+  TabList,
+  Tab,
+  Divider,
+  tokens,
+  createTableColumn,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableHeader,
+  TableHeaderCell,
+  TableSelectionCell,
+  TableCellLayout,
+  Dialog,
+  DialogSurface,
+  DialogBody,
+  DialogContent,
+  DialogTitle,
+  DialogActions
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import { Search20Regular, Add20Regular, Edit20Regular, Delete20Regular, ArrowClockwise20Regular } from '@fluentui/react-icons';
 import { formatDistanceToNow } from 'date-fns';
-import OpportunityService from '../services/OpportunityService';
-import OpportunityForm from '../components/OpportunityForm';
 
-const containerStyles = mergeStyles({
-  padding: '20px'
+import { useOpportunityList } from '../hooks/useOpportunityList';
+import { DEFAULT_NEW_OPPORTUNITY } from '../constants/opportunityConstants';
+import OpportunityDialog from '../components/OpportunityDialog';
+import OpportunityDeleteDialog from '../components/OpportunityDeleteDialog';
+
+const useStyles = makeStyles({
+  container: {
+    padding: tokens.spacingHorizontalL
+  },
+  header: {
+    marginBottom: tokens.spacingVerticalL
+  },
+  tabList: {
+    marginBottom: tokens.spacingVerticalM
+  },
+  toolbar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacingVerticalM
+  },
+  searchbox: {
+    width: '300px'
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  tableContainer: {
+    position: 'relative',
+    minHeight: '200px'
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    zIndex: 1
+  },
+  noData: {
+    textAlign: 'center',
+    padding: tokens.spacingVerticalXL
+  },
+  table: {
+    marginTop: tokens.spacingVerticalM
+  }
 });
 
-const stageOptions = [
-  { key: 'Discovery', text: 'Discovery' },
-  { key: 'Qualification', text: 'Qualification' },
-  { key: 'Proposal', text: 'Proposal' },
-  { key: 'Negotiation', text: 'Negotiation' },
-  { key: 'Closed Won', text: 'Closed Won' },
-  { key: 'Closed Lost', text: 'Closed Lost' }
-];
-
+/**
+ * Page component for opportunities list
+ * @returns {JSX.Element} OpportunitiesPage component
+ */
 const OpportunitiesPage = () => {
+  const styles = useStyles();
   const navigate = useNavigate();
-  
-  const [opportunities, setOpportunities] = useState([]);
-  const [selectedOpportunities, setSelectedOpportunities] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchText, setSearchText] = useState('');
-  const [filteredOpportunities, setFilteredOpportunities] = useState([]);
+
+  const {
+    filteredOpportunities,
+    selectedOpportunities,
+    isLoading,
+    error,
+    searchText,
+    selectedView,
+    debugInfo,
+    setSearchText,
+    setSelectedView,
+    setSelectedOpportunities,
+    fetchOpportunities,
+    createOpportunity,
+    updateOpportunity,
+    deleteOpportunities
+  } = useOpportunityList();
+
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isOpportunityPanelOpen, setIsOpportunityPanelOpen] = useState(false);
+  const [isOpportunityDialogOpen, setIsOpportunityDialogOpen] = useState(false);
   const [currentOpportunity, setCurrentOpportunity] = useState(null);
-  const [selectedView, setSelectedView] = useState('all');
-  
-  // Debug state
-  const [debug, setDebug] = useState({ dataSource: 'Loading...' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // Selection configuration
-  const selection = new Selection({
-    onSelectionChanged: () => {
-      setSelectedOpportunities(selection.getSelection());
-    }
-  });
+  // Define columns for the Table
+  const columns = [
+    { columnId: 'name', label: 'Name' },
+    { columnId: 'accountName', label: 'Account' },
+    { columnId: 'contactName', label: 'Contact' },
+    { columnId: 'stage', label: 'Stage' },
+    { columnId: 'amount', label: 'Amount' },
+    { columnId: 'probability', label: 'Probability' },
+    { columnId: 'closeDate', label: 'Close Date' },
+    { columnId: 'assignedTo', label: 'Assigned To' },
+    { columnId: 'updatedAt', label: 'Last Updated' }
+  ];
 
-  // Load opportunities from API
-  useEffect(() => {
-    fetchOpportunities();
-  }, []);
-
-  const fetchOpportunities = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      // Log attempt to fetch data
-      console.log('Attempting to fetch opportunities from backend...');
-      const response = await OpportunityService.getAllOpportunities();
-      
-      // Log successful response
-      console.log('Received opportunities from backend:', response.data);
-      setDebug({ dataSource: 'Backend API', count: response.data.length });
-      
-      setOpportunities(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching opportunities:', err);
-      setDebug({ dataSource: 'Error - using static data', error: err.message });
-      
-      // Fallback to static data for development purposes
-      setError('Failed to load opportunities from backend. Using static data instead.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Filter opportunities based on search and selected view
-  useEffect(() => {
-    if (!opportunities.length) {
-      setFilteredOpportunities([]);
-      return;
-    }
-    
-    let filtered = opportunities;
-    
-    // Apply search filter
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
-      filtered = filtered.filter(opportunity => {
-        return (
-          opportunity.name?.toLowerCase().includes(searchLower) ||
-          opportunity.accountName?.toLowerCase().includes(searchLower) ||
-          opportunity.contactName?.toLowerCase().includes(searchLower)
-        );
-      });
-    }
-    
-    // Apply view filter
-    if (selectedView === 'open') {
-      filtered = filtered.filter(opp => !opp.stage?.startsWith('Closed'));
-    } else if (selectedView === 'closed-won') {
-      filtered = filtered.filter(opp => opp.stage === 'Closed Won');
-    } else if (selectedView === 'closed-lost') {
-      filtered = filtered.filter(opp => opp.stage === 'Closed Lost');
-    }
-    
-    setFilteredOpportunities(filtered);
-  }, [opportunities, searchText, selectedView]);
-
-  const handleSearch = (_, newValue) => {
-    setSearchText(newValue || '');
-  };
-
+  // Handle creating a new opportunity
   const handleCreateNew = () => {
-    setCurrentOpportunity({
-      name: '',
-      accountName: '',
-      contactName: '',
-      stage: 'Discovery',
-      amount: 0,
-      probability: 20,
-      closeDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default to 30 days from now
-      type: 'New Business',
-      leadSource: '',
-      assignedTo: 'Jane Cooper',
-      nextStep: '',
-      description: ''
-    });
-    setIsOpportunityPanelOpen(true);
+    setCurrentOpportunity({...DEFAULT_NEW_OPPORTUNITY});
+    setIsOpportunityDialogOpen(true);
   };
 
+  // Handle editing an opportunity
   const handleEdit = () => {
     if (selectedOpportunities.length === 1) {
-      // Create a shallow copy of the selected opportunity to edit
-      const opportunityToEdit = { ...selectedOpportunities[0] };
-      
+      const opportunityToEdit = {...selectedOpportunities[0]};
+
       // Convert string date to Date object for DatePicker
       if (opportunityToEdit.closeDate && typeof opportunityToEdit.closeDate === 'string') {
         opportunityToEdit.closeDate = new Date(opportunityToEdit.closeDate);
       }
-      
+
       setCurrentOpportunity(opportunityToEdit);
-      setIsOpportunityPanelOpen(true);
+      setIsOpportunityDialogOpen(true);
     }
   };
 
-  const handleDetailsClick = (item) => {
-    // Navigate to detail view
-    navigate(`/opportunities/${item.id}`);
+  // Handle row click to navigate to detail page
+  const handleRowClick = (id) => {
+    navigate(`/opportunities/${id}`);
   };
 
+  // Handle deleting opportunities
   const handleDelete = () => {
     if (selectedOpportunities.length > 0) {
       setIsDeleteDialogOpen(true);
     }
   };
 
+  // Confirm and execute delete
   const confirmDelete = async () => {
     try {
       const selectedIds = selectedOpportunities.map(opportunity => opportunity.id);
-      await OpportunityService.deleteMultipleOpportunities(selectedIds);
-      // Refresh the opportunities list
-      fetchOpportunities();
+      await deleteOpportunities(selectedIds);
       setIsDeleteDialogOpen(false);
-      selection.setAllSelected(false);
     } catch (err) {
       console.error('Error deleting opportunities:', err);
-      setError('Failed to delete opportunities. Please try again later.');
     }
   };
 
-  const closePanel = () => {
-    setIsOpportunityPanelOpen(false);
+  // Close the opportunity dialog
+  const closeOpportunityDialog = () => {
+    setIsOpportunityDialogOpen(false);
     setCurrentOpportunity(null);
   };
 
+  // Save an opportunity (create or update)
   const saveOpportunity = async () => {
     if (!currentOpportunity) return;
-    
+
+    setIsSaving(true);
     try {
       if (currentOpportunity.id) {
         // Update existing opportunity
-        await OpportunityService.updateOpportunity(currentOpportunity.id, currentOpportunity);
+        await updateOpportunity(currentOpportunity.id, currentOpportunity);
       } else {
         // Create new opportunity
-        await OpportunityService.createOpportunity(currentOpportunity);
+        await createOpportunity(currentOpportunity);
       }
-      // Refresh the opportunities list
-      fetchOpportunities();
-      closePanel();
+      closeOpportunityDialog();
     } catch (err) {
       console.error('Error saving opportunity:', err);
-      setError('Failed to save opportunity. Please try again later.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  // Update field in current opportunity
   const updateOpportunityField = (field, value) => {
     setCurrentOpportunity({
       ...currentOpportunity,
@@ -224,154 +207,196 @@ const OpportunitiesPage = () => {
     });
   };
 
-  const opportunityColumns = [
-    { key: 'name', name: 'Name', fieldName: 'name', minWidth: 150, maxWidth: 200, isResizable: true },
-    { key: 'accountName', name: 'Account', fieldName: 'accountName', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'contactName', name: 'Contact', fieldName: 'contactName', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'stage', name: 'Stage', fieldName: 'stage', minWidth: 100, maxWidth: 120, isResizable: true },
-    { key: 'amount', name: 'Amount', fieldName: 'amount', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `$${item.amount?.toLocaleString() || 0}` },
-    { key: 'probability', name: 'Probability', fieldName: 'probability', minWidth: 80, maxWidth: 100, isResizable: true, onRender: (item) => `${item.probability || 0}%` },
-    { key: 'closeDate', name: 'Close Date', fieldName: 'closeDate', minWidth: 100, maxWidth: 120, isResizable: true, onRender: (item) => item.closeDate ? new Date(item.closeDate).toLocaleDateString() : '' },
-    { key: 'assignedTo', name: 'Assigned To', fieldName: 'assignedTo', minWidth: 120, maxWidth: 150, isResizable: true },
-    { key: 'updatedAt', name: 'Last Updated', fieldName: 'updatedAt', minWidth: 100, maxWidth: 140, isResizable: true, onRender: (item) => item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true }) : '' }
-  ];
+  // Toggle selection of a row
+  const toggleSelection = (id) => {
+    setSelectedIds(prevSelectedIds => {
+      const newSelectedIds = new Set(prevSelectedIds);
+      if (newSelectedIds.has(id)) {
+        newSelectedIds.delete(id);
+      } else {
+        newSelectedIds.add(id);
+      }
 
-  const commandBarItems = [
-    {
-      key: 'newItem',
-      text: 'New Opportunity',
-      iconProps: { iconName: 'Add' },
-      onClick: handleCreateNew
-    },
-    {
-      key: 'edit',
-      text: 'Edit',
-      iconProps: { iconName: 'Edit' },
-      onClick: handleEdit,
-      disabled: selectedOpportunities.length !== 1
-    },
-    {
-      key: 'delete',
-      text: 'Delete',
-      iconProps: { iconName: 'Delete' },
-      onClick: handleDelete,
-      disabled: selectedOpportunities.length === 0
-    }
-  ];
+      // Update selected opportunities
+      const newSelectedOpportunities = filteredOpportunities.filter(opp => newSelectedIds.has(opp.id));
+      setSelectedOpportunities(newSelectedOpportunities);
 
-  const commandBarFarItems = [
-    {
-      key: 'refresh',
-      iconProps: { iconName: 'Refresh' },
-      onClick: fetchOpportunities
+      return newSelectedIds;
+    });
+  };
+
+  // Format cell content
+  const formatCellContent = (item, columnId) => {
+    switch (columnId) {
+      case 'name':
+        return item.name;
+      case 'accountName':
+        return item.accountName;
+      case 'contactName':
+        return item.contactName || '';
+      case 'stage':
+        return item.stage;
+      case 'amount':
+        return `$${item.amount?.toLocaleString() || 0}`;
+      case 'probability':
+        return `${item.probability || 0}%`;
+      case 'closeDate':
+        return item.closeDate ? new Date(item.closeDate).toLocaleDateString() : '';
+      case 'assignedTo':
+        return item.assignedTo || '';
+      case 'updatedAt':
+        return item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true }) : '';
+      default:
+        return '';
     }
-  ];
+  };
 
   return (
-    <div className={containerStyles}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <Text variant="xLarge">Opportunities</Text>
-        
-        <Pivot 
-          selectedKey={selectedView} 
-          onLinkClick={(item) => setSelectedView(item.props.itemKey)}
-          styles={{ root: { marginBottom: 12 } }}
-        >
-          <PivotItem headerText="All Opportunities" itemKey="all" />
-          <PivotItem headerText="Open" itemKey="open" />
-          <PivotItem headerText="Closed Won" itemKey="closed-won" />
-          <PivotItem headerText="Closed Lost" itemKey="closed-lost" />
-        </Pivot>
-        
-        {/* Debug info - can be removed in production */}
-        {debug && (
-          <MessageBar messageBarType={MessageBarType.info} isMultiline={false} onDismiss={() => setDebug(null)}>
-            Data source: {debug.dataSource} {debug.count ? `(${debug.count} records)` : ''}
-            {debug.error && ` - Error: ${debug.error}`}
-          </MessageBar>
-        )}
-        
-        {error && (
-          <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
-            {error}
-          </MessageBar>
-        )}
-        
-        <Stack horizontal horizontalAlign="space-between">
-          <SearchBox
-            styles={{ root: { width: 300 } }}
-            placeholder="Search opportunities"
-            onChange={handleSearch}
-            value={searchText}
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <Text as="h1" size={800} weight="semibold">
+          Opportunities
+        </Text>
+      </div>
+
+      <TabList
+        className={styles.tabList}
+        selectedValue={selectedView}
+        onTabSelect={(_, data) => setSelectedView(data.value)}
+      >
+        <Tab value="all">All Opportunities</Tab>
+        <Tab value="open">Open</Tab>
+        <Tab value="closed-won">Closed Won</Tab>
+        <Tab value="closed-lost">Closed Lost</Tab>
+      </TabList>
+
+      {/* Debug info */}
+      {debugInfo && (
+        <Alert intent="info" style={{ marginBottom: tokens.spacingVerticalS }}>
+          Data source: {debugInfo.dataSource} {debugInfo.count ? `(${debugInfo.count} records)` : ''}
+          {debugInfo.error && ` - Error: ${debugInfo.error}`}
+        </Alert>
+      )}
+
+      {error && (
+        <Alert intent="error" style={{ marginBottom: tokens.spacingVerticalS }}>
+          {error}
+        </Alert>
+      )}
+
+      <div className={styles.toolbar}>
+        <Input
+          className={styles.searchbox}
+          placeholder="Search opportunities"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          contentBefore={<Search20Regular />}
+        />
+
+        <div className={styles.buttonGroup}>
+          <Button
+            appearance="primary"
+            icon={<Add20Regular />}
+            onClick={handleCreateNew}
+          >
+            New Opportunity
+          </Button>
+          <Button
+            appearance="secondary"
+            icon={<Edit20Regular />}
+            onClick={handleEdit}
+            disabled={selectedOpportunities.length !== 1}
+          >
+            Edit
+          </Button>
+          <Button
+            appearance="secondary"
+            icon={<Delete20Regular />}
+            onClick={handleDelete}
+            disabled={selectedOpportunities.length === 0}
+          >
+            Delete
+          </Button>
+          <Button
+            icon={<ArrowClockwise20Regular />}
+            appearance="subtle"
+            onClick={fetchOpportunities}
           />
-          <CommandBar
-            items={commandBarItems}
-            farItems={commandBarFarItems}
-          />
-        </Stack>
-        
-        <div style={{ position: 'relative' }}>
-          {isLoading && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1 }}>
-              <Spinner size={SpinnerSize.large} label="Loading opportunities..." />
-            </div>
-          )}
-          
-          <MarqueeSelection selection={selection}>
-            <DetailsList
-              items={filteredOpportunities}
-              columns={opportunityColumns}
-              setKey="id"
-              layoutMode={DetailsListLayoutMode.justified}
-              selection={selection}
-              selectionPreservedOnEmptyClick={true}
-              selectionMode={SelectionMode.multiple}
-              onItemInvoked={handleDetailsClick}
-              styles={{ root: { opacity: isLoading ? 0.6 : 1 } }}
-            />
-          </MarqueeSelection>
-          
-          {!isLoading && filteredOpportunities.length === 0 && (
-            <MessageBar>No opportunities found. {searchText ? 'Try adjusting your search criteria.' : 'Create a new opportunity to get started.'}</MessageBar>
-          )}
         </div>
-      </Stack>
+      </div>
+
+      <div className={styles.tableContainer}>
+        {isLoading && (
+          <div className={styles.overlay}>
+            <Spinner size="large" label="Loading opportunities..." />
+          </div>
+        )}
+
+        <Table className={styles.table} size="medium">
+          <TableHeader>
+            <TableRow>
+              <TableSelectionCell />
+              {columns.map((column) => (
+                <TableHeaderCell key={column.columnId}>
+                  {column.label}
+                </TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredOpportunities.map((item) => (
+              <TableRow
+                key={item.id}
+                onClick={() => handleRowClick(item.id)}
+                aria-selected={selectedIds.has(item.id)}
+              >
+                <TableSelectionCell
+                  checked={selectedIds.has(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelection(item.id);
+                  }}
+                />
+                {columns.map((column) => (
+                  <TableCell key={`${item.id}-${column.columnId}`}>
+                    <TableCellLayout>
+                      {formatCellContent(item, column.columnId)}
+                    </TableCellLayout>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        {!isLoading && filteredOpportunities.length === 0 && (
+          <div className={styles.noData}>
+            <Text>No opportunities found. {searchText ? 'Try adjusting your search criteria.' : 'Create a new opportunity to get started.'}</Text>
+          </div>
+        )}
+      </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        hidden={!isDeleteDialogOpen}
-        onDismiss={() => setIsDeleteDialogOpen(false)}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Delete Opportunity',
-          subText: `Are you sure you want to delete ${selectedOpportunities.length} selected opportunity(s)? This action cannot be undone.`
-        }}
-        modalProps={{
-          isBlocking: true
-        }}
-      >
-        <DialogFooter>
-          <PrimaryButton onClick={confirmDelete} text="Delete" />
-          <DefaultButton onClick={() => setIsDeleteDialogOpen(false)} text="Cancel" />
-        </DialogFooter>
-      </Dialog>
+      {isDeleteDialogOpen && (
+        <OpportunityDeleteDialog
+          open={isDeleteDialogOpen}
+          count={selectedOpportunities.length}
+          onConfirm={confirmDelete}
+          onCancel={() => setIsDeleteDialogOpen(false)}
+        />
+      )}
 
-      {/* Opportunity Form Panel */}
-      <Panel
-        isOpen={isOpportunityPanelOpen}
-        onDismiss={closePanel}
-        headerText={currentOpportunity && currentOpportunity.id ? `Edit Opportunity: ${currentOpportunity.name}` : 'New Opportunity'}
-        type={PanelType.medium}
-      >
-        {currentOpportunity && (
-          <OpportunityForm
-            opportunity={currentOpportunity}
-            onUpdate={(field, value) => updateOpportunityField(field, value)}
-            onSave={saveOpportunity}
-            onCancel={closePanel}
-          />
-        )}
-      </Panel>
+      {/* Opportunity Form Dialog */}
+      {isOpportunityDialogOpen && currentOpportunity && (
+        <OpportunityDialog
+          open={isOpportunityDialogOpen}
+          opportunity={currentOpportunity}
+          onDismiss={closeOpportunityDialog}
+          onUpdate={updateOpportunityField}
+          onSave={saveOpportunity}
+          isSaving={isSaving}
+        />
+      )}
     </div>
   );
 };

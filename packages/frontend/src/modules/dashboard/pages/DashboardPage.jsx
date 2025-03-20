@@ -1,32 +1,92 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Stack,
+  makeStyles,
+  tokens,
+  shorthands,
   Text,
-  CommandBar,
-  Pivot,
-  PivotItem,
-  Spinner,
-  SpinnerSize,
-  MessageBar,
-  MessageBarType,
-  DefaultButton,
-  IconButton,
-  Checkbox,
-  Link
-} from '@fluentui/react';
-import { Card, CardItem } from '@fluentui/react-cards';
+  Button,
+  TabList,
+  Tab,
+  Toolbar,
+  ToolbarButton,
+  Menu,
+  MenuTrigger,
+  MenuList,
+  MenuItem,
+  MenuPopover
+} from '@fluentui/react-components';
+import {
+  ArrowSync24Regular,
+  Calendar24Regular,
+  Settings24Regular,
+  ArrowDownload24Regular
+} from '@fluentui/react-icons';
+import { Alert } from '@fluentui/react-components/unstable';
+import { Spinner } from '@fluentui/react-components';
 
+// Import dashboard components
+import KpiCard from '../components/KpiCard';
+import ActivityFeed from '../components/ActivityFeed';
+import TaskList from '../components/TaskList';
+import SalesPipeline from '../components/SalesPipeline';
+import LeadPerformance from '../components/LeadPerformance';
+
+const useStyles = makeStyles({
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    ...shorthands.gap(tokens.spacingVerticalM)
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...shorthands.padding(tokens.spacingVerticalM, 0)
+  },
+  kpiContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    marginRight: `-${tokens.spacingHorizontalM}`
+  },
+  dashboardSections: {
+    display: 'flex',
+    ...shorthands.gap(tokens.spacingHorizontalL),
+    marginTop: tokens.spacingVerticalL
+  },
+  mainColumn: {
+    flex: 3,
+    minWidth: '400px'
+  },
+  sideColumn: {
+    flex: 1,
+    minWidth: '300px'
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '70vh',
+    ...shorthands.gap(tokens.spacingVerticalM)
+  },
+  errorContainer: {
+    ...shorthands.padding(tokens.spacingVerticalL),
+    display: 'flex',
+    flexDirection: 'column',
+    ...shorthands.gap(tokens.spacingVerticalM)
+  }
+});
 
 /**
- * Main Dashboard Page Component
- *
- * Displays an overview of key metrics, recent activities, and important data
+ * DashboardPage - Main dashboard page component
  */
 const DashboardPage = () => {
+  const styles = useStyles();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState(null);
   const [timeRange, setTimeRange] = useState('thisMonth');
+  const [selectedTabId, setSelectedTabId] = useState('activities');
 
   // Fetch dashboard data
   useEffect(() => {
@@ -95,79 +155,8 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, [timeRange]);
 
-  // Command bar items
-  const commandBarItems = [
-    {
-      key: 'refresh',
-      text: 'Refresh',
-      iconProps: { iconName: 'Refresh' },
-      onClick: () => {
-        setIsLoading(true);
-        // Simulate refresh
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 1000);
-      }
-    },
-    {
-      key: 'timeRange',
-      text: getTimeRangeLabel(),
-      iconProps: { iconName: 'Calendar' },
-      subMenuProps: {
-        items: [
-          {
-            key: 'today',
-            text: 'Today',
-            onClick: () => setTimeRange('today'),
-            checked: timeRange === 'today'
-          },
-          {
-            key: 'thisWeek',
-            text: 'This Week',
-            onClick: () => setTimeRange('thisWeek'),
-            checked: timeRange === 'thisWeek'
-          },
-          {
-            key: 'thisMonth',
-            text: 'This Month',
-            onClick: () => setTimeRange('thisMonth'),
-            checked: timeRange === 'thisMonth'
-          },
-          {
-            key: 'lastQuarter',
-            text: 'Last Quarter',
-            onClick: () => setTimeRange('lastQuarter'),
-            checked: timeRange === 'lastQuarter'
-          },
-          {
-            key: 'ytd',
-            text: 'Year to Date',
-            onClick: () => setTimeRange('ytd'),
-            checked: timeRange === 'ytd'
-          },
-        ]
-      }
-    }
-  ];
-
-  // Command bar far items
-  const commandBarFarItems = [
-    {
-      key: 'customize',
-      text: 'Customize',
-      iconProps: { iconName: 'Settings' },
-      onClick: () => console.log('Customize dashboard')
-    },
-    {
-      key: 'export',
-      text: 'Export',
-      iconProps: { iconName: 'Download' },
-      onClick: () => console.log('Export dashboard')
-    }
-  ];
-
   // Helper function to get time range label
-  function getTimeRangeLabel() {
+  const getTimeRangeLabel = () => {
     switch (timeRange) {
       case 'today':
         return 'Today';
@@ -182,62 +171,10 @@ const DashboardPage = () => {
       default:
         return 'This Month';
     }
-  }
-
-  // Render a KPI card
-  const renderKpiCard = (kpi) => {
-    return (
-      <Card
-        key={kpi.key}
-        styles={{
-          root: {
-            width: 'calc(25% - 16px)',
-            marginRight: 16,
-            marginBottom: 16,
-            minWidth: 220
-          }
-        }}
-      >
-        <CardItem>
-          <Text variant="medium">{kpi.label}</Text>
-        </CardItem>
-        <Stack tokens={{ padding: 16 }}>
-          <Text variant="xxLarge" styles={{ root: { fontWeight: 600 } }}>{kpi.value}</Text>
-          <Stack horizontal verticalAlign="center">
-            <IconButton
-              iconProps={{
-                iconName: kpi.changeType === 'increase' ? 'TriangleSolidUp12' : 'TriangleSolidDown12',
-                styles: {
-                  root: {
-                    color: kpi.changeType === 'increase' ? '#107c10' : '#d13438',
-                    marginRight: 4
-                  }
-                }
-              }}
-              styles={{ root: { height: 24, width: 24, padding: 0 } }}
-              disabled
-            />
-            <Text
-              variant="small"
-              styles={{
-                root: {
-                  color: kpi.changeType === 'increase' ? '#107c10' : '#d13438'
-                }
-              }}
-            >
-              {Math.abs(kpi.change)}%
-            </Text>
-            <Text variant="small" styles={{ root: { marginLeft: 4 } }}>
-              vs. {getPreviousPeriod()}
-            </Text>
-          </Stack>
-        </Stack>
-      </Card>
-    );
   };
 
-  // Helper function to get previous period
-  function getPreviousPeriod() {
+  // Helper function to get previous period label
+  const getPreviousPeriod = () => {
     switch (timeRange) {
       case 'today':
         return 'yesterday';
@@ -252,261 +189,185 @@ const DashboardPage = () => {
       default:
         return 'last month';
     }
-  }
-
-  // Render activity item
-  const renderActivityItem = (activity) => {
-    const getActivityIcon = (type) => {
-      switch (type) {
-        case 'lead':
-          return 'UserFollowed';
-        case 'opportunity':
-          return 'Money';
-        case 'task':
-          return 'CheckMark';
-        default:
-          return 'Info';
-      }
-    };
-
-    return (
-      <Stack
-        key={activity.id}
-        horizontal
-        verticalAlign="center"
-        tokens={{ childrenGap: 12 }}
-        styles={{
-          root: {
-            padding: '8px 12px',
-            borderBottom: '1px solid #f3f2f1',
-            ':hover': { backgroundColor: '#f8f8f8' }
-          }
-        }}
-      >
-        <IconButton
-          iconProps={{ iconName: getActivityIcon(activity.type) }}
-          styles={{
-            root: {
-              height: 32,
-              width: 32,
-              backgroundColor: '#f3f2f1',
-              borderRadius: '50%'
-            }
-          }}
-          disabled
-        />
-        <Stack grow>
-          <Text>{activity.title}: <b>{activity.entity}</b></Text>
-          <Text variant="smallPlus" styles={{ root: { color: '#605e5c' } }}>
-            {activity.user} • {activity.timestamp}
-          </Text>
-        </Stack>
-      </Stack>
-    );
   };
 
-  // Render task item
-  const renderTaskItem = (task) => {
-    const getPriorityColor = (priority) => {
-      switch (priority) {
-        case 'high':
-          return '#d13438';
-        case 'medium':
-          return '#ffb900';
-        case 'low':
-          return '#107c10';
-        default:
-          return '#8a8886';
-      }
-    };
+  // Handler for refresh button
+  const handleRefresh = () => {
+    setIsLoading(true);
+    // Simulate refresh
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+  };
 
-    return (
-      <Stack
-        key={task.id}
-        horizontal
-        verticalAlign="center"
-        tokens={{ childrenGap: 12 }}
-        styles={{
-          root: {
-            padding: '8px 12px',
-            borderBottom: '1px solid #f3f2f1',
-            ':hover': { backgroundColor: '#f8f8f8' }
-          }
-        }}
-      >
-        <Checkbox styles={{ checkbox: { borderColor: getPriorityColor(task.priority) } }} />
-        <Stack grow>
-          <Text>{task.title}</Text>
-          <Text variant="smallPlus" styles={{ root: { color: '#605e5c' } }}>
-            Due: {task.dueDate}
-          </Text>
-        </Stack>
-      </Stack>
-    );
+  // Handler for time range change
+  const handleTimeRangeChange = (newRange) => {
+    setTimeRange(newRange);
+  };
+
+  // Handler for task completion
+  const handleTaskComplete = (taskId) => {
+    console.log(`Task ${taskId} marked as complete`);
+  };
+
+  // Handler for view all tasks
+  const handleViewAllTasks = () => {
+    console.log('Navigate to tasks');
+  };
+
+  // Handler for view all activities
+  const handleViewAllActivities = () => {
+    console.log('View all activities');
   };
 
   // Render loading state
   if (isLoading) {
     return (
-      <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '70vh' } }}>
-        <Spinner size={SpinnerSize.large} label="Loading dashboard..." />
-      </Stack>
+      <div className={styles.loadingContainer}>
+        <Spinner size="large" label="Loading dashboard..." />
+      </div>
     );
   }
 
   // Render error state
   if (error) {
     return (
-      <Stack styles={{ root: { padding: 20 } }}>
-        <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
-        <DefaultButton
-          text="Try Again"
-          iconProps={{ iconName: 'Refresh' }}
-          onClick={() => {
-            setIsLoading(true);
-            setTimeout(() => {
-              setError(null);
-              setIsLoading(false);
-            }, 1000);
-          }}
-          styles={{ root: { marginTop: 16 } }}
-        />
-      </Stack>
+      <div className={styles.errorContainer}>
+        <Alert intent="error">{error}</Alert>
+        <Button
+          appearance="primary"
+          icon={<ArrowSync24Regular />}
+          onClick={handleRefresh}
+        >
+          Try Again
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Stack>
-      <Stack.Item>
-        <Stack horizontal horizontalAlign="space-between" verticalAlign="center" styles={{ root: { padding: '16px 0' } }}>
-          <Text variant="xxLarge">Dashboard</Text>
-        </Stack>
-      </Stack.Item>
+    <div className={styles.container}>
+      {/* Dashboard Header */}
+      <div className={styles.header}>
+        <Text size={800} weight="semibold">Dashboard</Text>
+      </div>
 
-      <Stack.Item>
-        <CommandBar
-          items={commandBarItems}
-          farItems={commandBarFarItems}
-        />
-      </Stack.Item>
+      {/* Toolbar */}
+      <Toolbar>
+        <ToolbarButton
+          icon={<ArrowSync24Regular />}
+          onClick={handleRefresh}
+        >
+          Refresh
+        </ToolbarButton>
 
-      {/* KPI Section */}
-      <Stack.Item styles={{ root: { marginTop: 20 } }}>
-        <Stack horizontal wrap styles={{ root: { marginRight: -16 } }}>
-          {dashboardData.kpis.map(renderKpiCard)}
-        </Stack>
-      </Stack.Item>
+        <Menu>
+          <MenuTrigger disableButtonEnhancement>
+            <ToolbarButton icon={<Calendar24Regular />}>
+              {getTimeRangeLabel()}
+            </ToolbarButton>
+          </MenuTrigger>
+          <MenuPopover>
+            <MenuList>
+              <MenuItem
+                onClick={() => handleTimeRangeChange('today')}
+                checkmark={timeRange === 'today'}
+              >
+                Today
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleTimeRangeChange('thisWeek')}
+                checkmark={timeRange === 'thisWeek'}
+              >
+                This Week
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleTimeRangeChange('thisMonth')}
+                checkmark={timeRange === 'thisMonth'}
+              >
+                This Month
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleTimeRangeChange('lastQuarter')}
+                checkmark={timeRange === 'lastQuarter'}
+              >
+                Last Quarter
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleTimeRangeChange('ytd')}
+                checkmark={timeRange === 'ytd'}
+              >
+                Year to Date
+              </MenuItem>
+            </MenuList>
+          </MenuPopover>
+        </Menu>
+
+        <ToolbarButton
+          icon={<Settings24Regular />}
+          onClick={() => console.log('Customize dashboard')}
+        >
+          Customize
+        </ToolbarButton>
+
+        <ToolbarButton
+          icon={<ArrowDownload24Regular />}
+          onClick={() => console.log('Export dashboard')}
+        >
+          Export
+        </ToolbarButton>
+      </Toolbar>
+
+      {/* KPI Cards */}
+      <div className={styles.kpiContainer}>
+        {dashboardData.kpis.map(kpi => (
+          <KpiCard
+            key={kpi.key}
+            kpi={kpi}
+            previousPeriod={getPreviousPeriod()}
+          />
+        ))}
+      </div>
 
       {/* Dashboard Sections */}
-      <Stack.Item styles={{ root: { marginTop: 24 } }}>
-        <Stack horizontal tokens={{ childrenGap: 24 }}>
-          {/* Left Column */}
-          <Stack.Item grow={3} styles={{ root: { minWidth: 400 } }}>
-            <Pivot>
-              <PivotItem headerText="Activities">
-                <Card>
-                  <Stack tokens={{ padding: 16 }}>
-                    <Text variant="large" styles={{ root: { marginBottom: 12 } }}>Recent Activities</Text>
-                    {dashboardData.activities.map(renderActivityItem)}
-                    <Link
-                      styles={{ root: { marginTop: 12, display: 'block', textAlign: 'center' } }}
-                      onClick={() => console.log('View all activities')}
-                    >
-                      View all activities
-                    </Link>
-                  </Stack>
-                </Card>
-              </PivotItem>
-              <PivotItem headerText="Pipeline">
-                <Card>
-                  <Stack tokens={{ padding: 16 }}>
-                    <Text variant="large">Sales Pipeline</Text>
-                    <Stack horizontal horizontalAlign="space-between" styles={{ root: { marginTop: 16 } }}>
-                      <Stack>
-                        <Text variant="smallPlus">Pipeline Value</Text>
-                        <Text variant="xLarge">{dashboardData.salesForecast.pipeline}</Text>
-                      </Stack>
-                      <Stack>
-                        <Text variant="smallPlus">This Month Forecast</Text>
-                        <Text variant="xLarge">{dashboardData.salesForecast.thisMonth}</Text>
-                      </Stack>
-                      <Stack>
-                        <Text variant="smallPlus">Next Month Forecast</Text>
-                        <Text variant="xLarge">{dashboardData.salesForecast.nextMonth}</Text>
-                      </Stack>
-                    </Stack>
+      <div className={styles.dashboardSections}>
+        {/* Main Column */}
+        <div className={styles.mainColumn}>
+          <TabList
+            selectedValue={selectedTabId}
+            onTabSelect={(_, data) => setSelectedTabId(data.value)}
+          >
+            <Tab value="activities">Activities</Tab>
+            <Tab value="pipeline">Pipeline</Tab>
+            <Tab value="leads">Leads</Tab>
+          </TabList>
 
-                    {/* Placeholder for chart */}
-                    <div
-                      style={{
-                        height: 200,
-                        backgroundColor: '#f3f2f1',
-                        marginTop: 16,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Text>Pipeline Chart Placeholder</Text>
-                    </div>
-                  </Stack>
-                </Card>
-              </PivotItem>
-              <PivotItem headerText="Leads">
-                <Card>
-                  <Stack tokens={{ padding: 16 }}>
-                    <Text variant="large">Lead Performance</Text>
-                    <Stack horizontal horizontalAlign="space-between" styles={{ root: { marginTop: 16 } }}>
-                      <Stack>
-                        <Text variant="smallPlus">Total Leads</Text>
-                        <Text variant="xLarge">{dashboardData.leadsPerformance.total}</Text>
-                      </Stack>
-                      <Stack>
-                        <Text variant="smallPlus">Qualified</Text>
-                        <Text variant="xLarge">{dashboardData.leadsPerformance.qualified}</Text>
-                      </Stack>
-                      <Stack>
-                        <Text variant="smallPlus">Converted</Text>
-                        <Text variant="xLarge">{dashboardData.leadsPerformance.converted}</Text>
-                      </Stack>
-                    </Stack>
+          {selectedTabId === 'activities' && (
+            <ActivityFeed
+              activities={dashboardData.activities}
+              onViewAll={handleViewAllActivities}
+            />
+          )}
 
-                    {/* Placeholder for chart */}
-                    <div
-                      style={{
-                        height: 200,
-                        backgroundColor: '#f3f2f1',
-                        marginTop: 16,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Text>Leads by Source Chart Placeholder</Text>
-                    </div>
-                  </Stack>
-                </Card>
-              </PivotItem>
-            </Pivot>
-          </Stack.Item>
+          {selectedTabId === 'pipeline' && (
+            <SalesPipeline salesForecast={dashboardData.salesForecast} />
+          )}
 
-          {/* Right Column */}
-          <Stack.Item grow={1} styles={{ root: { minWidth: 300 } }}>
-            <Card>
-              <Stack tokens={{ padding: 16 }}>
-                <Text variant="large" styles={{ root: { marginBottom: 12 } }}>Upcoming Tasks</Text>
-                {dashboardData.upcomingTasks.map(renderTaskItem)}
-                <DefaultButton
-                  text="View All Tasks"
-                  styles={{ root: { marginTop: 12 } }}
-                  onClick={() => console.log('Navigate to tasks')}
-                />
-              </Stack>
-            </Card>
-          </Stack.Item>
-        </Stack>
-      </Stack.Item>
-    </Stack>
+          {selectedTabId === 'leads' && (
+            <LeadPerformance leadsPerformance={dashboardData.leadsPerformance} />
+          )}
+        </div>
+
+        {/* Side Column */}
+        <div className={styles.sideColumn}>
+          <TaskList
+            tasks={dashboardData.upcomingTasks}
+            onTaskComplete={handleTaskComplete}
+            onViewAllTasks={handleViewAllTasks}
+          />
+        </div>
+      </div>
+    </div>
   );
 };
 

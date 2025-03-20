@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import PropTypes from 'prop-types';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -12,7 +13,7 @@ import {
   ArcElement
 } from 'chart.js';
 import { Line, Bar, Pie } from 'react-chartjs-2';
-import { mergeStyles } from '@fluentui/react';
+import { makeStyles, tokens } from '@fluentui/react-components';
 
 // Register ChartJS components
 ChartJS.register(
@@ -27,9 +28,11 @@ ChartJS.register(
   Legend
 );
 
-const chartContainerStyles = mergeStyles({
-  height: '400px',
-  padding: '20px'
+const useStyles = makeStyles({
+  chartContainer: {
+    height: '400px',
+    padding: tokens.spacingHorizontalL
+  }
 });
 
 /**
@@ -51,12 +54,14 @@ const getYAxisTitle = (reportType) => {
 /**
  * ReportChart component renders different chart types based on report data
  */
-const ReportChart = ({ 
-  data = [], 
-  chartType = 'bar', 
-  reportType = 'sales', 
-  groupBy = 'month' 
+const ReportChart = ({
+  data = [],
+  chartType = 'bar',
+  reportType = 'sales',
+  groupBy = 'month'
 }) => {
+  const styles = useStyles();
+
   // Prepare chart data
   const chartData = useMemo(() => {
     if (!data || data.length === 0) {
@@ -73,7 +78,7 @@ const ReportChart = ({
 
     // Extract labels from data based on groupBy
     const labels = data.map(item => item.label || item[groupBy] || 'Unknown');
-    
+
     // Get colors for chart
     const backgroundColor = [
       'rgba(75, 192, 192, 0.2)',
@@ -83,7 +88,7 @@ const ReportChart = ({
       'rgba(255, 159, 64, 0.2)',
       'rgba(255, 99, 132, 0.2)'
     ];
-    
+
     const borderColor = [
       'rgba(75, 192, 192, 1)',
       'rgba(54, 162, 235, 1)',
@@ -122,7 +127,7 @@ const ReportChart = ({
   const options = useMemo(() => {
     // Safely get groupBy with default
     const safeGroupBy = groupBy || 'month';
-    
+
     const baseOptions = {
       responsive: true,
       maintainAspectRatio: false,
@@ -142,7 +147,7 @@ const ReportChart = ({
                 label += ': ';
               }
               if (context.parsed.y !== null) {
-                label += new Intl.NumberFormat('en-US', { 
+                label += new Intl.NumberFormat('en-US', {
                   style: reportType === 'sales' ? 'currency' : 'decimal',
                   currency: 'USD'
                 }).format(context.parsed.y);
@@ -198,10 +203,26 @@ const ReportChart = ({
   };
 
   return (
-    <div className={chartContainerStyles}>
+    <div className={styles.chartContainer}>
       {renderChart()}
     </div>
   );
+};
+
+ReportChart.propTypes = {
+  /** Data to be displayed in the chart */
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number
+    })
+  ),
+  /** Type of chart to display */
+  chartType: PropTypes.oneOf(['line', 'bar', 'pie']),
+  /** Type of report */
+  reportType: PropTypes.string,
+  /** How the data is grouped */
+  groupBy: PropTypes.string
 };
 
 export default ReportChart;

@@ -1,31 +1,68 @@
-// src/components/leads/LeadList.jsx
+// src/modules/leads/components/LeadList.jsx
+// src/modules/leads/components/LeadList.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  DetailsList,
-  DetailsListLayoutMode,
-  Selection,
-  SelectionMode,
-  Spinner,
-  SpinnerSize,
+  Button,
   Text,
-  Stack,
-  CommandBar,
-  SearchBox,
-  MarqueeSelection,
-  MessageBar,
-  MessageBarType,
-  mergeStyles
-} from '@fluentui/react';
-import { LeadService } from '../services/LeadService';
+  Spinner,
+  Input,
+  makeStyles,
+  tokens,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableCellLayout,
+  TableSelectionCell,
+  Checkbox,
+  useTableFeatures,
+  useTableSelection,
+  createTableColumn
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import {
+  AddRegular,
+  EditRegular,
+  DeleteRegular,
+  ArrowClockwiseRegular,
+  SearchRegular,
+  DocumentRegular
+} from '@fluentui/react-icons';
+import { LeadService } from '../services';
 
-const containerStyles = mergeStyles({
-  margin: '10px 0'
-});
-
-const spinnerStyles = mergeStyles({
-  display: 'flex',
-  justifyContent: 'center',
-  padding: '20px'
+const useStyles = makeStyles({
+  container: {
+    margin: `${tokens.spacingVerticalM} 0`
+  },
+  spinnerContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: tokens.spacingVerticalXL
+  },
+  commandBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: tokens.spacingVerticalL
+  },
+  leftCommands: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  rightCommands: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  searchBox: {
+    width: '300px'
+  },
+  tableFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: tokens.spacingVerticalM
+  }
 });
 
 /**
@@ -38,6 +75,8 @@ const LeadList = ({
   onCreateLead,
   selectedView = 'all'
 }) => {
+  const styles = useStyles();
+
   // State
   const [leads, setLeads] = useState([]);
   const [filteredLeads, setFilteredLeads] = useState([]);
@@ -46,12 +85,87 @@ const LeadList = ({
   const [selectedLeads, setSelectedLeads] = useState([]);
   const [searchText, setSearchText] = useState('');
 
-  // Create selection for DetailsList
-  const selection = new Selection({
-    onSelectionChanged: () => {
-      setSelectedLeads(selection.getSelection());
-    }
-  });
+  // Define columns for the table
+  const columns = [
+    createTableColumn({
+      columnId: 'fullName',
+      compare: (a, b) => {
+        const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+        const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      },
+      renderHeaderCell: () => 'Name',
+      renderCell: (item) => (
+        <TableCellLayout>
+          {`${item.firstName || ''} ${item.lastName || ''}`}
+        </TableCellLayout>
+      )
+    }),
+    createTableColumn({
+      columnId: 'company',
+      compare: (a, b) => (a.company || '').localeCompare(b.company || ''),
+      renderHeaderCell: () => 'Company',
+      renderCell: (item) => <TableCellLayout>{item.company || ''}</TableCellLayout>
+    }),
+    createTableColumn({
+      columnId: 'email',
+      compare: (a, b) => (a.email || '').localeCompare(b.email || ''),
+      renderHeaderCell: () => 'Email',
+      renderCell: (item) => <TableCellLayout>{item.email || ''}</TableCellLayout>
+    }),
+    createTableColumn({
+      columnId: 'phone',
+      compare: (a, b) => (a.phone || '').localeCompare(b.phone || ''),
+      renderHeaderCell: () => 'Phone',
+      renderCell: (item) => <TableCellLayout>{item.phone || ''}</TableCellLayout>
+    }),
+    createTableColumn({
+      columnId: 'status',
+      compare: (a, b) => (a.status || '').localeCompare(b.status || ''),
+      renderHeaderCell: () => 'Status',
+      renderCell: (item) => <TableCellLayout>{item.status || ''}</TableCellLayout>
+    }),
+    createTableColumn({
+      columnId: 'source',
+      compare: (a, b) => (a.source || '').localeCompare(b.source || ''),
+      renderHeaderCell: () => 'Source',
+      renderCell: (item) => <TableCellLayout>{item.source || ''}</TableCellLayout>
+    }),
+    createTableColumn({
+      columnId: 'estimatedValue',
+      compare: (a, b) => (a.estimatedValue || 0) - (b.estimatedValue || 0),
+      renderHeaderCell: () => 'Value',
+      renderCell: (item) => (
+        <TableCellLayout>
+          {item.estimatedValue ? `$${Number(item.estimatedValue).toLocaleString()}` : '$0'}
+        </TableCellLayout>
+      )
+    }),
+    createTableColumn({
+      columnId: 'assignedTo',
+      compare: (a, b) => (a.assignedTo || '').localeCompare(b.assignedTo || ''),
+      renderHeaderCell: () => 'Assigned To',
+      renderCell: (item) => <TableCellLayout>{item.assignedTo || ''}</TableCellLayout>
+    })
+  ];
+
+  // Set up table selection
+  const { selectionState } = useTableFeatures(
+    {
+      columns,
+      items: filteredLeads
+    },
+    [
+      useTableSelection({
+        selectionMode: 'multiselect',
+        selectionItems: filteredLeads,
+        onSelectionChange: (e, data) => {
+          const selectedItems = data.selectedItems.filter(item => item !== undefined);
+          setSelectedLeads(selectedItems);
+        }
+      })
+    ]
+  );
 
   // Fetch Leads
   const fetchLeads = async () => {
@@ -84,11 +198,11 @@ const LeadList = ({
     const lowerCaseSearch = searchText.toLowerCase();
     const filtered = leadsData.filter(lead => {
       return (
-        lead.firstName?.toLowerCase().includes(lowerCaseSearch) ||
-        lead.lastName?.toLowerCase().includes(lowerCaseSearch) ||
-        lead.email?.toLowerCase().includes(lowerCaseSearch) ||
-        lead.company?.toLowerCase().includes(lowerCaseSearch) ||
-        `${lead.firstName} ${lead.lastName}`.toLowerCase().includes(lowerCaseSearch)
+        (lead.firstName?.toLowerCase() || '').includes(lowerCaseSearch) ||
+        (lead.lastName?.toLowerCase() || '').includes(lowerCaseSearch) ||
+        (lead.email?.toLowerCase() || '').includes(lowerCaseSearch) ||
+        (lead.company?.toLowerCase() || '').includes(lowerCaseSearch) ||
+        `${lead.firstName || ''} ${lead.lastName || ''}`.toLowerCase().includes(lowerCaseSearch)
       );
     });
     setFilteredLeads(filtered);
@@ -104,176 +218,137 @@ const LeadList = ({
     applyFilters();
   }, [searchText]);
 
-  // Handle search change
-  const handleSearch = (_, value) => {
-    setSearchText(value || '');
+  // Handle search input change
+  const handleSearch = (e) => {
+    setSearchText(e.target.value);
   };
 
-  // Columns for DetailsList
-  const columns = [
-    {
-      key: 'fullName',
-      name: 'Name',
-      fieldName: 'fullName',
-      minWidth: 120,
-      maxWidth: 180,
-      isResizable: true,
-      onRender: (item) => `${item.firstName || ''} ${item.lastName || ''}`
-    },
-    {
-      key: 'company',
-      name: 'Company',
-      fieldName: 'company',
-      minWidth: 120,
-      maxWidth: 180,
-      isResizable: true
-    },
-    {
-      key: 'email',
-      name: 'Email',
-      fieldName: 'email',
-      minWidth: 150,
-      maxWidth: 200,
-      isResizable: true
-    },
-    {
-      key: 'phone',
-      name: 'Phone',
-      fieldName: 'phone',
-      minWidth: 120,
-      maxWidth: 150,
-      isResizable: true
-    },
-    {
-      key: 'status',
-      name: 'Status',
-      fieldName: 'status',
-      minWidth: 100,
-      maxWidth: 120,
-      isResizable: true
-    },
-    {
-      key: 'source',
-      name: 'Source',
-      fieldName: 'source',
-      minWidth: 100,
-      maxWidth: 120,
-      isResizable: true
-    },
-    {
-      key: 'estimatedValue',
-      name: 'Value',
-      fieldName: 'estimatedValue',
-      minWidth: 80,
-      maxWidth: 100,
-      isResizable: true,
-      onRender: (item) => item.estimatedValue ? `$${Number(item.estimatedValue).toLocaleString()}` : '$0'
-    },
-    {
-      key: 'assignedTo',
-      name: 'Assigned To',
-      fieldName: 'assignedTo',
-      minWidth: 120,
-      maxWidth: 150,
-      isResizable: true
-    }
-  ];
+  // Handle row click
+  const handleRowClick = (item) => {
+    onEditLead(item);
+  };
 
-  // Command bar items
-  const commandBarItems = [
-    {
-      key: 'newLead',
-      text: 'New Lead',
-      iconProps: { iconName: 'Add' },
-      onClick: onCreateLead
-    },
-    {
-      key: 'editLead',
-      text: 'Edit',
-      iconProps: { iconName: 'Edit' },
-      onClick: () => onEditLead(selectedLeads[0]),
-      disabled: selectedLeads.length !== 1
-    },
-    {
-      key: 'deleteLead',
-      text: 'Delete',
-      iconProps: { iconName: 'Delete' },
-      onClick: () => onDeleteLead(selectedLeads),
-      disabled: selectedLeads.length === 0
-    },
-    {
-      key: 'refresh',
-      text: 'Refresh',
-      iconProps: { iconName: 'Refresh' },
-      onClick: fetchLeads
-    }
-  ];
+  // Render command bar buttons
+  const renderCommandBar = () => (
+    <div className={styles.commandBar}>
+      <div className={styles.leftCommands}>
+        <Button
+          icon={<AddRegular />}
+          onClick={onCreateLead}
+          appearance="primary"
+        >
+          New Lead
+        </Button>
+        <Button
+          icon={<EditRegular />}
+          onClick={() => onEditLead(selectedLeads[0])}
+          disabled={selectedLeads.length !== 1}
+        >
+          Edit
+        </Button>
+        <Button
+          icon={<DeleteRegular />}
+          onClick={() => onDeleteLead(selectedLeads)}
+          disabled={selectedLeads.length === 0}
+        >
+          Delete
+        </Button>
+        <Button
+          icon={<ArrowClockwiseRegular />}
+          onClick={fetchLeads}
+        >
+          Refresh
+        </Button>
+      </div>
 
-  // Command bar far items
-  const farItems = [
-    {
-      key: 'export',
-      text: 'Export',
-      iconProps: { iconName: 'Download' },
-      onClick: () => console.log('Export clicked')
-    }
-  ];
+      <div className={styles.rightCommands}>
+        <Input
+          placeholder="Search leads..."
+          onChange={handleSearch}
+          value={searchText}
+          contentBefore={<SearchRegular />}
+          className={styles.searchBox}
+        />
+        <Button
+          icon={<DocumentRegular />}
+          onClick={() => console.log('Export clicked')}
+        >
+          Export
+        </Button>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
-      <div className={spinnerStyles}>
-        <Spinner size={SpinnerSize.large} label="Loading leads..." />
+      <div className={styles.spinnerContainer}>
+        <Spinner size="large" label="Loading leads..." />
       </div>
     );
   }
 
   return (
-    <div className={containerStyles}>
+    <div className={styles.container}>
       {error && (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={false}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { marginBottom: 10 } }}
-        >
+        <Alert intent="error" style={{ marginBottom: tokens.spacingVerticalM }}>
           {error}
-        </MessageBar>
+        </Alert>
       )}
 
-      <Stack tokens={{ childrenGap: 10 }}>
-        <Stack horizontal horizontalAlign="space-between">
-          <SearchBox
-            placeholder="Search leads"
-            onChange={handleSearch}
-            styles={{ root: { width: 300 } }}
-          />
-          <CommandBar items={commandBarItems} farItems={farItems} />
-        </Stack>
+      {renderCommandBar()}
 
-        <MarqueeSelection selection={selection}>
-          <DetailsList
-            items={filteredLeads}
-            columns={columns}
-            setKey="id"
-            selection={selection}
-            selectionMode={SelectionMode.multiple}
-            layoutMode={DetailsListLayoutMode.justified}
-            selectionPreservedOnEmptyClick={true}
-            onItemInvoked={(item) => onEditLead(item)}
-            onRenderEmptyList={() => (
-              <Stack horizontalAlign="center" styles={{ root: { padding: 20 } }}>
-                <Text>No leads found.</Text>
-              </Stack>
-            )}
-          />
-        </MarqueeSelection>
+      <Table
+        aria-label="Leads table"
+        selectionMode="multiselect"
+      >
+        <TableHeader>
+          <TableRow>
+            <TableSelectionCell />
+            {columns.map((column) => (
+              <TableHeaderCell key={column.columnId}>
+                {column.renderHeaderCell()}
+              </TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredLeads.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={columns.length + 1}>
+                <Text align="center">No leads found.</Text>
+              </TableCell>
+            </TableRow>
+          ) : (
+            filteredLeads.map((item) => (
+              <TableRow
+                key={item.id}
+                onClick={() => handleRowClick(item)}
+                aria-selected={selectionState.isItemSelected(item)}
+              >
+                <TableSelectionCell>
+                  <Checkbox
+                    checked={selectionState.isItemSelected(item)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      selectionState.toggleItem(item);
+                    }}
+                  />
+                </TableSelectionCell>
+                {columns.map((column) => (
+                  <TableCell key={`${item.id}-${column.columnId}`}>
+                    {column.renderCell(item)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
-        <Stack horizontal horizontalAlign="space-between">
-          <Text>{filteredLeads.length} leads</Text>
-        </Stack>
-      </Stack>
+      <div className={styles.tableFooter}>
+        <Text>{filteredLeads.length} leads</Text>
+      </div>
     </div>
   );
 };
-
 export default LeadList;

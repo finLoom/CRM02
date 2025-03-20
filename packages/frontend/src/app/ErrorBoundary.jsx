@@ -1,6 +1,38 @@
 import React from 'react';
-import { MessageBar, MessageBarType, Stack, Text, PrimaryButton, DefaultButton } from '@fluentui/react';
+import {
+  Button,
+  makeStyles,
+  Text,
+  tokens,
+  shorthands
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import { logError } from '../services/logging/errorLoggingService';
+
+const useStyles = makeStyles({
+  root: {
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shorthands.padding(tokens.spacingVerticalL)
+  },
+  buttonContainer: {
+    display: 'flex',
+    ...shorthands.gap(tokens.spacingHorizontalM),
+    marginTop: tokens.spacingVerticalL
+  },
+  errorStack: {
+    overflow: 'auto',
+    maxHeight: '200px',
+    width: '100%',
+    ...shorthands.border(tokens.strokeWidthThin, 'solid', tokens.colorNeutralStroke1),
+    ...shorthands.borderRadius(tokens.borderRadiusMedium),
+    ...shorthands.padding(tokens.spacingHorizontalM),
+    backgroundColor: tokens.colorNeutralBackground2
+  }
+});
 
 /**
  * Error Boundary component to catch and handle runtime errors
@@ -47,35 +79,41 @@ class ErrorBoundary extends React.Component {
   };
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <Stack
-          horizontalAlign="center"
-          verticalAlign="center"
-          styles={{ root: { height: '100vh', padding: 20 } }}
-        >
-          <MessageBar messageBarType={MessageBarType.error} isMultiline>
-            <Text variant="large">Something went wrong</Text>
-            <Text>
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </Text>
-            {process.env.NODE_ENV === 'development' && (
-              <pre style={{ overflow: 'auto', maxHeight: '200px' }}>
-                {this.state.error?.stack}
-              </pre>
-            )}
-          </MessageBar>
-
-          <Stack horizontal tokens={{ childrenGap: 10 }} styles={{ root: { marginTop: 20 } }}>
-            <PrimaryButton onClick={this.handleReload} text="Reload Application" />
-            <DefaultButton onClick={this.handleReportError} text="Report Issue" />
-          </Stack>
-        </Stack>
-      );
+    if (!this.state.hasError) {
+      return this.props.children;
     }
 
-    return this.props.children;
+    return <ErrorContent
+      error={this.state.error}
+      isDevelopment={process.env.NODE_ENV === 'development'}
+      onReload={this.handleReload}
+      onReport={this.handleReportError}
+    />;
   }
 }
+
+// Extracted functional component for the error content
+const ErrorContent = ({ error, isDevelopment, onReload, onReport }) => {
+  const styles = useStyles();
+
+  return (
+    <div className={styles.root}>
+      <Alert intent="error">
+        <Text weight="semibold" size={500}>Something went wrong</Text>
+        <Text>{error?.message || 'An unexpected error occurred'}</Text>
+        {isDevelopment && error?.stack && (
+          <pre className={styles.errorStack}>
+            {error.stack}
+          </pre>
+        )}
+      </Alert>
+
+      <div className={styles.buttonContainer}>
+        <Button appearance="primary" onClick={onReload}>Reload Application</Button>
+        <Button appearance="secondary" onClick={onReport}>Report Issue</Button>
+      </div>
+    </div>
+  );
+};
 
 export default ErrorBoundary;

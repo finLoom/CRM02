@@ -1,183 +1,151 @@
 // File: packages/frontend/src/config/icons.js
-import { registerIcons } from '@fluentui/react/lib/Styling';
-import { initializeIcons as initFluentIcons } from '@fluentui/react/lib/Icons';
+import {
+  Add24Regular,
+  Delete24Regular,
+  Edit24Regular,
+  Search24Regular,
+  ArrowLeft24Regular,
+  ArrowRight24Regular,
+  Settings24Regular,
+  Person24Regular,
+  Mail24Regular,
+  Calendar24Regular,
+  CheckmarkCircle24Regular,
+  Dismiss24Regular,
+  Info24Regular,
+  Warning24Regular,
+  ArrowDown24Regular,
+  ArrowUp24Regular,
+  ChevronDown24Regular,
+  ChevronUp24Regular,
+  ChevronLeft24Regular,
+  ChevronRight24Regular,
+  Home24Regular,
+  Document24Regular,
+  Filter24Regular,
+  MoreHorizontal24Regular,
+  Save24Regular,
+  ArrowSync24Regular,
+  ShoppingCart24Regular,
+  PersonCircle24Regular,
+  PersonAdd24Regular,
+  Money24Regular,
+  CheckmarkSquare24Regular,
+  PeopleTeam24Regular,
+  DataPie24Regular,
+  CalendarAgenda24Regular,
+  TextBulletListSquare24Regular,
+  ArrowImport24Regular,
+  ArrowExport24Regular,
+  Filter24Regular as FilterIcon24Regular,
+  ArrowSort24Regular,
+  CalendarWeekStart24Regular,
+  Board24Regular,
+  TextBulletListTree24Regular,
+  Circle24Regular,
+  Clock24Regular
+} from '@fluentui/react-icons';
 
-// Flag to track if icons have been initialized
+// Flag to track if icons have been registered
 let iconsInitialized = false;
 
 /**
- * Custom icon set for the application
- * These extend the standard Fluent UI icons
+ * Icon mapping from v8 names to v9 components
+ * This helps with backward compatibility during migration
  */
-const customIcons = {
-  'LeadIcon': {
-    code: '\uE8B2',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'ContactIcon': {
-    code: '\uE779',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'OpportunityIcon': {
-    code: '\uEADF',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'TaskIcon': {
-    code: '\uE7C1',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'PipelineIcon': {
-    code: '\uF5F2',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'ReportIcon': {
-    code: '\uE9D2',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'DashboardIcon': {
-    code: '\uEECF',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'TeamIcon': {
-    code: '\uE716',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'ImportIcon': {
-    code: '\uE8B5',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'ExportIcon': {
-    code: '\uEDE1',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'FilterIcon': {
-    code: '\uE71C',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'SortIcon': {
-    code: '\uE8CB',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'CalendarIcon': {
-    code: '\uE787',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'KanbanIcon': {
-    code: '\uF555',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'TreeViewIcon': {
-    code: '\uF6D5',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'HighPriorityIcon': {
-    code: '\uE8AF',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'MediumPriorityIcon': {
-    code: '\uEA84',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'LowPriorityIcon': {
-    code: '\uEA85',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  }
-};
-
-/**
- * Status icons with colors for various states
- */
-const statusIcons = {
-  'StatusNewIcon': {
-    code: '\uE781',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'StatusInProgressIcon': {
-    code: '\uE915',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'StatusPendingIcon': {
-    code: '\uE8F7',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'StatusCompletedIcon': {
-    code: '\uE73E',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  },
-  'StatusCancelledIcon': {
-    code: '\uE74D',
-    fontFace: { fontFamily: 'FabricMDL2Icons' }
-  }
-};
-
-/**
- * Common icons that are needed but not registered by default
- */
-const commonIcons = {
+const iconMapping = {
   // Navigation icons
-  'GlobalNavButton': { code: '\uE700', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Search': { code: '\uE721', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Ringer': { code: '\uEA8F', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Help': { code: '\uE897', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  
+  'GlobalNavButton': ArrowLeft24Regular,
+  'Search': Search24Regular,
+  'Ringer': Mail24Regular,
+  'Help': Info24Regular,
+
   // Module icons
-  'ViewDashboard': { code: '\uF246', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'FunnelChart': { code: '\uE9F2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'ContactList': { code: '\uEEBD', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'SplitObject': { code: '\uE9B2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'CheckList': { code: '\uE9D5', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'BarChart4': { code: '\uE922', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Settings': { code: '\uE713', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'TaskList': { code: '\uE644', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  
+  'ViewDashboard': Home24Regular,
+  'FunnelChart': Filter24Regular,
+  'ContactList': Person24Regular,
+  'SplitObject': Document24Regular,
+  'CheckList': CheckmarkSquare24Regular,
+  'BarChart4': DataPie24Regular,
+  'Settings': Settings24Regular,
+  'TaskList': TextBulletListSquare24Regular,
+
   // Action icons
-  'Add': { code: '\uE710', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Delete': { code: '\uE74D', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Edit': { code: '\uE70F', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Refresh': { code: '\uE72C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Filter': { code: '\uE71C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'CheckMark': { code: '\uE73E', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'RemoveFilter': { code: '\uE71C', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'More': { code: '\uE712', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'MoreVertical': { code: '\uF2BC', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'CircleRing': { code: '\uEA3A', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'StatusCircleCheckmark': { code: '\uF1A2', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Info': { code: '\uE946', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'ChevronLeft': { code: '\uE76B', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'Back': { code: '\uE72B', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'AddTo': { code: '\uECC8', fontFace: { fontFamily: 'FabricMDL2Icons' } },
-  'ActivityFeed': { code: '\uF056', fontFace: { fontFamily: 'FabricMDL2Icons' } }
+  'Add': Add24Regular,
+  'Delete': Delete24Regular,
+  'Edit': Edit24Regular,
+  'Refresh': ArrowSync24Regular,
+  'Filter': FilterIcon24Regular,
+  'CheckMark': CheckmarkCircle24Regular,
+  'RemoveFilter': Dismiss24Regular,
+  'More': MoreHorizontal24Regular,
+  'MoreVertical': MoreHorizontal24Regular,
+  'CircleRing': Circle24Regular,
+  'StatusCircleCheckmark': CheckmarkCircle24Regular,
+  'Info': Info24Regular,
+  'ChevronLeft': ChevronLeft24Regular,
+  'Back': ArrowLeft24Regular,
+  'AddTo': Add24Regular,
+  'ActivityFeed': CalendarAgenda24Regular,
+
+  // Custom module icons
+  'LeadIcon': PersonAdd24Regular,
+  'ContactIcon': Person24Regular,
+  'OpportunityIcon': Money24Regular,
+  'TaskIcon': CheckmarkSquare24Regular,
+  'PipelineIcon': Filter24Regular,
+  'ReportIcon': DataPie24Regular,
+  'DashboardIcon': Home24Regular,
+  'TeamIcon': PeopleTeam24Regular,
+  'ImportIcon': ArrowImport24Regular,
+  'ExportIcon': ArrowExport24Regular,
+  'FilterIcon': FilterIcon24Regular,
+  'SortIcon': ArrowSort24Regular,
+  'CalendarIcon': Calendar24Regular,
+  'KanbanIcon': Board24Regular,
+  'TreeViewIcon': TextBulletListTree24Regular,
+
+  // Status icons
+  'StatusNewIcon': Circle24Regular,
+  'StatusInProgressIcon': Clock24Regular,
+  'StatusPendingIcon': Clock24Regular,
+  'StatusCompletedIcon': CheckmarkCircle24Regular,
+  'StatusCancelledIcon': Dismiss24Regular,
+
+  // Priority icons
+  'HighPriorityIcon': ArrowUp24Regular,
+  'MediumPriorityIcon': ArrowRight24Regular,
+  'LowPriorityIcon': ArrowDown24Regular
 };
 
 /**
  * Initialize all icons for the application
- * This function ensures we only initialize icons once
+ * Note: In Fluent UI v9, icons are imported directly as components rather than registered
+ * This function exists for compatibility with the old initialization pattern
  */
 export const initializeIcons = () => {
-  // Only initialize once to prevent duplicate registration warnings
+  // Only initialize once
   if (iconsInitialized) {
     return;
   }
 
-  // Initialize standard Fluent UI icons
-  initFluentIcons();
-
-  // Register custom application icons
-  registerIcons({
-    icons: {
-      ...customIcons,
-      ...statusIcons,
-      ...commonIcons
-    }
-  });
+  console.log('Icons ready for use (Fluent UI v9)');
 
   // Mark as initialized
   iconsInitialized = true;
-  console.log('Icons initialized');
+};
+
+/**
+ * Get an icon component by its name (for backwards compatibility)
+ * @param {string} iconName - The name of the icon
+ * @returns {React.ComponentType} - Icon component or undefined
+ */
+export const getIconByName = (iconName) => {
+  return iconMapping[iconName];
 };
 
 export default {
   initializeIcons,
-  customIcons,
-  statusIcons
+  getIconByName,
+  iconMapping
 };

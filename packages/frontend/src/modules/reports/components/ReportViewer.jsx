@@ -1,32 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  DetailsList,
-  DetailsListLayoutMode,
-  SelectionMode,
-  Text,
-  mergeStyles,
-  MessageBar,
-  MessageBarType,
+  makeStyles,
+  tokens,
   Spinner,
-  SpinnerSize
-} from '@fluentui/react';
+  Text,
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+  TableCellLayout
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import reportService, { getColumnsForReportType } from '../services/reportService';
 
-const sectionStyles = mergeStyles({
-  backgroundColor: 'white',
-  boxShadow: '0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108)',
-  borderRadius: '2px',
-  padding: '20px',
-  marginBottom: '20px'
+const useStyles = makeStyles({
+  section: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium,
+    padding: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  footer: {
+    marginTop: tokens.spacingVerticalM,
+    fontStyle: 'italic',
+    color: tokens.colorNeutralForeground3
+  }
 });
 
 /**
  * ReportViewer component to display tabular report data
- * 
+ *
  * @component
  */
 const ReportViewer = ({ reportType, reportData, isLoading }) => {
+  const styles = useStyles();
   const [columns, setColumns] = useState([]);
 
   // Update columns when report type changes
@@ -43,8 +54,8 @@ const ReportViewer = ({ reportType, reportData, isLoading }) => {
   // Render loading spinner
   if (isLoading) {
     return (
-      <div className={sectionStyles}>
-        <Spinner size={SpinnerSize.large} label="Loading report data..." />
+      <div className={styles.section}>
+        <Spinner label="Loading report data..." />
       </div>
     );
   }
@@ -52,30 +63,54 @@ const ReportViewer = ({ reportType, reportData, isLoading }) => {
   // Render empty state
   if (!reportData || reportData.length === 0) {
     return (
-      <div className={sectionStyles}>
-        <MessageBar>
+      <div className={styles.section}>
+        <Alert intent="warning">
           No data available for this report. Adjust your filters or date range and try again.
-        </MessageBar>
+        </Alert>
       </div>
     );
   }
 
+  // Helper function to format cell value
+  const formatCellValue = (item, column) => {
+    if (column.onRender) {
+      return column.onRender(item);
+    }
+    return item[column.fieldName];
+  };
+
   return (
-    <div className={sectionStyles}>
-      <Text variant="large" styles={{ root: { marginBottom: 16 } }}>
+    <div className={styles.section}>
+      <Text size={500} weight="semibold">
         {getReportTitle()}
       </Text>
-      
-      <DetailsList
-        items={reportData}
-        columns={columns}
-        setKey="period"
-        layoutMode={DetailsListLayoutMode.justified}
-        selectionMode={SelectionMode.none}
-        isHeaderVisible={true}
-      />
-      
-      <Text variant="small" styles={{ root: { marginTop: 16, fontStyle: 'italic', color: '#666' } }}>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {columns.map((column) => (
+              <TableHeaderCell key={column.key}>
+                {column.name}
+              </TableHeaderCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {reportData.map((item, index) => (
+            <TableRow key={`row-${index}`}>
+              {columns.map((column) => (
+                <TableCell key={`cell-${index}-${column.key}`}>
+                  <TableCellLayout>
+                    {formatCellValue(item, column)}
+                  </TableCellLayout>
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <Text size={200} className={styles.footer}>
         Showing {reportData.length} records
       </Text>
     </div>

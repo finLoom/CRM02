@@ -1,36 +1,150 @@
+// packages/frontend/src/modules/contacts/pages/ContactMerge.jsx
 import React, { useState } from 'react';
-import {
-  Stack,
-  Text,
-  CommandBar,
-  PrimaryButton,
-  DefaultButton,
-  MessageBar,
-  MessageBarType,
-  Card,
-  DetailsList,
-  DetailsListLayoutMode,
-  SelectionMode,
-  Selection,
-  Checkbox,
-  RadioButton,
-  Label,
-  SearchBox,
-  Icon,
-  Separator
-} from '@fluentui/react';
 import { useNavigate } from 'react-router-dom';
+import {
+  makeStyles,
+  tokens,
+  Title2,
+  Button,
+  Card,
+  CardHeader,
+  Text,
+  Body1,
+  Input,
+  RadioGroup,
+  Radio,
+  Label,
+  Divider,
+  Table,
+  TableHeader,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableSelectionCell,
+  TableCellLayout,
+  Toolbar,
+  ToolbarButton
+} from '@fluentui/react-components';
+import {
+  DismissRegular,
+  SearchRegular,
+  MergeDuplicateRegular
+} from '@fluentui/react-icons';
+import { Alert } from '@fluentui/react-components/unstable';
+import ContactService from '../services/ContactService';
+
+const useStyles = makeStyles({
+  container: {
+    padding: tokens.spacingHorizontalL,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  card: {
+    padding: tokens.spacingHorizontalL,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  searchContainer: {
+    maxWidth: '300px',
+    marginBottom: tokens.spacingVerticalM
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: tokens.spacingVerticalL
+  },
+  rightButtons: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
+  },
+  fieldSection: {
+    marginTop: tokens.spacingVerticalM,
+    marginBottom: tokens.spacingVerticalM
+  },
+  fieldContainer: {
+    marginTop: tokens.spacingVerticalS,
+    marginBottom: tokens.spacingVerticalM
+  },
+  successIcon: {
+    fontSize: '48px',
+    color: tokens.colorBrandBackground,
+    marginBottom: tokens.spacingVerticalM
+  },
+  completeContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
+    padding: tokens.spacingVerticalXL
+  },
+  tableContainer: {
+    overflowX: 'auto'
+  },
+  tableRow: {
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground1Hover
+    }
+  },
+  stepContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: `${tokens.spacingVerticalL} 0`
+  },
+  stepItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  stepCircle: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    color: tokens.colorNeutralForegroundInverted
+  },
+  stepActive: {
+    backgroundColor: tokens.colorBrandBackground
+  },
+  stepInactive: {
+    backgroundColor: tokens.colorNeutralBackground4
+  },
+  stepConnector: {
+    width: '60px',
+    height: '4px',
+    margin: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalS}`
+  },
+  stepConnectorActive: {
+    backgroundColor: tokens.colorBrandBackground
+  },
+  stepConnectorInactive: {
+    backgroundColor: tokens.colorNeutralBackground4
+  }
+});
 
 /**
- * Contact Merge Page - Placeholder Component
- *
- * Provides functionality to find and merge duplicate contacts
+ * Contact Merge page for finding and merging duplicate contacts
  */
 const ContactMerge = () => {
+  const styles = useStyles();
   const navigate = useNavigate();
+
   const [currentStep, setCurrentStep] = useState(1);
   const [searchText, setSearchText] = useState('');
   const [selectedContacts, setSelectedContacts] = useState([]);
+  const [selectedContactIds, setSelectedContactIds] = useState(new Set());
   const [masterContact, setMasterContact] = useState(null);
   const [fieldSelections, setFieldSelections] = useState({});
   const [mergeComplete, setMergeComplete] = useState(false);
@@ -38,7 +152,7 @@ const ContactMerge = () => {
   // Mock duplicate contacts for demonstration
   const duplicateContacts = [
     {
-      id: 1,
+      id: '1',
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
@@ -47,7 +161,7 @@ const ContactMerge = () => {
       lastActivity: '2025-03-10'
     },
     {
-      id: 2,
+      id: '2',
       firstName: 'John',
       lastName: 'Doe',
       email: 'johndoe@gmail.com',
@@ -56,7 +170,7 @@ const ContactMerge = () => {
       lastActivity: '2025-02-18'
     },
     {
-      id: 3,
+      id: '3',
       firstName: 'Jon',
       lastName: 'Doe',
       email: 'jon.doe@acme.com',
@@ -66,47 +180,13 @@ const ContactMerge = () => {
     }
   ];
 
-  // Command bar items
-  const commandBarItems = [
-    {
-      key: 'cancel',
-      text: 'Cancel',
-      iconProps: { iconName: 'Cancel' },
-      onClick: () => navigate('/contacts')
-    }
-  ];
+  // Steps for the merge process
+  const steps = ['Select Contacts', 'Configure Merge', 'Complete'];
 
-  // Contact selection for merging
-  const selection = new Selection({
-    onSelectionChanged: () => {
-      const selected = selection.getSelection();
-      setSelectedContacts(selected);
-
-      // Set the first contact as the master by default
-      if (selected.length > 0 && !masterContact) {
-        setMasterContact(selected[0].id);
-
-        // Initialize field selections with the master contact's values
-        const initialFieldSelections = {};
-        Object.keys(selected[0]).forEach(key => {
-          if (key !== 'id') {
-            initialFieldSelections[key] = selected[0].id;
-          }
-        });
-        setFieldSelections(initialFieldSelections);
-      }
-    }
-  });
-
-  // Define columns for contacts list
-  const contactColumns = [
-    { key: 'firstName', name: 'First Name', fieldName: 'firstName', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'lastName', name: 'Last Name', fieldName: 'lastName', minWidth: 100, maxWidth: 150, isResizable: true },
-    { key: 'email', name: 'Email', fieldName: 'email', minWidth: 200, maxWidth: 250, isResizable: true },
-    { key: 'phone', name: 'Phone', fieldName: 'phone', minWidth: 120, maxWidth: 150, isResizable: true },
-    { key: 'company', name: 'Company', fieldName: 'company', minWidth: 150, maxWidth: 200, isResizable: true },
-    { key: 'lastActivity', name: 'Last Activity', fieldName: 'lastActivity', minWidth: 120, maxWidth: 150, isResizable: true },
-  ];
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+  };
 
   // Filter contacts based on search
   const filteredContacts = searchText
@@ -117,6 +197,55 @@ const ContactMerge = () => {
       )
     : duplicateContacts;
 
+  // Handle selection changes
+  const handleSelectionChange = (contactId, isSelected) => {
+    const newSelectedIds = new Set(selectedContactIds);
+
+    if (isSelected) {
+      newSelectedIds.add(contactId);
+    } else {
+      newSelectedIds.delete(contactId);
+    }
+
+    setSelectedContactIds(newSelectedIds);
+
+    const newSelectedContacts = duplicateContacts.filter(contact =>
+      newSelectedIds.has(contact.id)
+    );
+
+    setSelectedContacts(newSelectedContacts);
+
+    // Set the first contact as the master by default
+    if (newSelectedContacts.length > 0 && !masterContact) {
+      setMasterContact(newSelectedContacts[0].id);
+
+      // Initialize field selections with the master contact's values
+      const initialFieldSelections = {};
+      Object.keys(newSelectedContacts[0]).forEach(key => {
+        if (key !== 'id') {
+          initialFieldSelections[key] = newSelectedContacts[0].id;
+        }
+      });
+      setFieldSelections(initialFieldSelections);
+    } else if (newSelectedContacts.length === 0) {
+      setMasterContact(null);
+      setFieldSelections({});
+    }
+  };
+
+  // Handle master record selection
+  const handleMasterChange = (e, data) => {
+    setMasterContact(data.value);
+  };
+
+  // Handle field value selection
+  const handleFieldSelectionChange = (field, value) => {
+    setFieldSelections({
+      ...fieldSelections,
+      [field]: value
+    });
+  };
+
   // Handle merge action
   const handleMerge = () => {
     // In a real implementation, this would send the merge data to the API
@@ -125,125 +254,204 @@ const ContactMerge = () => {
     setCurrentStep(3);
   };
 
+  // Render step indicator
+  const renderStepIndicator = () => {
+    return (
+      <div className={styles.stepContainer}>
+        {steps.map((step, index) => (
+          <React.Fragment key={index}>
+            <div className={styles.stepItem}>
+              <div className={`
+                ${styles.stepCircle}
+                ${index + 1 <= currentStep ? styles.stepActive : styles.stepInactive}
+              `}>
+                {index + 1}
+              </div>
+              <Text style={{ marginTop: tokens.spacingVerticalS }}>{step}</Text>
+            </div>
+
+            {/* Connector between steps (except after last step) */}
+            {index < steps.length - 1 && (
+              <div className={`
+                ${styles.stepConnector}
+                ${index + 2 <= currentStep ? styles.stepConnectorActive : styles.stepConnectorInactive}
+              `} />
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
+  // Render contacts table
+  const renderContactsTable = () => {
+    const columns = [
+      { key: 'firstName', name: 'First Name' },
+      { key: 'lastName', name: 'Last Name' },
+      { key: 'email', name: 'Email' },
+      { key: 'phone', name: 'Phone' },
+      { key: 'company', name: 'Company' },
+      { key: 'lastActivity', name: 'Last Activity' }
+    ];
+
+    return (
+      <div className={styles.tableContainer}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableSelectionCell />
+              {columns.map(col => (
+                <TableHeaderCell key={col.key}>{col.name}</TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredContacts.map(contact => (
+              <TableRow key={contact.id}>
+                <TableSelectionCell
+                  checked={selectedContactIds.has(contact.id)}
+                  onChange={(e) => handleSelectionChange(contact.id, e.target.checked)}
+                />
+                {columns.map(col => (
+                  <TableCell key={`${contact.id}-${col.key}`}>
+                    <TableCellLayout>
+                      {contact[col.key]}
+                    </TableCellLayout>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
+
   // Render different steps of the merge process
   const renderStepContent = () => {
     switch (currentStep) {
       case 1: // Select contacts to merge
         return (
-          <Card styles={{ root: { padding: 20 } }}>
-            <Stack tokens={{ childrenGap: 16 }}>
-              <Text variant="mediumPlus">Select Duplicate Contacts to Merge</Text>
-              <Text>Select 2 or more contacts that represent the same person.</Text>
+          <Card className={styles.card}>
+            <CardHeader header={<Text weight="semibold">Select Duplicate Contacts to Merge</Text>} />
+            <Body1>Select 2 or more contacts that represent the same person.</Body1>
 
-              <SearchBox
+            <div className={styles.searchContainer}>
+              <Input
                 placeholder="Search contacts"
-                onChange={(_, value) => setSearchText(value || '')}
-                styles={{ root: { maxWidth: 300 } }}
+                onChange={handleSearchChange}
+                contentBefore={<SearchRegular />}
+                value={searchText}
               />
+            </div>
 
-              <DetailsList
-                items={filteredContacts}
-                columns={contactColumns}
-                selectionMode={SelectionMode.multiple}
-                layoutMode={DetailsListLayoutMode.justified}
-                selection={selection}
-                selectionPreservedOnEmptyClick={true}
-                getKey={(item) => item.id.toString()}
-                setKey="id"
-                isHeaderVisible={true}
-              />
+            {renderContactsTable()}
 
-              <Stack horizontal horizontalAlign="end">
-                <PrimaryButton
-                  text="Next"
-                  onClick={() => setCurrentStep(2)}
-                  disabled={selectedContacts.length < 2}
-                />
-              </Stack>
-            </Stack>
+            <div className={styles.buttonContainer}>
+              <div></div> {/* Empty div to maintain space-between */}
+              <Button
+                appearance="primary"
+                onClick={() => setCurrentStep(2)}
+                disabled={selectedContacts.length < 2}
+              >
+                Next
+              </Button>
+            </div>
           </Card>
         );
 
       case 2: // Choose master record and field values
         return (
-          <Card styles={{ root: { padding: 20 } }}>
-            <Stack tokens={{ childrenGap: 16 }}>
-              <Text variant="mediumPlus">Configure Merge</Text>
-              <Text>Choose which record will be the master and select values to keep for each field.</Text>
+          <Card className={styles.card}>
+            <CardHeader header={<Text weight="semibold">Configure Merge</Text>} />
+            <Body1>Choose which record will be the master and select values to keep for each field.</Body1>
 
-              <Stack tokens={{ childrenGap: 16 }}>
-                <Label>Select Master Record</Label>
-                <Stack tokens={{ childrenGap: 8 }}>
-                  {selectedContacts.map(contact => (
-                    <RadioButton
-                      key={contact.id}
-                      label={`${contact.firstName} ${contact.lastName} (${contact.email})`}
-                      checked={masterContact === contact.id}
-                      onChange={() => setMasterContact(contact.id)}
-                    />
-                  ))}
-                </Stack>
+            <div className={styles.fieldSection}>
+              <Label weight="semibold">Select Master Record</Label>
+              <RadioGroup
+                value={masterContact}
+                onChange={handleMasterChange}
+              >
+                {selectedContacts.map(contact => (
+                  <Radio
+                    key={contact.id}
+                    value={contact.id}
+                    label={`${contact.firstName} ${contact.lastName} (${contact.email})`}
+                  />
+                ))}
+              </RadioGroup>
+            </div>
 
-                <Separator>Field Values</Separator>
+            <Divider />
+            <Label weight="semibold">Field Values</Label>
 
-                {Object.keys(selectedContacts[0] || {}).map(field => {
-                  if (field === 'id') return null;
+            {Object.keys(selectedContacts[0] || {}).map(field => {
+              if (field === 'id') return null;
 
-                  return (
-                    <Stack key={field} tokens={{ childrenGap: 8 }}>
-                      <Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
-                      <Stack tokens={{ childrenGap: 4 }}>
-                        {selectedContacts.map(contact => (
-                          <RadioButton
-                            key={contact.id}
-                            label={`${contact[field]} (from ${contact.email})`}
-                            checked={fieldSelections[field] === contact.id}
-                            onChange={() => setFieldSelections({
-                              ...fieldSelections,
-                              [field]: contact.id
-                            })}
-                          />
-                        ))}
-                      </Stack>
-                    </Stack>
-                  );
-                })}
-              </Stack>
+              return (
+                <div key={field} className={styles.fieldContainer}>
+                  <Label>{field.charAt(0).toUpperCase() + field.slice(1)}</Label>
+                  <RadioGroup
+                    value={fieldSelections[field]}
+                    onChange={(e, data) => handleFieldSelectionChange(field, data.value)}
+                  >
+                    {selectedContacts.map(contact => (
+                      <Radio
+                        key={contact.id}
+                        value={contact.id}
+                        label={`${contact[field]} (from ${contact.email})`}
+                      />
+                    ))}
+                  </RadioGroup>
+                </div>
+              );
+            })}
 
-              <Stack horizontal horizontalAlign="space-between">
-                <DefaultButton text="Back" onClick={() => setCurrentStep(1)} />
-                <PrimaryButton
-                  text="Merge Contacts"
-                  onClick={handleMerge}
-                />
-              </Stack>
-            </Stack>
+            <div className={styles.buttonContainer}>
+              <Button
+                appearance="secondary"
+                onClick={() => setCurrentStep(1)}
+              >
+                Back
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={handleMerge}
+              >
+                Merge Contacts
+              </Button>
+            </div>
           </Card>
         );
 
       case 3: // Merge complete
         return (
-          <Card styles={{ root: { padding: 20 } }}>
-            <Stack tokens={{ childrenGap: 16 }} horizontalAlign="center">
-              <Icon iconName="MergeCall" styles={{ root: { fontSize: 48, color: '#0078d4' } }} />
-              <Text variant="xLarge">Merge Complete</Text>
-              <Text>Successfully merged {selectedContacts.length} contacts.</Text>
+          <Card className={styles.card}>
+            <div className={styles.completeContainer}>
+              <MergeDuplicateRegular className={styles.successIcon} />
+              <Title2>Merge Complete</Title2>
+              <Body1>Successfully merged {selectedContacts.length} contacts.</Body1>
 
-              <MessageBar messageBarType={MessageBarType.success}>
+              <Alert intent="success" style={{ marginTop: tokens.spacingVerticalL, marginBottom: tokens.spacingVerticalL }}>
                 The contacts have been merged successfully. All activities, opportunities, and other related records have been associated with the master contact.
-              </MessageBar>
+              </Alert>
 
-              <Stack horizontal tokens={{ childrenGap: 8 }}>
-                <PrimaryButton text="Go to Contacts" onClick={() => navigate('/contacts')} />
-                <DefaultButton text="Merge More Contacts" onClick={() => {
+              <div className={styles.rightButtons}>
+                <Button appearance="primary" onClick={() => navigate('/contacts')}>
+                  Go to Contacts
+                </Button>
+                <Button appearance="secondary" onClick={() => {
                   setCurrentStep(1);
                   setSelectedContacts([]);
+                  setSelectedContactIds(new Set());
                   setMasterContact(null);
                   setFieldSelections({});
                   setMergeComplete(false);
-                }} />
-              </Stack>
-            </Stack>
+                }}>
+                  Merge More Contacts
+                </Button>
+              </div>
+            </div>
           </Card>
         );
 
@@ -253,84 +461,27 @@ const ContactMerge = () => {
   };
 
   return (
-    <Stack tokens={{ childrenGap: 16 }}>
-      <Stack horizontal horizontalAlign="space-between" verticalAlign="center">
-        <Text variant="xxLarge">Merge Contacts</Text>
-      </Stack>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <Title2>Merge Contacts</Title2>
+      </div>
 
-      <CommandBar items={commandBarItems} />
+      <Toolbar>
+        <ToolbarButton
+          icon={<DismissRegular />}
+          onClick={() => navigate('/contacts')}
+        >
+          Cancel
+        </ToolbarButton>
+      </Toolbar>
 
-      <MessageBar messageBarType={MessageBarType.info}>
+      <Alert intent="info">
         This is a placeholder component for contact merge functionality. In a real implementation, you would detect and merge actual duplicate contacts.
-      </MessageBar>
+      </Alert>
 
-      <Stack horizontal horizontalAlign="center" styles={{ root: { margin: '20px 0' } }}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack horizontalAlign="center">
-            <div style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              backgroundColor: currentStep >= 1 ? '#0078d4' : '#e1dfdd',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold'
-            }}>
-              1
-            </div>
-            <Text styles={{ root: { marginTop: 8 } }}>Select Contacts</Text>
-          </Stack>
-          <div style={{
-            width: 60,
-            height: 4,
-            backgroundColor: currentStep >= 2 ? '#0078d4' : '#e1dfdd',
-            margin: '16px 0'
-          }} />
-          <Stack horizontalAlign="center">
-            <div style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              backgroundColor: currentStep >= 2 ? '#0078d4' : '#e1dfdd',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold'
-            }}>
-              2
-            </div>
-            <Text styles={{ root: { marginTop: 8 } }}>Configure Merge</Text>
-          </Stack>
-          <div style={{
-            width: 60,
-            height: 4,
-            backgroundColor: currentStep >= 3 ? '#0078d4' : '#e1dfdd',
-            margin: '16px 0'
-          }} />
-          <Stack horizontalAlign="center">
-            <div style={{
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              backgroundColor: currentStep >= 3 ? '#0078d4' : '#e1dfdd',
-              color: 'white',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold'
-            }}>
-              3
-            </div>
-            <Text styles={{ root: { marginTop: 8 } }}>Complete</Text>
-          </Stack>
-        </Stack>
-      </Stack>
-
+      {renderStepIndicator()}
       {renderStepContent()}
-    </Stack>
+    </div>
   );
 };
 

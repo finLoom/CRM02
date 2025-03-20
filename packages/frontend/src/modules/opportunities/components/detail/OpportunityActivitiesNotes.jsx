@@ -1,23 +1,52 @@
-// packages/frontend/src/components/opportunities/detail/OpportunityActivitiesNotes.jsx
+// packages/frontend/src/modules/opportunities/components/detail/OpportunityActivitiesNotes.jsx
 import React from 'react';
 import {
   Text,
-  Separator
-} from '@fluentui/react';
+  Divider,
+  makeStyles,
+  tokens
+} from '@fluentui/react-components';
 
+const useStyles = makeStyles({
+  container: {
+    marginTop: tokens.spacingVerticalL
+  },
+  section: {
+    marginBottom: tokens.spacingVerticalL
+  },
+  emptyText: {
+    marginTop: tokens.spacingVerticalM,
+    color: tokens.colorNeutralForeground3
+  }
+});
+
+/**
+ * Component for displaying opportunity activities and notes
+ * @returns {JSX.Element} OpportunityActivitiesNotes component
+ */
 const OpportunityActivitiesNotes = () => {
+  const styles = useStyles();
+
   return (
-    <div style={{ marginTop: 20 }}>
-      <Text variant="large" block>Activity History</Text>
-      <div style={{ marginTop: 16, color: '#605e5c' }}>
-        <Text>No activities recorded yet.</Text>
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" block>
+          Activity History
+        </Text>
+        <div className={styles.emptyText}>
+          <Text>No activities recorded yet.</Text>
+        </div>
       </div>
-      
-      <Separator styles={{ root: { margin: '20px 0' } }} />
-      
-      <Text variant="large" block>Notes</Text>
-      <div style={{ marginTop: 16, color: '#605e5c' }}>
-        <Text>No notes available.</Text>
+
+      <Divider />
+
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" block>
+          Notes
+        </Text>
+        <div className={styles.emptyText}>
+          <Text>No notes available.</Text>
+        </div>
       </div>
     </div>
   );

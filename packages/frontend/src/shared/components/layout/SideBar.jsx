@@ -11,7 +11,7 @@ import {
   Person24Regular,
   Trophy24Regular,
   List24Regular,
-  ChartBar24Regular,
+  DataPieRegular,
   Settings24Regular
 } from '@fluentui/react-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -125,7 +125,7 @@ const SideBar = ({ collapsed }) => {
       name: 'Reports',
       path: '/reports',
       key: 'reports',
-      icon: <ChartBar24Regular />
+      icon: <DataPieRegular />
     },
     {
       name: 'Settings',

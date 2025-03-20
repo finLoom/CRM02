@@ -1,19 +1,37 @@
-// src/components/leads/LeadForm.jsx
+// src/modules/leads/components/LeadForm.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  Stack,
-  TextField,
+  Button,
+  Input,
+  Field,
   Dropdown,
-  PrimaryButton,
-  DefaultButton,
+  Option,
+  DropdownProps,
   Text,
-  Separator,
-  DatePicker,
-  mergeStyles
-} from '@fluentui/react';
+  Divider,
+  makeStyles,
+  tokens,
+  useId
+} from '@fluentui/react-components';
 
-const formStyles = mergeStyles({
-  padding: '10px 0'
+const useStyles = makeStyles({
+  form: {
+    padding: `${tokens.spacingVerticalS} 0`,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  buttonGroup: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalL
+  },
+  fieldRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: tokens.spacingHorizontalM
+  }
 });
 
 const statuses = [
@@ -44,6 +62,19 @@ const assignees = [
  * Form for creating and editing leads
  */
 const LeadForm = ({ lead, onSave, onCancel, isNew = true }) => {
+  const styles = useStyles();
+
+  // Generate unique IDs for form fields
+  const firstNameId = useId('firstName');
+  const lastNameId = useId('lastName');
+  const emailId = useId('email');
+  const phoneId = useId('phone');
+  const companyId = useId('company');
+  const statusId = useId('status');
+  const sourceId = useId('source');
+  const valueId = useId('value');
+  const assignedToId = useId('assignedTo');
+
   const [formState, setFormState] = useState({
     firstName: '',
     lastName: '',
@@ -81,10 +112,15 @@ const LeadForm = ({ lead, onSave, onCancel, isNew = true }) => {
     }));
   };
 
+  // Handle dropdown selection changes
+  const handleDropdownChange = (field) => (event, data) => {
+    handleFieldChange(field, data.optionValue || data.value);
+  };
+
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     // Return form data to parent component
     const submittedLead = {
       ...lead,  // Maintain ID and other fields if editing
@@ -95,96 +131,116 @@ const LeadForm = ({ lead, onSave, onCancel, isNew = true }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className={formStyles}>
-      <Stack tokens={{ childrenGap: 15 }}>
-        <Text variant="large">
-          {isNew ? 'Create New Lead' : 'Edit Lead'}
-        </Text>
-        
-        <Separator />
-        
-        <Stack horizontal tokens={{ childrenGap: 10 }}>
-          <Stack.Item grow={1}>
-            <TextField
-              label="First Name"
-              required
-              value={formState.firstName}
-              onChange={(_, value) => handleFieldChange('firstName', value)}
-            />
-          </Stack.Item>
-          
-          <Stack.Item grow={1}>
-            <TextField
-              label="Last Name"
-              required
-              value={formState.lastName}
-              onChange={(_, value) => handleFieldChange('lastName', value)}
-            />
-          </Stack.Item>
-        </Stack>
-        
-        <TextField
-          label="Email"
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <Text size={600} weight="semibold">
+        {isNew ? 'Create New Lead' : 'Edit Lead'}
+      </Text>
+
+      <Divider />
+
+      <div className={styles.fieldRow}>
+        <Field label="First Name" required id={firstNameId}>
+          <Input
+            value={formState.firstName}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+          />
+        </Field>
+
+        <Field label="Last Name" required id={lastNameId}>
+          <Input
+            value={formState.lastName}
+            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+          />
+        </Field>
+      </div>
+
+      <Field label="Email" id={emailId}>
+        <Input
           type="email"
           value={formState.email}
-          onChange={(_, value) => handleFieldChange('email', value)}
+          onChange={(e) => handleFieldChange('email', e.target.value)}
         />
-        
-        <TextField
-          label="Phone"
+      </Field>
+
+      <Field label="Phone" id={phoneId}>
+        <Input
           value={formState.phone}
-          onChange={(_, value) => handleFieldChange('phone', value)}
+          onChange={(e) => handleFieldChange('phone', e.target.value)}
         />
-        
-        <TextField
-          label="Company"
+      </Field>
+
+      <Field label="Company" id={companyId}>
+        <Input
           value={formState.company}
-          onChange={(_, value) => handleFieldChange('company', value)}
+          onChange={(e) => handleFieldChange('company', e.target.value)}
         />
-        
+      </Field>
+
+      <Field label="Status" id={statusId}>
         <Dropdown
-          label="Status"
-          selectedKey={formState.status}
-          options={statuses}
-          onChange={(_, option) => handleFieldChange('status', option.key)}
-        />
-        
+          value={formState.status}
+          onOptionSelect={handleDropdownChange('status')}
+        >
+          {statuses.map(option => (
+            <Option key={option.key} value={option.key}>
+              {option.text}
+            </Option>
+          ))}
+        </Dropdown>
+      </Field>
+
+      <Field label="Source" id={sourceId}>
         <Dropdown
-          label="Source"
-          selectedKey={formState.source}
-          options={sources}
-          onChange={(_, option) => handleFieldChange('source', option.key)}
-        />
-        
-        <TextField
-          label="Estimated Value"
+          value={formState.source}
+          onOptionSelect={handleDropdownChange('source')}
+        >
+          {sources.map(option => (
+            <Option key={option.key} value={option.key}>
+              {option.text}
+            </Option>
+          ))}
+        </Dropdown>
+      </Field>
+
+      <Field label="Estimated Value" id={valueId}>
+        <Input
           type="number"
           value={formState.estimatedValue.toString()}
-          onChange={(_, value) => handleFieldChange('estimatedValue', Number(value) || 0)}
-          prefix="$"
+          onChange={(e) => handleFieldChange('estimatedValue', Number(e.target.value) || 0)}
+          contentBefore="$"
         />
-        
+      </Field>
+
+      <Field label="Assigned To" id={assignedToId}>
         <Dropdown
-          label="Assigned To"
-          selectedKey={formState.assignedTo}
-          options={assignees}
-          onChange={(_, option) => handleFieldChange('assignedTo', option.key)}
-        />
-        
-        <Separator />
-        
-        <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 10 }}>
-          <DefaultButton
-            text="Cancel"
-            onClick={onCancel}
-          />
-          
-          <PrimaryButton
-            text="Save"
-            type="submit"
-          />
-        </Stack>
-      </Stack>
+          value={formState.assignedTo}
+          onOptionSelect={handleDropdownChange('assignedTo')}
+        >
+          {assignees.map(option => (
+            <Option key={option.key} value={option.key}>
+              {option.text}
+            </Option>
+          ))}
+        </Dropdown>
+      </Field>
+
+      <Divider />
+
+      <div className={styles.buttonGroup}>
+        <Button
+          appearance="secondary"
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+
+        <Button
+          appearance="primary"
+          type="submit"
+        >
+          Save
+        </Button>
+      </div>
     </form>
   );
 };

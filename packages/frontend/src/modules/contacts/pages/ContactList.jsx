@@ -1,52 +1,109 @@
-// packages/frontend/src/components/contacts/ContactList.jsx
+// packages/frontend/src/modules/contacts/pages/ContactList.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Stack,
-  Text,
-  DetailsList,
-  DetailsListLayoutMode,
-  Selection,
-  SelectionMode,
-  MarqueeSelection,
-  CommandBar,
-  SearchBox,
-  Dialog,
-  DialogType,
-  DialogFooter,
-  PrimaryButton,
-  DefaultButton,
+  makeStyles,
+  tokens,
+  Title2,
+  Input,
+  Button,
+  Card,
   Spinner,
-  MessageBar,
-  MessageBarType,
-  mergeStyles
-} from '@fluentui/react';
+  Table,
+  TableHeader,
+  TableRow,
+  TableHeaderCell,
+  TableBody,
+  TableCell,
+  TableSelectionCell,
+  TableCellLayout,
+  Dialog,
+  DialogTrigger,
+  DialogSurface,
+  DialogBody,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Toolbar,
+  ToolbarButton,
+  ToolbarDivider,
+  Checkbox
+} from '@fluentui/react-components';
+import {
+  SearchRegular,
+  AddRegular,
+  EditRegular,
+  DeleteRegular,
+  ArrowClockwiseRegular
+} from '@fluentui/react-icons';
+import { Alert } from '@fluentui/react-components/unstable';
 import ContactService from '../services/ContactService';
 
-const containerStyles = mergeStyles({
-  padding: '20px'
+const useStyles = makeStyles({
+  container: {
+    padding: tokens.spacingHorizontalL,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  toolbar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacingVerticalS
+  },
+  searchContainer: {
+    maxWidth: '300px',
+    width: '100%'
+  },
+  tableContainer: {
+    overflowX: 'auto'
+  },
+  tableRow: {
+    cursor: 'pointer',
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground1Hover
+    }
+  },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: tokens.spacingVerticalL
+  },
+  emptyState: {
+    padding: tokens.spacingVerticalL,
+    textAlign: 'center'
+  },
+  checkboxCell: {
+    paddingLeft: tokens.spacingHorizontalS
+  },
+  infoMessage: {
+    marginBottom: tokens.spacingVerticalM
+  }
 });
 
+/**
+ * Contact list page using Fluent UI v9 components
+ */
 const ContactList = () => {
+  const styles = useStyles();
   const navigate = useNavigate();
-  
+
   const [contacts, setContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
+  const [selectedContactIds, setSelectedContactIds] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState('');
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
-  // Debug state
-  const [debug, setDebug] = useState({ dataSource: 'Loading...' });
-
-  // Selection configuration
-  const selection = new Selection({
-    onSelectionChanged: () => {
-      setSelectedContacts(selection.getSelection());
-    }
-  });
+  const [dataSource, setDataSource] = useState('Loading...');
 
   // Load contacts from API
   useEffect(() => {
@@ -57,21 +114,13 @@ const ContactList = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Log attempt to fetch data
-      console.log('Attempting to fetch contacts from backend...');
       const response = await ContactService.getAllContacts();
-      
-      // Log successful response
-      console.log('Received contacts from backend:', response.data);
-      setDebug({ dataSource: 'Backend API', count: response.data.length });
-      
       setContacts(response.data);
+      setDataSource(`Backend API (${response.data.length} records)`);
       setError(null);
     } catch (err) {
       console.error('Error fetching contacts:', err);
-      setDebug({ dataSource: 'Error - using static data', error: err.message });
-      
-      // Fallback to static data for development purposes
+      setDataSource(`Error - Using static data: ${err.message}`);
       setError('Failed to load contacts from backend. Using static data instead.');
     } finally {
       setIsLoading(false);
@@ -84,7 +133,7 @@ const ContactList = () => {
       setFilteredContacts([]);
       return;
     }
-    
+
     if (searchText) {
       const searchLower = searchText.toLowerCase();
       const filtered = contacts.filter(contact => {
@@ -101,8 +150,8 @@ const ContactList = () => {
     }
   }, [contacts, searchText]);
 
-  const handleSearch = (_, value) => {
-    setSearchText(value || '');
+  const handleSearch = (e) => {
+    setSearchText(e.target.value);
   };
 
   const handleCreateNew = () => {
@@ -115,7 +164,7 @@ const ContactList = () => {
     }
   };
 
-  const handleDetailsClick = (item) => {
+  const handleRowClick = (item) => {
     navigate(`/contacts/${item.id}`);
   };
 
@@ -131,176 +180,235 @@ const ContactList = () => {
       for (const contact of selectedContacts) {
         await ContactService.deleteContact(contact.id);
       }
-      
+
       // Refresh the contacts list
       fetchContacts();
       setIsDeleteDialogOpen(false);
-      selection.setAllSelected(false);
+      setSelectedContacts([]);
+      setSelectedContactIds(new Set());
     } catch (err) {
       console.error('Error deleting contacts:', err);
       setError('Failed to delete contacts. Please try again later.');
     }
   };
 
+  // Handle selection changes
+  const handleSelectionChange = (contactId, isSelected) => {
+    const newSelectedIds = new Set(selectedContactIds);
+
+    if (isSelected) {
+      newSelectedIds.add(contactId);
+    } else {
+      newSelectedIds.delete(contactId);
+    }
+
+    setSelectedContactIds(newSelectedIds);
+
+    const newSelectedContacts = contacts.filter(contact =>
+      newSelectedIds.has(contact.id)
+    );
+
+    setSelectedContacts(newSelectedContacts);
+  };
+
+  // Handle header selection (select all)
+  const handleSelectAll = (e) => {
+    const isChecked = e.target.checked;
+
+    if (isChecked) {
+      const allIds = new Set(filteredContacts.map(contact => contact.id));
+      setSelectedContactIds(allIds);
+      setSelectedContacts([...filteredContacts]);
+    } else {
+      setSelectedContactIds(new Set());
+      setSelectedContacts([]);
+    }
+  };
+
+  // Check if all items are selected
+  const isAllSelected = filteredContacts.length > 0 &&
+    selectedContactIds.size === filteredContacts.length;
+
+  // Columns for the table
   const columns = [
     {
       key: 'name',
       name: 'Name',
       fieldName: 'firstName',
-      minWidth: 150,
-      maxWidth: 200,
-      isResizable: true,
-      onRender: (item) => `${item.firstName} ${item.lastName}`
+      render: (item) => `${item.firstName} ${item.lastName}`
     },
     {
       key: 'email',
       name: 'Email',
-      fieldName: 'email',
-      minWidth: 150,
-      maxWidth: 200,
-      isResizable: true
+      fieldName: 'email'
     },
     {
       key: 'phone',
       name: 'Phone',
-      fieldName: 'phone',
-      minWidth: 120,
-      maxWidth: 150,
-      isResizable: true
+      fieldName: 'phone'
     },
     {
       key: 'accountName',
       name: 'Account',
-      fieldName: 'accountName',
-      minWidth: 150,
-      maxWidth: 200,
-      isResizable: true
+      fieldName: 'accountName'
     },
     {
       key: 'title',
       name: 'Title',
-      fieldName: 'title',
-      minWidth: 120,
-      maxWidth: 150,
-      isResizable: true
+      fieldName: 'title'
     },
     {
       key: 'assignedTo',
       name: 'Assigned To',
-      fieldName: 'assignedTo',
-      minWidth: 120,
-      maxWidth: 150,
-      isResizable: true
+      fieldName: 'assignedTo'
     }
   ];
 
-  const commandBarItems = [
-    {
-      key: 'newItem',
-      text: 'New Contact',
-      iconProps: { iconName: 'Add' },
-      onClick: handleCreateNew
-    },
-    {
-      key: 'edit',
-      text: 'Edit',
-      iconProps: { iconName: 'Edit' },
-      onClick: handleEdit,
-      disabled: selectedContacts.length !== 1
-    },
-    {
-      key: 'delete',
-      text: 'Delete',
-      iconProps: { iconName: 'Delete' },
-      onClick: handleDelete,
-      disabled: selectedContacts.length === 0
+  // Render the data table
+  const renderTable = () => {
+    if (isLoading && filteredContacts.length === 0) {
+      return (
+        <div className={styles.loadingContainer}>
+          <Spinner size="large" label="Loading contacts..." />
+        </div>
+      );
     }
-  ];
 
-  const commandBarFarItems = [
-    {
-      key: 'refresh',
-      iconProps: { iconName: 'Refresh' },
-      onClick: fetchContacts
+    if (!isLoading && filteredContacts.length === 0) {
+      return (
+        <div className={styles.emptyState}>
+          {searchText ?
+            "No contacts match your search. Try adjusting your criteria." :
+            "No contacts found. Create a new contact to get started."}
+        </div>
+      );
     }
-  ];
+
+    return (
+      <div className={styles.tableContainer}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableSelectionCell
+                checked={isAllSelected}
+                onChange={handleSelectAll}
+              />
+              {columns.map(col => (
+                <TableHeaderCell key={col.key}>
+                  {col.name}
+                </TableHeaderCell>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredContacts.map(contact => (
+              <TableRow
+                key={contact.id}
+                className={styles.tableRow}
+                onClick={() => handleRowClick(contact)}
+              >
+                <TableSelectionCell
+                  checked={selectedContactIds.has(contact.id)}
+                  onChange={(e) => {
+                    e.stopPropagation(); // Prevent row click
+                    handleSelectionChange(contact.id, e.target.checked);
+                  }}
+                />
+                {columns.map(col => (
+                  <TableCell key={`${contact.id}-${col.key}`}>
+                    <TableCellLayout>
+                      {col.render ? col.render(contact) : contact[col.fieldName] || ''}
+                    </TableCellLayout>
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    );
+  };
 
   return (
-    <div className={containerStyles}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <Text variant="xLarge">Contacts</Text>
-        
-        {/* Debug info - can be removed in production */}
-        {debug && (
-          <MessageBar messageBarType={MessageBarType.info} isMultiline={false} onDismiss={() => setDebug(null)}>
-            Data source: {debug.dataSource} {debug.count ? `(${debug.count} records)` : ''}
-            {debug.error && ` - Error: ${debug.error}`}
-          </MessageBar>
-        )}
-        
-        {error && (
-          <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
-            {error}
-          </MessageBar>
-        )}
-        
-        <Stack horizontal horizontalAlign="space-between">
-          <SearchBox
-            styles={{ root: { width: 300 } }}
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <Title2>Contacts</Title2>
+      </div>
+
+      {/* Debug info - can be removed in production */}
+      {dataSource && (
+        <Alert intent="info" className={styles.infoMessage} dismissible onDismiss={() => setDataSource(null)}>
+          Data source: {dataSource}
+        </Alert>
+      )}
+
+      {error && (
+        <Alert intent="error" className={styles.infoMessage} dismissible onDismiss={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <div className={styles.toolbar}>
+        <div className={styles.searchContainer}>
+          <Input
             placeholder="Search contacts"
-            onChange={handleSearch}
+            contentBefore={<SearchRegular />}
             value={searchText}
+            onChange={handleSearch}
           />
-          <CommandBar
-            items={commandBarItems}
-            farItems={commandBarFarItems}
-          />
-        </Stack>
-        
-        <div style={{ position: 'relative' }}>
-          {isLoading && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 1 }}>
-              <Spinner label="Loading contacts..." />
-            </div>
-          )}
-          
-          <MarqueeSelection selection={selection}>
-            <DetailsList
-              items={filteredContacts}
-              columns={columns}
-              setKey="id"
-              layoutMode={DetailsListLayoutMode.justified}
-              selection={selection}
-              selectionPreservedOnEmptyClick={true}
-              selectionMode={SelectionMode.multiple}
-              onItemInvoked={handleDetailsClick}
-              styles={{ root: { opacity: isLoading ? 0.6 : 1 } }}
-            />
-          </MarqueeSelection>
-          
-          {!isLoading && filteredContacts.length === 0 && (
-            <MessageBar>No contacts found. {searchText ? 'Try adjusting your search criteria.' : 'Create a new contact to get started.'}</MessageBar>
-          )}
         </div>
-      </Stack>
+        <Toolbar>
+          <ToolbarButton
+            icon={<AddRegular />}
+            onClick={handleCreateNew}
+          >
+            New Contact
+          </ToolbarButton>
+          <ToolbarButton
+            icon={<EditRegular />}
+            onClick={handleEdit}
+            disabled={selectedContacts.length !== 1}
+          >
+            Edit
+          </ToolbarButton>
+          <ToolbarButton
+            icon={<DeleteRegular />}
+            onClick={handleDelete}
+            disabled={selectedContacts.length === 0}
+          >
+            Delete
+          </ToolbarButton>
+          <ToolbarDivider />
+          <ToolbarButton
+            icon={<ArrowClockwiseRegular />}
+            onClick={fetchContacts}
+            title="Refresh contacts"
+          />
+        </Toolbar>
+      </div>
+
+      <Card>
+        {renderTable()}
+      </Card>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        hidden={!isDeleteDialogOpen}
-        onDismiss={() => setIsDeleteDialogOpen(false)}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Delete Contact',
-          subText: `Are you sure you want to delete ${selectedContacts.length} selected contact(s)? This action cannot be undone.`
-        }}
-        modalProps={{
-          isBlocking: true
-        }}
-      >
-        <DialogFooter>
-          <PrimaryButton onClick={confirmDelete} text="Delete" />
-          <DefaultButton onClick={() => setIsDeleteDialogOpen(false)} text="Cancel" />
-        </DialogFooter>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={(_, { open }) => setIsDeleteDialogOpen(open)}>
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>Delete Contact</DialogTitle>
+            <DialogContent>
+              Are you sure you want to delete {selectedContacts.length} selected contact(s)? This action cannot be undone.
+            </DialogContent>
+            <DialogActions>
+              <Button appearance="secondary" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button appearance="primary" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
     </div>
   );

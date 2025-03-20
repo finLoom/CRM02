@@ -1,97 +1,80 @@
-// File: packages/frontend/src/modules/opportunities/pages/OpportunityFormPage.jsx
+// packages/frontend/src/modules/opportunities/pages/OpportunityFormPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Stack,
+  makeStyles,
   Text,
-  TextField,
-  Dropdown,
-  DatePicker,
-  PrimaryButton,
-  DefaultButton,
-  Breadcrumb,
-  MessageBar,
-  MessageBarType,
+  Button,
   Spinner,
-  SpinnerSize,
-  mergeStyles
-} from '@fluentui/react';
-import OpportunityService from '../../../services/OpportunityService';
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbButton,
+  tokens
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 
-// Styles
-const containerStyles = mergeStyles({
-  maxWidth: '800px',
-  margin: '0 auto',
-  padding: '20px'
+import OpportunityForm from '../components/OpportunityForm';
+
+import { ArrowLeftRegular } from '@fluentui/react-icons';
+import { useOpportunity } from '../hooks/useOpportunity';
+import opportunityService from '../services/OpportunityService';
+import { DEFAULT_NEW_OPPORTUNITY } from '../constants/opportunityConstants';
+
+const useStyles = makeStyles({
+  container: {
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: tokens.spacingHorizontalL
+  },
+  header: {
+    marginBottom: tokens.spacingVerticalL
+  },
+  breadcrumb: {
+    marginBottom: tokens.spacingVerticalM
+  },
+  spinnerContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '60vh'
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalL
+  }
 });
-
-const formFieldStyles = mergeStyles({
-  marginBottom: '15px'
-});
-
-const stageOptions = [
-  { key: 'Discovery', text: 'Discovery' },
-  { key: 'Qualification', text: 'Qualification' },
-  { key: 'Proposal', text: 'Proposal' },
-  { key: 'Negotiation', text: 'Negotiation' },
-  { key: 'Closed Won', text: 'Closed Won' },
-  { key: 'Closed Lost', text: 'Closed Lost' }
-];
 
 /**
- * OpportunityFormPage component for creating and editing opportunities
+ * Page component for creating and editing opportunities
+ * @returns {JSX.Element} OpportunityFormPage component
  */
 const OpportunityFormPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const styles = useStyles();
   const isEditMode = Boolean(id);
 
-  // State
-  const [opportunity, setOpportunity] = useState({
-    name: '',
-    accountName: '',
-    contactName: '',
-    stage: 'Discovery',
-    amount: 0,
-    probability: 20,
-    closeDate: new Date(new Date().setDate(new Date().getDate() + 30)), // Default to 30 days from now
-    type: 'New Business',
-    leadSource: '',
-    assignedTo: '',
-    nextStep: '',
-    description: ''
-  });
-  const [isLoading, setIsLoading] = useState(isEditMode);
+  // Use the hook for edit mode, or local state for create mode
+  const {
+    opportunity: existingOpportunity,
+    isLoading: isLoadingExisting,
+    error: fetchError,
+    updateOpportunity
+  } = useOpportunity(isEditMode ? id : null);
+
+  const [opportunity, setOpportunity] = useState(DEFAULT_NEW_OPPORTUNITY);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Load opportunity data if in edit mode
+  // Set opportunity data when fetched in edit mode
   useEffect(() => {
-    if (isEditMode) {
-      const fetchOpportunity = async () => {
-        try {
-          const response = await OpportunityService.getOpportunityById(id);
-
-          // Convert string date to Date object for DatePicker
-          const opportunityData = {
-            ...response.data,
-            closeDate: response.data.closeDate ? new Date(response.data.closeDate) : null
-          };
-
-          setOpportunity(opportunityData);
-          setError(null);
-        } catch (err) {
-          console.error('Error loading opportunity:', err);
-          setError('Failed to load opportunity data. Please try again later.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchOpportunity();
+    if (isEditMode && existingOpportunity) {
+      setOpportunity(existingOpportunity);
     }
-  }, [id, isEditMode]);
+  }, [isEditMode, existingOpportunity]);
 
   // Handle field changes
   const handleFieldChange = (field, value) => {
@@ -114,10 +97,10 @@ const OpportunityFormPage = () => {
 
     try {
       if (isEditMode) {
-        await OpportunityService.updateOpportunity(id, opportunity);
+        await updateOpportunity(opportunity);
         setSuccessMessage('Opportunity updated successfully');
       } else {
-        await OpportunityService.createOpportunity(opportunity);
+        await opportunityService.createOpportunity(opportunity);
         setSuccessMessage('New opportunity created successfully');
       }
 
@@ -138,167 +121,68 @@ const OpportunityFormPage = () => {
     navigate('/opportunities');
   };
 
-  // Breadcrumb items
-  const breadcrumbItems = [
-    { text: 'Home', key: 'home', onClick: () => navigate('/') },
-    { text: 'Opportunities', key: 'opportunities', onClick: () => navigate('/opportunities') },
-    { text: isEditMode ? 'Edit Opportunity' : 'New Opportunity', key: 'currentPage' }
-  ];
-
   // Show loading state
-  if (isLoading) {
+  if (isEditMode && isLoadingExisting) {
     return (
-      <div className={containerStyles}>
-        <Breadcrumb items={breadcrumbItems} />
-        <Stack horizontalAlign="center" verticalAlign="center" style={{ height: '60vh' }}>
-          <Spinner size={SpinnerSize.large} label="Loading opportunity..." />
-        </Stack>
+      <div className={styles.container}>
+        <Breadcrumb className={styles.breadcrumb}>
+          <BreadcrumbItem>
+            <BreadcrumbButton onClick={() => navigate('/')}>Home</BreadcrumbButton>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            <BreadcrumbButton onClick={() => navigate('/opportunities')}>Opportunities</BreadcrumbButton>
+          </BreadcrumbItem>
+          <BreadcrumbItem>
+            {isEditMode ? 'Edit Opportunity' : 'New Opportunity'}
+          </BreadcrumbItem>
+        </Breadcrumb>
+
+        <div className={styles.spinnerContainer}>
+          <Spinner size="large" label="Loading opportunity..." />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={containerStyles}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <Breadcrumb items={breadcrumbItems} />
+    <div className={styles.container}>
+      <Breadcrumb className={styles.breadcrumb}>
+        <BreadcrumbItem>
+          <BreadcrumbButton onClick={() => navigate('/')}>Home</BreadcrumbButton>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          <BreadcrumbButton onClick={() => navigate('/opportunities')}>Opportunities</BreadcrumbButton>
+        </BreadcrumbItem>
+        <BreadcrumbItem>
+          {isEditMode ? 'Edit Opportunity' : 'New Opportunity'}
+        </BreadcrumbItem>
+      </Breadcrumb>
 
-        <Text variant="xLarge">{isEditMode ? 'Edit Opportunity' : 'New Opportunity'}</Text>
+      <div className={styles.header}>
+        <Text as="h1" size={800}>
+          {isEditMode ? 'Edit Opportunity' : 'New Opportunity'}
+        </Text>
+      </div>
 
-        {error && (
-          <MessageBar messageBarType={MessageBarType.error} onDismiss={() => setError(null)}>
-            {error}
-          </MessageBar>
-        )}
+      {(error || fetchError) && (
+        <Alert intent="error" style={{ marginBottom: tokens.spacingVerticalM }}>
+          {error || fetchError}
+        </Alert>
+      )}
 
-        {successMessage && (
-          <MessageBar messageBarType={MessageBarType.success} onDismiss={() => setSuccessMessage(null)}>
-            {successMessage}
-          </MessageBar>
-        )}
+      {successMessage && (
+        <Alert intent="success" style={{ marginBottom: tokens.spacingVerticalM }}>
+          {successMessage}
+        </Alert>
+      )}
 
-        <Stack tokens={{ childrenGap: 15 }}>
-          {/* Basic Information */}
-          <Stack className={formFieldStyles}>
-            <Text variant="mediumPlus">Basic Information</Text>
-            <TextField
-              label="Opportunity Name *"
-              required
-              value={opportunity.name}
-              onChange={(_, value) => handleFieldChange('name', value)}
-            />
-            <TextField
-              label="Account Name *"
-              required
-              value={opportunity.accountName}
-              onChange={(_, value) => handleFieldChange('accountName', value)}
-            />
-            <TextField
-              label="Contact Name"
-              value={opportunity.contactName || ''}
-              onChange={(_, value) => handleFieldChange('contactName', value)}
-            />
-          </Stack>
-
-          {/* Details */}
-          <Stack className={formFieldStyles}>
-            <Text variant="mediumPlus">Opportunity Details</Text>
-            <Stack horizontal tokens={{ childrenGap: 10 }}>
-              <Stack.Item grow={1}>
-                <Dropdown
-                  label="Stage"
-                  selectedKey={opportunity.stage}
-                  options={stageOptions}
-                  onChange={(_, option) => handleFieldChange('stage', option.key)}
-                />
-              </Stack.Item>
-              <Stack.Item grow={1}>
-                <TextField
-                  label="Amount"
-                  type="number"
-                  prefix="$"
-                  value={opportunity.amount?.toString() || '0'}
-                  onChange={(_, value) => handleFieldChange('amount', parseFloat(value) || 0)}
-                />
-              </Stack.Item>
-            </Stack>
-
-            <Stack horizontal tokens={{ childrenGap: 10 }}>
-              <Stack.Item grow={1}>
-                <TextField
-                  label="Probability (%)"
-                  type="number"
-                  suffix="%"
-                  min={0}
-                  max={100}
-                  value={opportunity.probability?.toString() || '0'}
-                  onChange={(_, value) => handleFieldChange('probability', parseFloat(value) || 0)}
-                />
-              </Stack.Item>
-              <Stack.Item grow={1}>
-                <DatePicker
-                  label="Close Date"
-                  value={opportunity.closeDate}
-                  onSelectDate={(date) => handleFieldChange('closeDate', date)}
-                />
-              </Stack.Item>
-            </Stack>
-
-            <Stack horizontal tokens={{ childrenGap: 10 }}>
-              <Stack.Item grow={1}>
-                <TextField
-                  label="Type"
-                  value={opportunity.type || ''}
-                  onChange={(_, value) => handleFieldChange('type', value)}
-                />
-              </Stack.Item>
-              <Stack.Item grow={1}>
-                <TextField
-                  label="Lead Source"
-                  value={opportunity.leadSource || ''}
-                  onChange={(_, value) => handleFieldChange('leadSource', value)}
-                />
-              </Stack.Item>
-            </Stack>
-
-            <TextField
-              label="Assigned To"
-              value={opportunity.assignedTo || ''}
-              onChange={(_, value) => handleFieldChange('assignedTo', value)}
-            />
-          </Stack>
-
-          {/* Additional Information */}
-          <Stack className={formFieldStyles}>
-            <Text variant="mediumPlus">Additional Information</Text>
-            <TextField
-              label="Next Step"
-              value={opportunity.nextStep || ''}
-              onChange={(_, value) => handleFieldChange('nextStep', value)}
-            />
-            <TextField
-              label="Description"
-              multiline
-              rows={4}
-              value={opportunity.description || ''}
-              onChange={(_, value) => handleFieldChange('description', value)}
-            />
-          </Stack>
-
-          {/* Form Actions */}
-          <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 10 }}>
-            <DefaultButton
-              text="Cancel"
-              onClick={handleCancel}
-              disabled={isSaving}
-            />
-            <PrimaryButton
-              text={isSaving ? 'Saving...' : 'Save'}
-              onClick={handleSubmit}
-              disabled={isSaving}
-            />
-          </Stack>
-        </Stack>
-      </Stack>
+      <OpportunityForm
+        opportunity={opportunity}
+        onUpdate={handleFieldChange}
+        onSave={handleSubmit}
+        onCancel={handleCancel}
+        isLoading={isSaving}
+      />
     </div>
   );
 };

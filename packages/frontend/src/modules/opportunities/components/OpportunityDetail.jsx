@@ -1,19 +1,18 @@
-// packages/frontend/src/components/opportunities/OpportunityDetail.jsx
-import React, { useState, useEffect } from 'react';
+// packages/frontend/src/modules/opportunities/components/OpportunityDetail.jsx
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  Stack,
+  makeStyles,
   Spinner,
-  SpinnerSize,
-  MessageBar,
-  MessageBarType,
-  DefaultButton,
-  Separator,
-  Pivot,
-  PivotItem,
-  mergeStyles
-} from '@fluentui/react';
-import OpportunityService from '../services/OpportunityService';
+  TabList,
+  Tab,
+  Divider,
+  tokens,
+  Button,
+  Text
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import { useOpportunity } from '../hooks/useOpportunity';
 
 // Import sub-components
 import OpportunityHeader from './detail/OpportunityHeader';
@@ -22,41 +21,45 @@ import OpportunitySalesProcess from './detail/OpportunitySalesProcess';
 import OpportunityActivitiesNotes from './detail/OpportunityActivitiesNotes';
 import OpportunityEditPanel from './detail/OpportunityEditPanel';
 
-const containerStyles = mergeStyles({
-  padding: '20px'
+const useStyles = makeStyles({
+  container: {
+    padding: tokens.spacingHorizontalL
+  },
+  spinnerContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '70vh'
+  },
+  buttonContainer: {
+    marginTop: tokens.spacingVerticalL
+  },
+  content: {
+    marginTop: tokens.spacingVerticalL
+  }
 });
 
+/**
+ * OpportunityDetail component
+ * @returns {JSX.Element} OpportunityDetail component
+ */
 const OpportunityDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const styles = useStyles();
 
-  const [opportunity, setOpportunity] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    opportunity,
+    isLoading,
+    error,
+    updateOpportunity,
+    deleteOpportunity
+  } = useOpportunity(id);
+
   const [isEditPanelOpen, setIsEditPanelOpen] = useState(false);
   const [editedOpportunity, setEditedOpportunity] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  // Fetch opportunity data
-  useEffect(() => {
-    const fetchOpportunityData = async () => {
-      setLoading(true);
-      try {
-        const response = await OpportunityService.getOpportunityById(id);
-        setOpportunity(response.data);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching opportunity:', err);
-        setError('Failed to load opportunity details. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchOpportunityData();
-    }
-  }, [id]);
+  const [selectedTab, setSelectedTab] = useState('overview');
 
   const handleEditClick = () => {
     setEditedOpportunity({...opportunity});
@@ -76,15 +79,15 @@ const OpportunityDetail = () => {
   };
 
   const handleSaveEdit = async () => {
+    if (!editedOpportunity) return;
+
     setIsSaving(true);
     try {
-      const response = await OpportunityService.updateOpportunity(id, editedOpportunity);
-      setOpportunity(response.data);
+      await updateOpportunity(editedOpportunity);
       setIsEditPanelOpen(false);
       setEditedOpportunity(null);
     } catch (error) {
       console.error('Error updating opportunity:', error);
-      setError('Failed to update opportunity. Please try again later.');
     } finally {
       setIsSaving(false);
     }
@@ -93,11 +96,10 @@ const OpportunityDetail = () => {
   const handleDeleteClick = async () => {
     if (window.confirm('Are you sure you want to delete this opportunity?')) {
       try {
-        await OpportunityService.deleteOpportunity(id);
+        await deleteOpportunity();
         navigate('/opportunities');
       } catch (error) {
         console.error('Error deleting opportunity:', error);
-        setError('Failed to delete opportunity. Please try again later.');
       }
     }
   };
@@ -106,63 +108,80 @@ const OpportunityDetail = () => {
     navigate('/opportunities');
   };
 
-  if (loading) {
+  const handleTabSelect = (event, data) => {
+    setSelectedTab(data.value);
+  };
+
+  if (isLoading) {
     return (
-      <div className={containerStyles}>
-        <Stack horizontalAlign="center" verticalAlign="center" styles={{ root: { height: '70vh' } }}>
-          <Spinner size={SpinnerSize.large} label="Loading opportunity details..." />
-        </Stack>
+      <div className={styles.container}>
+        <div className={styles.spinnerContainer}>
+          <Spinner size="large" label="Loading opportunity details..." />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={containerStyles}>
-        <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>
-        <DefaultButton text="Back to Opportunities" onClick={handleBackClick} styles={{ root: { marginTop: 20 } }} />
+      <div className={styles.container}>
+        <Alert intent="error">{error}</Alert>
+        <div className={styles.buttonContainer}>
+          <Button appearance="secondary" onClick={handleBackClick}>
+            Back to Opportunities
+          </Button>
+        </div>
       </div>
     );
   }
 
   if (!opportunity) {
     return (
-      <div className={containerStyles}>
-        <MessageBar messageBarType={MessageBarType.warning}>
+      <div className={styles.container}>
+        <Alert intent="warning">
           Opportunity not found or has been deleted.
-        </MessageBar>
-        <DefaultButton text="Back to Opportunities" onClick={handleBackClick} styles={{ root: { marginTop: 20 } }} />
+        </Alert>
+        <div className={styles.buttonContainer}>
+          <Button appearance="secondary" onClick={handleBackClick}>
+            Back to Opportunities
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={containerStyles}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <OpportunityHeader 
-          opportunity={opportunity}
-          onBack={handleBackClick}
-          onEdit={handleEditClick}
-          onDelete={handleDeleteClick}
-        />
+    <div className={styles.container}>
+      <OpportunityHeader
+        opportunity={opportunity}
+        onBack={handleBackClick}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteClick}
+      />
 
-        <Separator />
+      <Divider style={{ margin: `${tokens.spacingVerticalM} 0` }} />
 
-        <Pivot>
-          <PivotItem headerText="Overview">
-            <OpportunityOverview opportunity={opportunity} />
-          </PivotItem>
-          
-          <PivotItem headerText="Sales Process">
-            <OpportunitySalesProcess opportunity={opportunity} />
-          </PivotItem>
-          
-          <PivotItem headerText="Notes & Activities">
-            <OpportunityActivitiesNotes />
-          </PivotItem>
-        </Pivot>
-      </Stack>
-      
+      <TabList
+        selectedValue={selectedTab}
+        onTabSelect={handleTabSelect}
+      >
+        <Tab value="overview">Overview</Tab>
+        <Tab value="salesProcess">Sales Process</Tab>
+        <Tab value="activities">Notes & Activities</Tab>
+      </TabList>
+
+      <div className={styles.content}>
+        {selectedTab === "overview" && (
+          <OpportunityOverview opportunity={opportunity} />
+        )}
+        {selectedTab === "salesProcess" && (
+          <OpportunitySalesProcess opportunity={opportunity} />
+        )}
+        {selectedTab === "activities" && (
+          <OpportunityActivitiesNotes />
+        )}
+      </div>
+
       <OpportunityEditPanel
         isOpen={isEditPanelOpen}
         opportunity={editedOpportunity}
@@ -174,5 +193,4 @@ const OpportunityDetail = () => {
     </div>
   );
 };
-
 export default OpportunityDetail;

@@ -1,25 +1,60 @@
-// packages/frontend/src/components/contacts/ContactForm.jsx
+// packages/frontend/src/modules/contacts/components/ContactForm.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  Stack,
-  TextField,
+  Input,
+  Button,
+  makeStyles,
+  tokens,
+  Field,
   Dropdown,
-  DefaultButton,
-  PrimaryButton
-} from '@fluentui/react';
+  Option,
+  Textarea
+} from '@fluentui/react-components';
+
+const useStyles = makeStyles({
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+  },
+  rowContainer: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalM,
+  },
+  fieldItem: {
+    flex: 1,
+  },
+  buttonContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalL,
+  }
+});
 
 const assigneeOptions = [
-  { key: 'Jane Cooper', text: 'Jane Cooper' },
-  { key: 'Robert Fox', text: 'Robert Fox' }
+  { id: 'Jane Cooper', value: 'Jane Cooper' },
+  { id: 'Robert Fox', value: 'Robert Fox' }
 ];
 
-const ContactForm = ({ 
-  contact, 
-  onUpdate, 
-  onSave, 
-  onCancel, 
+/**
+ * Contact form component for creating and editing contacts
+ *
+ * @param {Object} props - Component props
+ * @param {Object} props.contact - Contact data
+ * @param {Function} props.onUpdate - Update field callback
+ * @param {Function} props.onSave - Save contact callback
+ * @param {Function} props.onCancel - Cancel callback
+ * @param {boolean} props.isLoading - Loading state
+ */
+const ContactForm = ({
+  contact,
+  onUpdate,
+  onSave,
+  onCancel,
   isLoading = false
 }) => {
+  const styles = useStyles();
   const [hasChanges, setHasChanges] = useState(false);
 
   // Handle Escape key press
@@ -29,9 +64,9 @@ const ContactForm = ({
         handleCancel();
       }
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
-    
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
@@ -40,6 +75,11 @@ const ContactForm = ({
   const handleUpdate = (field, value) => {
     setHasChanges(true);
     onUpdate(field, value);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    handleUpdate(name, value);
   };
 
   const handleCancel = () => {
@@ -55,128 +95,156 @@ const ContactForm = ({
   if (!contact) return null;
 
   return (
-    <Stack tokens={{ childrenGap: 16 }}>
-      <Stack horizontal tokens={{ childrenGap: 16 }}>
-        <Stack.Item grow={1}>
-          <TextField
-            label="First Name"
-            required
+    <div className={styles.form}>
+      <div className={styles.rowContainer}>
+        <Field
+          label="First Name"
+          required
+          className={styles.fieldItem}
+        >
+          <Input
+            name="firstName"
             value={contact.firstName || ''}
-            onChange={(_, val) => handleUpdate('firstName', val)}
+            onChange={handleInputChange}
           />
-        </Stack.Item>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Last Name"
-            required
+        </Field>
+        <Field
+          label="Last Name"
+          required
+          className={styles.fieldItem}
+        >
+          <Input
+            name="lastName"
             value={contact.lastName || ''}
-            onChange={(_, val) => handleUpdate('lastName', val)}
+            onChange={handleInputChange}
           />
-        </Stack.Item>
-      </Stack>
+        </Field>
+      </div>
 
-      <TextField
-        label="Email"
-        value={contact.email || ''}
-        onChange={(_, val) => handleUpdate('email', val)}
-      />
-
-      <Stack horizontal tokens={{ childrenGap: 16 }}>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Phone"
-            value={contact.phone || ''}
-            onChange={(_, val) => handleUpdate('phone', val)}
-          />
-        </Stack.Item>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Mobile"
-            value={contact.mobile || ''}
-            onChange={(_, val) => handleUpdate('mobile', val)}
-          />
-        </Stack.Item>
-      </Stack>
-
-      <TextField
-        label="Account Name"
-        value={contact.accountName || ''}
-        onChange={(_, val) => handleUpdate('accountName', val)}
-      />
-
-      <Stack horizontal tokens={{ childrenGap: 16 }}>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Title"
-            value={contact.title || ''}
-            onChange={(_, val) => handleUpdate('title', val)}
-          />
-        </Stack.Item>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Department"
-            value={contact.department || ''}
-            onChange={(_, val) => handleUpdate('department', val)}
-          />
-        </Stack.Item>
-      </Stack>
-
-      <TextField
-        label="Mailing Street"
-        value={contact.mailingStreet || ''}
-        onChange={(_, val) => handleUpdate('mailingStreet', val)}
-      />
-
-      <Stack horizontal tokens={{ childrenGap: 16 }}>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Mailing City"
-            value={contact.mailingCity || ''}
-            onChange={(_, val) => handleUpdate('mailingCity', val)}
-          />
-        </Stack.Item>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Mailing State"
-            value={contact.mailingState || ''}
-            onChange={(_, val) => handleUpdate('mailingState', val)}
-          />
-        </Stack.Item>
-      </Stack>
-
-      <Stack horizontal tokens={{ childrenGap: 16 }}>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Mailing Zip"
-            value={contact.mailingZip || ''}
-            onChange={(_, val) => handleUpdate('mailingZip', val)}
-          />
-        </Stack.Item>
-        <Stack.Item grow={1}>
-          <TextField
-            label="Mailing Country"
-            value={contact.mailingCountry || ''}
-            onChange={(_, val) => handleUpdate('mailingCountry', val)}
-          />
-        </Stack.Item>
-      </Stack>
-
-      <Dropdown
-        label="Assigned To"
-        selectedKey={contact.assignedTo}
-        options={assigneeOptions}
-        onChange={(_, option) => handleUpdate('assignedTo', option.key)}
-      />
-
-      <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 8 }}>
-        <DefaultButton onClick={handleCancel} text="Cancel" disabled={isLoading} />
-        <PrimaryButton 
-          onClick={onSave} 
-          text="Save" 
-          disabled={isLoading || !contact.firstName || !contact.lastName} 
+      <Field label="Email">
+        <Input
+          name="email"
+          value={contact.email || ''}
+          onChange={handleInputChange}
+          type="email"
         />
-      </Stack>
-    </Stack>
+      </Field>
+
+      <div className={styles.rowContainer}>
+        <Field label="Phone" className={styles.fieldItem}>
+          <Input
+            name="phone"
+            value={contact.phone || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+        <Field label="Mobile" className={styles.fieldItem}>
+          <Input
+            name="mobile"
+            value={contact.mobile || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+      </div>
+
+      <Field label="Account Name">
+        <Input
+          name="accountName"
+          value={contact.accountName || ''}
+          onChange={handleInputChange}
+        />
+      </Field>
+
+      <div className={styles.rowContainer}>
+        <Field label="Title" className={styles.fieldItem}>
+          <Input
+            name="title"
+            value={contact.title || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+        <Field label="Department" className={styles.fieldItem}>
+          <Input
+            name="department"
+            value={contact.department || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+      </div>
+
+      <Field label="Mailing Street">
+        <Textarea
+          name="mailingStreet"
+          value={contact.mailingStreet || ''}
+          onChange={handleInputChange}
+          resize="vertical"
+        />
+      </Field>
+
+      <div className={styles.rowContainer}>
+        <Field label="Mailing City" className={styles.fieldItem}>
+          <Input
+            name="mailingCity"
+            value={contact.mailingCity || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+        <Field label="Mailing State" className={styles.fieldItem}>
+          <Input
+            name="mailingState"
+            value={contact.mailingState || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+      </div>
+
+      <div className={styles.rowContainer}>
+        <Field label="Mailing Zip" className={styles.fieldItem}>
+          <Input
+            name="mailingZip"
+            value={contact.mailingZip || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+        <Field label="Mailing Country" className={styles.fieldItem}>
+          <Input
+            name="mailingCountry"
+            value={contact.mailingCountry || ''}
+            onChange={handleInputChange}
+          />
+        </Field>
+      </div>
+
+      <Field label="Assigned To">
+        <Dropdown
+          value={contact.assignedTo || ''}
+          onOptionSelect={(e, data) => handleUpdate('assignedTo', data.optionValue)}
+        >
+          {assigneeOptions.map((option) => (
+            <Option key={option.id} value={option.value}>
+              {option.value}
+            </Option>
+          ))}
+        </Dropdown>
+      </Field>
+
+      <div className={styles.buttonContainer}>
+        <Button
+          appearance="secondary"
+          onClick={handleCancel}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          appearance="primary"
+          onClick={onSave}
+          disabled={isLoading || !contact.firstName || !contact.lastName}
+        >
+          Save
+        </Button>
+      </div>
+    </div>
   );
 };
 

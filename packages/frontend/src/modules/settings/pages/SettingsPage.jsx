@@ -1,3 +1,4 @@
+// packages/frontend/src/modules/settings/pages/SettingsPage.jsx
 import React, { useState } from 'react';
 import {
   makeStyles,
@@ -5,6 +6,7 @@ import {
   Button,
   Input,
   Dropdown,
+  Option,
   TabList,
   Tab,
   Text,
@@ -12,16 +14,13 @@ import {
   Divider,
   Switch,
   Checkbox,
-  MessageBar,
   Field
 } from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import {
-  Upload24Regular,
-  Download24Regular
-} from '@fluentui/react-components/icons';
-
-import { Upload24Regular, Download24Regular } from '@fluentui/react-components/icons';
-import { Upload24Regular, Download24Regular } from '@fluentui/react-icons';
+  ArrowUploadRegular,
+  ArrowDownloadRegular
+} from '@fluentui/react-icons';
 
 const useStyles = makeStyles({
   container: {
@@ -130,22 +129,22 @@ const SettingsPage = () => {
   };
 
   const timeZoneOptions = [
-    { key: 'Pacific', text: 'Pacific Standard Time (UTC-08:00)' },
-    { key: 'Mountain', text: 'Mountain Standard Time (UTC-07:00)' },
-    { key: 'Central', text: 'Central Standard Time (UTC-06:00)' },
-    { key: 'Eastern', text: 'Eastern Standard Time (UTC-05:00)' }
+    { id: 'Pacific', value: 'Pacific Standard Time (UTC-08:00)' },
+    { id: 'Mountain', value: 'Mountain Standard Time (UTC-07:00)' },
+    { id: 'Central', value: 'Central Standard Time (UTC-06:00)' },
+    { id: 'Eastern', value: 'Eastern Standard Time (UTC-05:00)' }
   ];
 
   const dateFormatOptions = [
-    { key: 'MM/DD/YYYY', text: 'MM/DD/YYYY' },
-    { key: 'DD/MM/YYYY', text: 'DD/MM/YYYY' },
-    { key: 'YYYY-MM-DD', text: 'YYYY-MM-DD' }
+    { id: 'MM/DD/YYYY', value: 'MM/DD/YYYY' },
+    { id: 'DD/MM/YYYY', value: 'DD/MM/YYYY' },
+    { id: 'YYYY-MM-DD', value: 'YYYY-MM-DD' }
   ];
 
   const themeOptions = [
-    { key: 'Light', text: 'Light' },
-    { key: 'Dark', text: 'Dark' },
-    { key: 'System', text: 'System Default' }
+    { id: 'Light', value: 'Light' },
+    { id: 'Dark', value: 'Dark' },
+    { id: 'System', value: 'System Default' }
   ];
 
   return (
@@ -153,12 +152,9 @@ const SettingsPage = () => {
       <Text size={500} as="h1">Settings</Text>
 
       {savedSuccessfully && (
-        <MessageBar
-          intent="success"
-          onDismiss={() => setSavedSuccessfully(false)}
-        >
+        <Alert intent="success" dismissible onDismiss={() => setSavedSuccessfully(false)}>
           Your settings have been saved successfully.
-        </MessageBar>
+        </Alert>
       )}
 
       <TabList
@@ -179,7 +175,7 @@ const SettingsPage = () => {
                 name={`${userProfile.firstName} ${userProfile.lastName}`}
                 size={72}
               />
-              <Button icon={<Upload24Regular />} appearance="secondary">
+              <Button icon={<ArrowUploadRegular />} appearance="secondary">
                 Change Photo
               </Button>
             </div>
@@ -188,70 +184,67 @@ const SettingsPage = () => {
 
             <div className={styles.formField}>
               <div style={{ display: 'flex', gap: tokens.spacingHorizontalM }}>
-                <Field style={{ flex: 1 }}>
-                  <Text size={200} weight="semibold">First Name</Text>
+                <Field style={{ flex: 1 }} label="First Name">
                   <Input
                     value={userProfile.firstName}
-                    onChange={(_, data) => handleUserProfileChange('firstName', data.value)}
+                    onChange={e => handleUserProfileChange('firstName', e.target.value)}
                   />
                 </Field>
-                <Field style={{ flex: 1 }}>
-                  <Text size={200} weight="semibold">Last Name</Text>
+                <Field style={{ flex: 1 }} label="Last Name">
                   <Input
                     value={userProfile.lastName}
-                    onChange={(_, data) => handleUserProfileChange('lastName', data.value)}
+                    onChange={e => handleUserProfileChange('lastName', e.target.value)}
                   />
                 </Field>
               </div>
 
-              <Field>
-                <Text size={200} weight="semibold">Email Address</Text>
+              <Field label="Email Address">
                 <Input
                   type="email"
                   value={userProfile.email}
-                  onChange={(_, data) => handleUserProfileChange('email', data.value)}
+                  onChange={e => handleUserProfileChange('email', e.target.value)}
                 />
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">Job Title</Text>
+              <Field label="Job Title">
                 <Input
                   value={userProfile.jobTitle}
-                  onChange={(_, data) => handleUserProfileChange('jobTitle', data.value)}
+                  onChange={e => handleUserProfileChange('jobTitle', e.target.value)}
                 />
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">Phone</Text>
+              <Field label="Phone">
                 <Input
                   type="tel"
                   value={userProfile.phone}
-                  onChange={(_, data) => handleUserProfileChange('phone', data.value)}
+                  onChange={e => handleUserProfileChange('phone', e.target.value)}
                 />
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">Time Zone</Text>
+              <Field label="Time Zone">
                 <Dropdown
-                  selectedKey={userProfile.timeZone}
-                  options={timeZoneOptions.map(option => ({
-                    key: option.key,
-                    text: option.text
-                  }))}
-                  onOptionSelect={(_, option) => handleUserProfileChange('timeZone', option.optionValue)}
-                />
+                  value={userProfile.timeZone}
+                  onOptionSelect={(_, data) => handleUserProfileChange('timeZone', data.optionValue)}
+                >
+                  {timeZoneOptions.map(option => (
+                    <Option key={option.id} value={option.id}>
+                      {option.value}
+                    </Option>
+                  ))}
+                </Dropdown>
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">Date Format</Text>
+              <Field label="Date Format">
                 <Dropdown
-                  selectedKey={userProfile.dateFormat}
-                  options={dateFormatOptions.map(option => ({
-                    key: option.key,
-                    text: option.text
-                  }))}
-                  onOptionSelect={(_, option) => handleUserProfileChange('dateFormat', option.optionValue)}
-                />
+                  value={userProfile.dateFormat}
+                  onOptionSelect={(_, data) => handleUserProfileChange('dateFormat', data.optionValue)}
+                >
+                  {dateFormatOptions.map(option => (
+                    <Option key={option.id} value={option.id}>
+                      {option.value}
+                    </Option>
+                  ))}
+                </Dropdown>
               </Field>
             </div>
           </div>
@@ -259,18 +252,15 @@ const SettingsPage = () => {
           <div className={styles.section}>
             <Text size={400}>Password</Text>
             <div className={styles.formField}>
-              <Field>
-                <Text size={200} weight="semibold">Current Password</Text>
+              <Field label="Current Password">
                 <Input type="password" />
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">New Password</Text>
+              <Field label="New Password">
                 <Input type="password" />
               </Field>
 
-              <Field>
-                <Text size={200} weight="semibold">Confirm New Password</Text>
+              <Field label="Confirm New Password">
                 <Input type="password" />
               </Field>
 
@@ -327,13 +317,13 @@ const SettingsPage = () => {
           <div className={styles.formField}>
             <Text>Import data from CSV files</Text>
             <div className={styles.importExportButtons}>
-              <Button icon={<Upload24Regular />} appearance="secondary">
+              <Button icon={<ArrowUploadRegular />} appearance="secondary">
                 Import Contacts
               </Button>
-              <Button icon={<Upload24Regular />} appearance="secondary">
+              <Button icon={<ArrowUploadRegular />} appearance="secondary">
                 Import Leads
               </Button>
-              <Button icon={<Upload24Regular />} appearance="secondary">
+              <Button icon={<ArrowUploadRegular />} appearance="secondary">
                 Import Opportunities
               </Button>
             </div>
@@ -345,13 +335,13 @@ const SettingsPage = () => {
           <div className={styles.formField}>
             <Text>Export your CRM data as CSV files</Text>
             <div className={styles.importExportButtons}>
-              <Button icon={<Download24Regular />} appearance="secondary">
+              <Button icon={<ArrowDownloadRegular />} appearance="secondary">
                 Export Contacts
               </Button>
-              <Button icon={<Download24Regular />} appearance="secondary">
+              <Button icon={<ArrowDownloadRegular />} appearance="secondary">
                 Export Leads
               </Button>
-              <Button icon={<Download24Regular />} appearance="secondary">
+              <Button icon={<ArrowDownloadRegular />} appearance="secondary">
                 Export Opportunities
               </Button>
             </div>
@@ -364,16 +354,17 @@ const SettingsPage = () => {
           <div className={styles.section}>
             <Text size={400}>Theme Settings</Text>
             <div className={styles.formField}>
-              <Field>
-                <Text size={200} weight="semibold">Theme</Text>
+              <Field label="Theme">
                 <Dropdown
-                  selectedKey={userProfile.theme}
-                  options={themeOptions.map(option => ({
-                    key: option.key,
-                    text: option.text
-                  }))}
-                  onOptionSelect={(_, option) => handleUserProfileChange('theme', option.optionValue)}
-                />
+                  value={userProfile.theme}
+                  onOptionSelect={(_, data) => handleUserProfileChange('theme', data.optionValue)}
+                >
+                  {themeOptions.map(option => (
+                    <Option key={option.id} value={option.id}>
+                      {option.value}
+                    </Option>
+                  ))}
+                </Dropdown>
               </Field>
 
               <Switch

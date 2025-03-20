@@ -1,53 +1,76 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Stack,
+  makeStyles,
+  tokens,
   Text,
-  StackItem,
   Spinner,
-  SpinnerSize,
-  MessageBar,
-  mergeStyles,
-  DocumentCard,
-  DocumentCardDetails,
-  Separator,
-  ProgressIndicator
-} from '@fluentui/react';
+  Card,
+  CardHeader,
+  ProgressBar
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import ReportChart from '../ReportChart';
 import ReportViewer from '../ReportViewer';
 import ExportTools from '../ExportTools';
 import reportService, { getColumnsForReportType } from '../../services/reportService';
 
-const sectionStyles = mergeStyles({
-  backgroundColor: 'white',
-  boxShadow: '0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108)',
-  borderRadius: '2px',
-  padding: '20px',
-  marginBottom: '20px'
-});
-
-const kpiCardStyles = mergeStyles({
-  padding: '16px',
-  height: '100%',
-  minHeight: '120px'
-});
-
-const kpiTitleStyles = mergeStyles({
-  fontSize: '14px',
-  fontWeight: 'normal',
-  color: '#605e5c'
-});
-
-const kpiValueStyles = mergeStyles({
-  fontSize: '28px',
-  fontWeight: 'bold',
-  marginTop: '8px',
-  color: '#0078d4'
-});
-
-const kpiTrendStyles = mergeStyles({
-  fontSize: '12px',
-  marginTop: '8px'
+const useStyles = makeStyles({
+  section: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium,
+    padding: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  kpiGrid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr 2fr',
+    gap: tokens.spacingHorizontalM
+  },
+  kpiCard: {
+    height: '100%'
+  },
+  kpiTitle: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
+    textTransform: 'uppercase',
+    letterSpacing: tokens.spacingHorizontalXS
+  },
+  kpiValue: {
+    fontSize: tokens.fontSizeBase600,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorBrandForeground1,
+    marginTop: tokens.spacingVerticalS,
+    marginBottom: tokens.spacingVerticalXS
+  },
+  kpiTrend: {
+    fontSize: tokens.fontSizeBase100
+  },
+  trendPositive: {
+    color: tokens.colorPaletteGreenForeground1
+  },
+  trendNegative: {
+    color: tokens.colorPaletteRedForeground1
+  },
+  progressSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalS
+  },
+  progressLabel: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginBottom: tokens.spacingVerticalXXS
+  },
+  progressContainer: {
+    marginBottom: tokens.spacingVerticalS
+  }
 });
 
 /**
@@ -56,6 +79,7 @@ const kpiTrendStyles = mergeStyles({
  * @component
  */
 const ContactsReport = ({ reportConfig }) => {
+  const styles = useStyles();
   const [reportData, setReportData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -117,8 +141,8 @@ const ContactsReport = ({ reportConfig }) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className={sectionStyles}>
-        <Spinner size={SpinnerSize.large} label="Loading contacts report..." />
+      <div className={styles.section}>
+        <Spinner label="Loading contacts report..." />
       </div>
     );
   }
@@ -126,18 +150,18 @@ const ContactsReport = ({ reportConfig }) => {
   // Error state
   if (error) {
     return (
-      <div className={sectionStyles}>
-        <MessageBar>
+      <div className={styles.section}>
+        <Alert intent="error">
           {error}
-        </MessageBar>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <Stack tokens={{ childrenGap: 16 }}>
-      <div className={sectionStyles}>
-        <Text variant="xLarge" styles={{ root: { marginBottom: 16 } }}>Contacts Report</Text>
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <Text size={600} weight="semibold">Contacts Report</Text>
         <Text>
           {reportConfig.dateRange.startDate.toLocaleDateString()} - {reportConfig.dateRange.endDate.toLocaleDateString()}
         </Text>
@@ -150,61 +174,90 @@ const ContactsReport = ({ reportConfig }) => {
       </div>
 
       {/* KPI Cards */}
-      <div className={sectionStyles}>
-        <Text variant="large" styles={{ root: { marginBottom: 16 } }}>Key Performance Indicators</Text>
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" block>Key Performance Indicators</Text>
 
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <StackItem grow={2}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>NEW CONTACTS</Text>
-                <Text className={kpiValueStyles}>{kpis.totalNew}</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#107C10' }}>
-                  ↑ 14.2% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
+        <div className={styles.kpiGrid}>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>New Contacts</Text>
+              <Text className={styles.kpiValue}>{kpis.totalNew}</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendPositive}`}>
+                ↑ 14.2% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
 
-          <StackItem grow={2}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>ACTIVE CONTACTS</Text>
-                <Text className={kpiValueStyles}>{kpis.totalActive}</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#107C10' }}>
-                  ↑ 8.9% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>Active Contacts</Text>
+              <Text className={styles.kpiValue}>{kpis.totalActive}</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendPositive}`}>
+                ↑ 8.9% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
 
-          <StackItem grow={3}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>CONTACT SOURCE BREAKDOWN</Text>
-                <Stack tokens={{ childrenGap: 8 }} styles={{ root: { marginTop: 12 } }}>
-                  <Stack.Item>
-                    <Text>Web ({kpis.sourceBreakdown.web}%)</Text>
-                    <ProgressIndicator percentComplete={kpis.sourceBreakdown.web / 100} />
-                  </Stack.Item>
-                  <Stack.Item>
-                    <Text>Referral ({kpis.sourceBreakdown.referral}%)</Text>
-                    <ProgressIndicator percentComplete={kpis.sourceBreakdown.referral / 100} />
-                  </Stack.Item>
-                  <Stack.Item>
-                    <Text>Event ({kpis.sourceBreakdown.event}%)</Text>
-                    <ProgressIndicator percentComplete={kpis.sourceBreakdown.event / 100} />
-                  </Stack.Item>
-                </Stack>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
-        </Stack>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>Contact Source Breakdown</Text>
+              <div className={styles.progressSection}>
+                <div className={styles.progressContainer}>
+                  <div className={styles.progressLabel}>
+                    <Text>Web</Text>
+                    <Text>{kpis.sourceBreakdown.web}%</Text>
+                  </div>
+                  <ProgressBar
+                    value={kpis.sourceBreakdown.web / 100}
+                    thickness="large"
+                    color="brand"
+                  />
+                </div>
+
+                <div className={styles.progressContainer}>
+                  <div className={styles.progressLabel}>
+                    <Text>Referral</Text>
+                    <Text>{kpis.sourceBreakdown.referral}%</Text>
+                  </div>
+                  <ProgressBar
+                    value={kpis.sourceBreakdown.referral / 100}
+                    thickness="large"
+                    color="brand"
+                  />
+                </div>
+
+                <div className={styles.progressContainer}>
+                  <div className={styles.progressLabel}>
+                    <Text>Event</Text>
+                    <Text>{kpis.sourceBreakdown.event}%</Text>
+                  </div>
+                  <ProgressBar
+                    value={kpis.sourceBreakdown.event / 100}
+                    thickness="large"
+                    color="brand"
+                  />
+                </div>
+
+                <div className={styles.progressContainer}>
+                  <div className={styles.progressLabel}>
+                    <Text>Other</Text>
+                    <Text>{kpis.sourceBreakdown.other}%</Text>
+                  </div>
+                  <ProgressBar
+                    value={kpis.sourceBreakdown.other / 100}
+                    thickness="large"
+                    color="brand"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
 
       {/* Chart visualization */}
       {reportConfig.showChart && reportData.length > 0 && (
-        <div className={sectionStyles}>
+        <div className={styles.section}>
           <ReportChart
             data={reportData.map(item => ({
               label: item.period,
@@ -223,7 +276,7 @@ const ContactsReport = ({ reportConfig }) => {
         reportData={reportData}
         isLoading={isLoading}
       />
-    </Stack>
+    </div>
   );
 };
 

@@ -1,10 +1,8 @@
 // File: packages/frontend/src/modules/tasks/pages/TasksPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Button,
-  Card,
   makeStyles,
-  Spinner,
   Tab,
   TabList,
   Text,
@@ -72,7 +70,7 @@ const TasksPage = () => {
   const styles = useStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const { getQueryParams, setQueryParams } = useQueryParams();
+  const queryParams = useQueryParams();
 
   // State for page
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -80,17 +78,18 @@ const TasksPage = () => {
   const [teams, setTeams] = useState([]);
   const [modules, setModules] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // Parse query params for initial filter
-  const initialFilter = {
-    status: getQueryParams('status') || [],
-    startDate: getQueryParams('startDate') ? new Date(getQueryParams('startDate')) : null,
-    endDate: getQueryParams('endDate') ? new Date(getQueryParams('endDate')) : null,
-    assignee: getQueryParams('assignee') || null,
-    showCompleted: getQueryParams('showCompleted') !== 'false',
-    priority: getQueryParams('priority') || [],
-    searchText: getQueryParams('searchText') || ''
-  };
+  // Memoize initial filter to prevent re-creation on every render
+  const initialFilter = React.useMemo(() => ({
+    status: queryParams.get('status') || [],
+    startDate: queryParams.get('startDate') ? new Date(queryParams.get('startDate')) : null,
+    endDate: queryParams.get('endDate') ? new Date(queryParams.get('endDate')) : null,
+    assignee: queryParams.get('assignee') || null,
+    showCompleted: queryParams.get('showCompleted') !== 'false',
+    priority: queryParams.get('priority') || [],
+    searchText: queryParams.get('search') || ''
+  }), []); // Empty dependency array - only compute once
 
   // Use task data hook
   const {
@@ -102,33 +101,41 @@ const TasksPage = () => {
     filter
   } = useTaskData({
     filter: initialFilter,
-    loadOnMount: true
+    loadOnMount: false // We'll manually control when to load
   });
 
-  // Set initial search text from query params
+  // Set initial search text only once
   useEffect(() => {
-    setSearchText(initialFilter.searchText || '');
-  }, [initialFilter.searchText]);
+    if (!initialLoadComplete) {
+      setSearchText(initialFilter.searchText || '');
+      setInitialLoadComplete(true);
+      loadTasks(initialFilter);
+    }
+  }, [initialFilter, initialLoadComplete, loadTasks]);
 
   // Determine the current view from the URL
-  const getSelectedTab = () => {
+  const getSelectedTab = useCallback(() => {
     const path = location.pathname;
     if (path.includes('/my-tasks')) return 'my';
     if (path.includes('/due-today')) return 'today';
     if (path.includes('/overdue')) return 'overdue';
     if (path.includes('/unassigned')) return 'unassigned';
     return 'all';
-  };
+  }, [location.pathname]);
 
   // Selected tab
   const selectedTab = getSelectedTab();
 
   // Load users for assignee filter
   useEffect(() => {
+    let mounted = true;
+
     const loadUsers = async () => {
       try {
         const response = await UserService.getAllUsers();
-        setUsers(response.data || []);
+        if (mounted) {
+          setUsers(response?.data || []);
+        }
       } catch (err) {
         console.error('Error loading users:', err);
       }
@@ -137,69 +144,53 @@ const TasksPage = () => {
     loadUsers();
 
     // Set modules (this could be from an API in a real implementation)
-    setModules(['CRM', 'OPERATIONS', 'SALES', 'MARKETING', 'SUPPORT', 'HR', 'FINANCE']);
+    if (mounted) {
+      setModules(['CRM', 'OPERATIONS', 'SALES', 'MARKETING', 'SUPPORT', 'HR', 'FINANCE']);
+    }
+
+    return () => { mounted = false; };
   }, []);
 
-  // Handle search text change
-  const handleSearchChange = (_, data) => {
+  // Handle search text change with debounce
+  const handleSearchChange = useCallback((_, data) => {
     setSearchText(data.value);
 
-    // Update filter after a small delay to avoid excessive API calls
+    // Use a ref to store the timeout ID to avoid creating a new dependency
     const timeoutId = setTimeout(() => {
-      applyFilter({
+      const newFilter = {
         ...filter,
         searchText: data.value
-      });
+      };
 
-      // Update URL query params
-      setQueryParams({ ...getQueryParams(), searchText: data.value });
+      applyFilter(newFilter);
+
+      // Update URL search parameter without causing navigation/reload
+      const params = {...queryParams.getAsObject()};
+      if (data.value) {
+        params.search = data.value;
+      } else {
+        delete params.search;
+      }
+
+      const searchString = queryParams.createSearchString(params);
+      const newUrl = `${location.pathname}${searchString}`;
+
+      // Use history.replaceState to update URL without navigation
+      window.history.replaceState(null, '', newUrl);
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  };
+  }, [filter, applyFilter, queryParams, location.pathname]);
 
-  // Handle filter changes
-  const handleFilterChange = (newFilter) => {
+  // Handle filter changes without causing loops
+  const handleFilterChange = useCallback((newFilter) => {
     applyFilter(newFilter);
     setIsFilterPanelOpen(false);
-
-    // Update URL with filter parameters
-    const queryParams = {};
-
-    // Only add params that have values
-    if (newFilter.status?.length > 0) {
-      queryParams.status = newFilter.status;
-    }
-
-    if (newFilter.priority?.length > 0) {
-      queryParams.priority = newFilter.priority;
-    }
-
-    if (newFilter.startDate) {
-      queryParams.startDate = newFilter.startDate.toISOString().split('T')[0];
-    }
-
-    if (newFilter.endDate) {
-      queryParams.endDate = newFilter.endDate.toISOString().split('T')[0];
-    }
-
-    if (newFilter.assignee) {
-      queryParams.assignee = newFilter.assignee;
-    }
-
-    if (!newFilter.showCompleted) {
-      queryParams.showCompleted = 'false';
-    }
-
-    if (newFilter.searchText) {
-      queryParams.searchText = newFilter.searchText;
-    }
-
-    setQueryParams(queryParams);
-  };
+    // The filter component already handles updating URL
+  }, [applyFilter]);
 
   // Handle tab changes
-  const handleTabChange = (_, data) => {
+  const handleTabChange = useCallback((_, data) => {
     switch (data.value) {
       case 'my':
         navigate('/tasks/my-tasks');
@@ -216,7 +207,27 @@ const TasksPage = () => {
       default:
         navigate('/tasks');
     }
-  };
+  }, [navigate]);
+
+  // Handle refresh button click
+  const handleRefresh = useCallback(() => {
+    loadTasks(filter);
+  }, [loadTasks, filter]);
+
+  // Toggle filter panel
+  const toggleFilterPanel = useCallback(() => {
+    setIsFilterPanelOpen(prev => !prev);
+  }, []);
+
+  // Navigate to new task page
+  const navigateToNewTask = useCallback(() => {
+    navigate('/tasks/new');
+  }, [navigate]);
+
+  // Navigate to task detail
+  const navigateToTaskDetail = useCallback((taskId) => {
+    navigate(`/tasks/${taskId}`);
+  }, [navigate]);
 
   return (
     <div className={styles.container}>
@@ -237,7 +248,7 @@ const TasksPage = () => {
           <Button
             appearance="secondary"
             icon={<ArrowClockwise24Regular />}
-            onClick={() => loadTasks(filter)}
+            onClick={handleRefresh}
           >
             Refresh
           </Button>
@@ -245,7 +256,7 @@ const TasksPage = () => {
           <Button
             appearance={isFilterPanelOpen ? "primary" : "secondary"}
             icon={<Filter24Regular />}
-            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+            onClick={toggleFilterPanel}
           >
             Filters
           </Button>
@@ -253,7 +264,7 @@ const TasksPage = () => {
           <Button
             appearance="primary"
             icon={<Add24Regular />}
-            onClick={() => navigate('/tasks/new')}
+            onClick={navigateToNewTask}
           >
             New Task
           </Button>
@@ -275,11 +286,11 @@ const TasksPage = () => {
           <TaskList
             tasks={tasks}
             loading={loading}
-            onTaskSelect={(taskId) => navigate(`/tasks/${taskId}`)}
+            onTaskSelect={navigateToTaskDetail}
             view={selectedTab}
             emptyStateAction={{
               text: "Create Task",
-              onClick: () => navigate('/tasks/new')
+              onClick: navigateToNewTask
             }}
           />
         </div>

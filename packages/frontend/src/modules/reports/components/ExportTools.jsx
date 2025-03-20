@@ -1,36 +1,56 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
-  CommandBar,
-  MessageBar,
-  MessageBarType,
-  Dialog,
-  DialogType,
-  DialogFooter,
-  PrimaryButton,
-  DefaultButton,
-  mergeStyles,
-  Dropdown,
-  TextField,
+  makeStyles,
+  tokens,
+  Button,
   Spinner,
-  SpinnerSize,
-  Stack,
-  Text
-} from '@fluentui/react';
+  Text,
+  Field,
+  Input,
+  Dialog,
+  DialogTrigger,
+  DialogSurface,
+  DialogTitle,
+  DialogContent,
+  DialogBody,
+  DialogActions,
+  Dropdown
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
+import {
+  ArrowDownloadRegular,
+  PrintRegular
+} from '@fluentui/react-icons';
 import * as XLSX from 'exceljs';
 import { saveAs } from 'file-saver';
 import { reportTypes } from '../services/reportService';
 
-const exportDialogContentStyles = mergeStyles({
-  padding: '20px 0'
+const useStyles = makeStyles({
+  toolbarContainer: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalM,
+    marginBottom: tokens.spacingVerticalM
+  },
+  dialogContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+    padding: `${tokens.spacingVerticalM} 0`
+  },
+  alert: {
+    marginBottom: tokens.spacingVerticalM
+  }
 });
 
 /**
  * ExportTools component for exporting report data
- * 
+ *
  * @component
  */
 const ExportTools = ({ reportType, reportData, columns }) => {
+  const styles = useStyles();
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState('excel');
   const [fileName, setFileName] = useState('');
@@ -60,23 +80,23 @@ const ExportTools = ({ reportType, reportData, columns }) => {
   const exportToExcel = async () => {
     try {
       setIsExporting(true);
-      
+
       // Create a new workbook
       const workbook = new XLSX.Workbook();
-      
+
       // Add a worksheet
       const worksheetName = reportTypes.find(t => t.key === reportType)?.text || 'Report';
       const worksheet = workbook.addWorksheet(worksheetName);
-      
+
       // Add columns
       const excelColumns = columns.map(col => ({
         header: col.name,
         key: col.fieldName,
         width: Math.max(col.name.length + 5, 12)
       }));
-      
+
       worksheet.columns = excelColumns;
-      
+
       // Add rows
       reportData.forEach(item => {
         const row = {};
@@ -86,7 +106,7 @@ const ExportTools = ({ reportType, reportData, columns }) => {
         });
         worksheet.addRow(row);
       });
-      
+
       // Format headers
       worksheet.getRow(1).font = { bold: true };
       worksheet.getRow(1).fill = {
@@ -94,21 +114,21 @@ const ExportTools = ({ reportType, reportData, columns }) => {
         pattern: 'solid',
         fgColor: { argb: 'FFE0E6F1' }
       };
-      
+
       // Format specific columns (currency, percentages)
       columns.forEach((col, colIndex) => {
-        if (col.fieldName.includes('revenue') || 
-            col.fieldName.includes('value') || 
+        if (col.fieldName.includes('revenue') ||
+            col.fieldName.includes('value') ||
             col.fieldName.includes('avgDealSize')) {
           // Format currency columns
           worksheet.getColumn(col.fieldName).numFmt = '$#,##0.00';
-        } else if (col.fieldName.includes('conversionRate') || 
+        } else if (col.fieldName.includes('conversionRate') ||
                   col.fieldName.includes('winRate')) {
           // Format percentage columns
           worksheet.getColumn(col.fieldName).numFmt = '0.00%';
         }
       });
-      
+
       // Set borders
       worksheet.eachRow((row, rowNumber) => {
         row.eachCell({ includeEmpty: true }, (cell) => {
@@ -120,31 +140,31 @@ const ExportTools = ({ reportType, reportData, columns }) => {
           };
         });
       });
-      
+
       // Generate Excel file and trigger download
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       saveAs(blob, `${fileName || getDefaultFileName()}.xlsx`);
-      
+
       setIsExporting(false);
       closeExportDialog();
-      
+
       setExportMessage({
-        type: MessageBarType.success,
+        type: 'success',
         message: 'Report exported successfully'
       });
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setExportMessage(null);
       }, 3000);
-      
+
     } catch (error) {
       console.error('Export error:', error);
       setIsExporting(false);
-      
+
       setExportMessage({
-        type: MessageBarType.error,
+        type: 'error',
         message: `Export failed: ${error.message || 'Unknown error'}`
       });
     }
@@ -154,10 +174,10 @@ const ExportTools = ({ reportType, reportData, columns }) => {
   const exportToCsv = () => {
     try {
       setIsExporting(true);
-      
+
       // Create header row
       const headerRow = columns.map(col => col.name);
-      
+
       // Create data rows
       const dataRows = reportData.map(item => {
         return columns.map(col => {
@@ -169,35 +189,35 @@ const ExportTools = ({ reportType, reportData, columns }) => {
           }
         });
       });
-      
+
       // Combine header and data rows
       const csvContent = [headerRow, ...dataRows]
         .map(row => row.join(','))
         .join('\n');
-      
+
       // Create and download CSV file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       saveAs(blob, `${fileName || getDefaultFileName()}.csv`);
-      
+
       setIsExporting(false);
       closeExportDialog();
-      
+
       setExportMessage({
-        type: MessageBarType.success,
+        type: 'success',
         message: 'Report exported successfully'
       });
-      
+
       // Clear success message after 3 seconds
       setTimeout(() => {
         setExportMessage(null);
       }, 3000);
-      
+
     } catch (error) {
       console.error('Export error:', error);
       setIsExporting(false);
-      
+
       setExportMessage({
-        type: MessageBarType.error,
+        type: 'error',
         message: `Export failed: ${error.message || 'Unknown error'}`
       });
     }
@@ -218,92 +238,87 @@ const ExportTools = ({ reportType, reportData, columns }) => {
     { key: 'csv', text: 'CSV (.csv)' }
   ];
 
-  // Command bar items
-  const commandBarItems = [
-    {
-      key: 'export',
-      text: 'Export',
-      iconProps: { iconName: 'Download' },
-      onClick: openExportDialog,
-      disabled: !reportData || reportData.length === 0
-    },
-    {
-      key: 'print',
-      text: 'Print',
-      iconProps: { iconName: 'Print' },
-      onClick: () => window.print(),
-      disabled: !reportData || reportData.length === 0
-    }
-  ];
-
   return (
     <>
       {exportMessage && (
-        <MessageBar
-          messageBarType={exportMessage.type}
-          isMultiline={false}
-          onDismiss={() => setExportMessage(null)}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { marginBottom: 16 } }}
+        <Alert
+          intent={exportMessage.type === 'success' ? 'success' : 'error'}
+          action={{
+            onClick: () => setExportMessage(null)
+          }}
+          className={styles.alert}
         >
           {exportMessage.message}
-        </MessageBar>
+        </Alert>
       )}
-      
-      <CommandBar
-        items={commandBarItems}
-        ariaLabel="Report actions"
-      />
-      
-      <Dialog
-        hidden={!isExportDialogOpen}
-        onDismiss={closeExportDialog}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Export Report',
-          subText: 'Choose export format and file name'
-        }}
-        modalProps={{
-          isBlocking: true
-        }}
-      >
-        <div className={exportDialogContentStyles}>
-          <Stack tokens={{ childrenGap: 16 }}>
-            <Dropdown
-              label="Export Format"
-              selectedKey={exportFormat}
-              options={exportFormatOptions}
-              onChange={(_, option) => setExportFormat(option.key)}
-            />
-            
-            <TextField
-              label="File Name"
-              value={fileName}
-              onChange={(_, value) => setFileName(value)}
-              placeholder="Enter file name (without extension)"
-              suffix={exportFormat === 'excel' ? '.xlsx' : '.csv'}
-            />
-            
-            {isExporting && (
-              <Spinner 
-                size={SpinnerSize.medium} 
-                label="Exporting..." 
-              />
-            )}
-          </Stack>
-        </div>
-        
-        <DialogFooter>
-          <PrimaryButton 
-            onClick={handleExport} 
-            text="Export" 
-            disabled={isExporting}
-          />
-          <DefaultButton 
-            onClick={closeExportDialog} 
-            text="Cancel" 
-          />
-        </DialogFooter>
+
+      <div className={styles.toolbarContainer}>
+        <Button
+          icon={<ArrowDownloadRegular />}
+          onClick={openExportDialog}
+          disabled={!reportData || reportData.length === 0}
+        >
+          Export
+        </Button>
+        <Button
+          icon={<PrintRegular />}
+          onClick={() => window.print()}
+          disabled={!reportData || reportData.length === 0}
+        >
+          Print
+        </Button>
+      </div>
+
+      <Dialog open={isExportDialogOpen} onOpenChange={(_, data) => setIsExportDialogOpen(data.open)}>
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>Export Report</DialogTitle>
+            <DialogContent>
+              <div className={styles.dialogContent}>
+                <Field label="Export Format">
+                  <Dropdown
+                    value={exportFormat}
+                    onOptionSelect={(_, data) => setExportFormat(data.optionValue)}
+                  >
+                    {exportFormatOptions.map(option => (
+                      <Dropdown.Option key={option.key} value={option.key}>
+                        {option.text}
+                      </Dropdown.Option>
+                    ))}
+                  </Dropdown>
+                </Field>
+
+                <Field label="File Name">
+                  <Input
+                    value={fileName}
+                    onChange={(_, data) => setFileName(data.value)}
+                    placeholder="Enter file name (without extension)"
+                    contentAfter={exportFormat === 'excel' ? '.xlsx' : '.csv'}
+                  />
+                </Field>
+
+                {isExporting && (
+                  <Spinner label="Exporting..." />
+                )}
+              </div>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                appearance="secondary"
+                onClick={closeExportDialog}
+              >
+                Cancel
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={handleExport}
+                disabled={isExporting}
+              >
+                Export
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
       </Dialog>
     </>
   );

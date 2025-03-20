@@ -1,53 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Stack,
+  makeStyles,
+  tokens,
   Text,
-  StackItem,
   Spinner,
-  SpinnerSize,
-  MessageBar,
-  mergeStyles,
-  DocumentCard,
-  DocumentCardTitle,
-  DocumentCardDetails,
-  Separator
-} from '@fluentui/react';
+  Card,
+  CardHeader,
+  CardFooter
+} from '@fluentui/react-components';
+import { Alert } from '@fluentui/react-components/unstable';
 import ReportChart from '../ReportChart';
 import ReportViewer from '../ReportViewer';
 import ExportTools from '../ExportTools';
 import reportService, { getColumnsForReportType } from '../../services/reportService';
 
-const sectionStyles = mergeStyles({
-  backgroundColor: 'white',
-  boxShadow: '0 1.6px 3.6px 0 rgba(0, 0, 0, 0.132), 0 0.3px 0.9px 0 rgba(0, 0, 0, 0.108)',
-  borderRadius: '2px',
-  padding: '20px',
-  marginBottom: '20px'
-});
-
-const kpiCardStyles = mergeStyles({
-  padding: '16px',
-  height: '100%',
-  minHeight: '120px'
-});
-
-const kpiTitleStyles = mergeStyles({
-  fontSize: '14px',
-  fontWeight: 'normal',
-  color: '#605e5c'
-});
-
-const kpiValueStyles = mergeStyles({
-  fontSize: '28px',
-  fontWeight: 'bold',
-  marginTop: '8px',
-  color: '#0078d4'
-});
-
-const kpiTrendStyles = mergeStyles({
-  fontSize: '12px',
-  marginTop: '8px'
+const useStyles = makeStyles({
+  section: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    boxShadow: tokens.shadow4,
+    borderRadius: tokens.borderRadiusMedium,
+    padding: tokens.spacingHorizontalL,
+    marginBottom: tokens.spacingVerticalL
+  },
+  container: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM
+  },
+  kpiContainer: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: tokens.spacingHorizontalM
+  },
+  kpiCard: {
+    height: '100%'
+  },
+  kpiTitle: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
+    textTransform: 'uppercase',
+    letterSpacing: tokens.spacingHorizontalXS
+  },
+  kpiValue: {
+    fontSize: tokens.fontSizeBase600,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorBrandForeground1,
+    marginTop: tokens.spacingVerticalS,
+    marginBottom: tokens.spacingVerticalXS
+  },
+  kpiTrend: {
+    fontSize: tokens.fontSizeBase100
+  },
+  trendPositive: {
+    color: tokens.colorPaletteGreenForeground1
+  },
+  trendNegative: {
+    color: tokens.colorPaletteRedForeground1
+  }
 });
 
 /**
@@ -56,6 +66,7 @@ const kpiTrendStyles = mergeStyles({
  * @component
  */
 const LeadsReport = ({ reportConfig }) => {
+  const styles = useStyles();
   const [reportData, setReportData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -111,8 +122,8 @@ const LeadsReport = ({ reportConfig }) => {
   // Loading state
   if (isLoading) {
     return (
-      <div className={sectionStyles}>
-        <Spinner size={SpinnerSize.large} label="Loading leads report..." />
+      <div className={styles.section}>
+        <Spinner label="Loading leads report..." />
       </div>
     );
   }
@@ -120,18 +131,18 @@ const LeadsReport = ({ reportConfig }) => {
   // Error state
   if (error) {
     return (
-      <div className={sectionStyles}>
-        <MessageBar>
+      <div className={styles.section}>
+        <Alert intent="error">
           {error}
-        </MessageBar>
+        </Alert>
       </div>
     );
   }
 
   return (
-    <Stack tokens={{ childrenGap: 16 }}>
-      <div className={sectionStyles}>
-        <Text variant="xLarge" styles={{ root: { marginBottom: 16 } }}>Leads Report</Text>
+    <div className={styles.container}>
+      <div className={styles.section}>
+        <Text size={600} weight="semibold">Leads Report</Text>
         <Text>
           {reportConfig.dateRange.startDate.toLocaleDateString()} - {reportConfig.dateRange.endDate.toLocaleDateString()}
         </Text>
@@ -144,63 +155,55 @@ const LeadsReport = ({ reportConfig }) => {
       </div>
 
       {/* KPI Cards */}
-      <div className={sectionStyles}>
-        <Text variant="large" styles={{ root: { marginBottom: 16 } }}>Key Performance Indicators</Text>
+      <div className={styles.section}>
+        <Text size={500} weight="semibold" block>Key Performance Indicators</Text>
 
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <StackItem grow={1}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>NEW LEADS</Text>
-                <Text className={kpiValueStyles}>{kpis.totalNew}</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#107C10' }}>
-                  ↑ 12.3% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
+        <div className={styles.kpiContainer}>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>New Leads</Text>
+              <Text className={styles.kpiValue}>{kpis.totalNew}</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendPositive}`}>
+                ↑ 12.3% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
 
-          <StackItem grow={1}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>QUALIFIED LEADS</Text>
-                <Text className={kpiValueStyles}>{kpis.totalQualified}</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#107C10' }}>
-                  ↑ 8.7% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>Qualified Leads</Text>
+              <Text className={styles.kpiValue}>{kpis.totalQualified}</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendPositive}`}>
+                ↑ 8.7% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
 
-          <StackItem grow={1}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>CONVERTED LEADS</Text>
-                <Text className={kpiValueStyles}>{kpis.totalConverted}</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#107C10' }}>
-                  ↑ 6.2% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>Converted Leads</Text>
+              <Text className={styles.kpiValue}>{kpis.totalConverted}</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendPositive}`}>
+                ↑ 6.2% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
 
-          <StackItem grow={1}>
-            <DocumentCard className={kpiCardStyles}>
-              <DocumentCardDetails>
-                <Text className={kpiTitleStyles}>CONVERSION RATE</Text>
-                <Text className={kpiValueStyles}>{kpis.avgConversionRate.toFixed(1)}%</Text>
-                <Text className={kpiTrendStyles} style={{ color: '#D83B01' }}>
-                  ↓ 1.8% from previous period
-                </Text>
-              </DocumentCardDetails>
-            </DocumentCard>
-          </StackItem>
-        </Stack>
+          <Card className={styles.kpiCard}>
+            <CardHeader>
+              <Text className={styles.kpiTitle}>Conversion Rate</Text>
+              <Text className={styles.kpiValue}>{kpis.avgConversionRate.toFixed(1)}%</Text>
+              <Text className={`${styles.kpiTrend} ${styles.trendNegative}`}>
+                ↓ 1.8% from previous period
+              </Text>
+            </CardHeader>
+          </Card>
+        </div>
       </div>
 
       {/* Chart visualization */}
       {reportConfig.showChart && reportData.length > 0 && (
-        <div className={sectionStyles}>
+        <div className={styles.section}>
           <ReportChart
             data={reportData.map(item => ({
               label: item.period,
@@ -219,7 +222,7 @@ const LeadsReport = ({ reportConfig }) => {
         reportData={reportData}
         isLoading={isLoading}
       />
-    </Stack>
+    </div>
   );
 };
 
