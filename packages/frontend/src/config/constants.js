@@ -157,3 +157,44 @@ export default {
   UPLOAD,
   REGEX,
 };
+
+// File: packages/frontend/src/config/constants.js
+
+// API URL configuration
+//export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+
+// Task module constants
+export const TASK_STATUS = {
+  NOT_STARTED: 'NOT_STARTED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  DEFERRED: 'DEFERRED',
+  BLOCKED: 'BLOCKED',
+  CANCELLED: 'CANCELLED'
+};
+
+export const TASK_PRIORITY = {
+  LOW: 'LOW',
+  MEDIUM: 'MEDIUM',
+  HIGH: 'HIGH',
+  CRITICAL: 'CRITICAL'
+};
+
+export const TASK_MODULE = {
+  CRM: 'CRM',
+  ACCOUNTING: 'ACCOUNTING',
+  HR: 'HR',
+  OPERATIONS: 'OPERATIONS',
+  GLOBAL: 'GLOBAL'
+};
+
+// Pagination defaults
+export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE = 0;
+
+// Date format patterns
+export const DATE_FORMAT = {
+  DISPLAY: 'MMM d, yyyy',
+  API: 'yyyy-MM-dd',
+  FULL: 'yyyy-MM-dd\'T\'HH:mm:ss'
+};

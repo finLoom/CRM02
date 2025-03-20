@@ -1,169 +1,203 @@
+// File: packages/frontend/src/shared/components/layout/TopBar.jsx
 import React, { useState } from 'react';
 import {
-  CommandBar,
-  SearchBox,
-  Persona,
-  PersonaSize,
-  ContextualMenu,
-  IconButton,
-  Stack,
-  mergeStyles
-} from '@fluentui/react';
+  Button,
+  Input,
+  Avatar,
+  Text,
+  Menu,
+  MenuTrigger,
+  MenuPopover,
+  MenuList,
+  MenuItem,
+  makeStyles,
+  tokens,
+  mergeClasses
+} from '@fluentui/react-components';
+import {
+  Navigation24Regular,
+  Search24Regular,
+  Alert24Regular,
+  QuestionCircle24Regular,
+  Person24Regular,
+  PersonInfo24Regular,
+  Settings24Regular,
+  SignOut24Regular
+} from '@fluentui/react-icons';
 import { useNavigate } from 'react-router-dom';
 
-const headerStyles = mergeStyles({
-  height: '48px',
-  padding: '0 20px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  backgroundColor: '#0078d4',
-  color: 'white',
-  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-});
-
-const logoCss = mergeStyles({
-  fontSize: '20px',
-  fontWeight: 'bold',
-  display: 'flex',
-  alignItems: 'center'
-});
-
-const searchBoxStyles = {
-  root: {
-    width: 300,
+// Styles for the TopBar component
+const useStyles = makeStyles({
+  header: {
+    height: '48px',
+    padding: `0 ${tokens.spacingHorizontalL}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: tokens.colorBrandBackground,
+    color: tokens.colorNeutralForegroundOnBrand,
+    boxShadow: tokens.shadow4,
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 200
+  },
+  logo: {
+    fontSize: tokens.fontSizeBase500,
+    fontWeight: tokens.fontWeightSemibold,
+    display: 'flex',
+    alignItems: 'center',
+    marginLeft: tokens.spacingHorizontalS
+  },
+  section: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS
+  },
+  searchContainer: {
+    width: '300px'
+  },
+  searchInput: {
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: '4px',
-    border: 'none'
-  },
-  icon: {
-    color: 'white'
-  },
-  field: {
-    color: 'white',
-    '::placeholder': {
+    '& input': {
+      color: tokens.colorNeutralForegroundOnBrand
+    },
+    '& input::placeholder': {
       color: 'rgba(255, 255, 255, 0.7)'
+    },
+    '& svg': {
+      color: tokens.colorNeutralForegroundOnBrand
     }
+  },
+  iconButton: {
+    color: tokens.colorNeutralForegroundOnBrand,
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)'
+    }
+  },
+  avatarContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    cursor: 'pointer',
+    padding: tokens.spacingHorizontalXS,
+    borderRadius: tokens.borderRadiusMedium,
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)'
+    }
+  },
+  userName: {
+    color: tokens.colorNeutralForegroundOnBrand
   }
-};
+});
 
+/**
+ * TopBar component - Main application header with navigation, search, and user controls
+ */
 const TopBar = ({ toggleSidebar }) => {
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const [profileMenuTarget, setProfileMenuTarget] = useState(null);
+  const styles = useStyles();
   const navigate = useNavigate();
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
-  const handleProfileClick = (event) => {
-    setProfileMenuTarget(event.currentTarget);
-    setIsProfileMenuOpen(true);
+  // Handle search submission
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const searchValue = e.target.elements.searchInput.value;
+    console.log('Search:', searchValue);
+    // Implement search functionality here
   };
 
+  // Profile menu items
   const profileMenuItems = [
     {
       key: 'profile',
       text: 'My Profile',
-      iconProps: { iconName: 'Contact' },
-      onClick: () => navigate('/settings')
+      icon: <PersonInfo24Regular />,
+      onClick: () => navigate('/settings/profile')
     },
     {
       key: 'settings',
       text: 'Settings',
-      iconProps: { iconName: 'Settings' },
+      icon: <Settings24Regular />,
       onClick: () => navigate('/settings')
     },
     {
-      key: 'divider',
-      itemType: 'divider'
-    },
-    {
-      key: 'logout',
+      key: 'signout',
       text: 'Sign Out',
-      iconProps: { iconName: 'SignOut' },
+      icon: <SignOut24Regular />,
       onClick: () => console.log('Sign Out clicked')
     }
   ];
 
-  const commandBarItems = [
-    {
-      key: 'menu',
-      iconOnly: true,
-      iconProps: { iconName: 'GlobalNavButton' },
-      onClick: toggleSidebar
-    }
-  ];
-
-  const commandBarFarItems = [
-    {
-      key: 'notifications',
-      iconOnly: true,
-      iconProps: { iconName: 'Ringer' },
-      onClick: () => console.log('Notifications clicked')
-    },
-    {
-      key: 'help',
-      iconOnly: true,
-      iconProps: { iconName: 'Help' },
-      onClick: () => console.log('Help clicked')
-    }
-  ];
-
   return (
-    <header className={headerStyles}>
-      <Stack horizontal tokens={{ childrenGap: 16 }} verticalAlign="center">
-        <IconButton 
-          iconProps={{ iconName: 'GlobalNavButton' }} 
+    <header className={styles.header}>
+      {/* Left section: Menu toggle and logo */}
+      <div className={styles.section}>
+        <Button
+          appearance="transparent"
+          icon={<Navigation24Regular />}
+          aria-label="Toggle navigation"
           onClick={toggleSidebar}
-          styles={{ 
-            root: { color: 'white' },
-            rootHovered: { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
-          }}
+          className={styles.iconButton}
         />
-        <span className={logoCss}>Fluent CRM</span>
-      </Stack>
+        <Text className={styles.logo}>Fluent CRM</Text>
+      </div>
 
-      <SearchBox 
-        placeholder="Search..." 
-        styles={searchBoxStyles}
-        onSearch={newValue => console.log('Search:', newValue)}
-      />
-
-      <Stack horizontal tokens={{ childrenGap: 16 }} verticalAlign="center">
-        <IconButton 
-          iconProps={{ iconName: 'Ringer' }} 
-          title="Notifications"
-          styles={{ 
-            root: { color: 'white' },
-            rootHovered: { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
-          }}
-        />
-        <IconButton 
-          iconProps={{ iconName: 'Help' }} 
-          title="Help"
-          styles={{ 
-            root: { color: 'white' },
-            rootHovered: { backgroundColor: 'rgba(255, 255, 255, 0.1)' }
-          }}
-        />
-        <div onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
-          <Persona
-            size={PersonaSize.size32}
-            text="John Doe"
-            secondaryText="Admin"
-            showSecondaryText={false}
-            styles={{
-              root: { cursor: 'pointer' },
-              primaryText: { color: 'white' }
-            }}
+      {/* Middle section: Search */}
+      <div className={styles.searchContainer}>
+        <form onSubmit={handleSearch}>
+          <Input
+            name="searchInput"
+            placeholder="Search..."
+            contentBefore={<Search24Regular />}
+            className={styles.searchInput}
           />
-        </div>
-      </Stack>
+        </form>
+      </div>
 
-      <ContextualMenu
-        items={profileMenuItems}
-        hidden={!isProfileMenuOpen}
-        target={profileMenuTarget}
-        onDismiss={() => setIsProfileMenuOpen(false)}
-        directionalHint={4} // Bottom right
-      />
+      {/* Right section: Notifications, Help, and Profile */}
+      <div className={styles.section}>
+        <Button
+          appearance="transparent"
+          icon={<Alert24Regular />}
+          aria-label="Notifications"
+          className={styles.iconButton}
+        />
+
+        <Button
+          appearance="transparent"
+          icon={<QuestionCircle24Regular />}
+          aria-label="Help"
+          className={styles.iconButton}
+        />
+
+        <Menu open={profileMenuOpen} onOpenChange={(e, data) => setProfileMenuOpen(data.open)}>
+          <MenuTrigger disableButtonEnhancement>
+            <div className={styles.avatarContainer}>
+              <Avatar
+                name="John Doe"
+                size="small"
+                color="colorful"
+              />
+              <Text className={styles.userName}>John Doe</Text>
+            </div>
+          </MenuTrigger>
+          <MenuPopover>
+            <MenuList>
+              {profileMenuItems.map(item => (
+                <MenuItem
+                  key={item.key}
+                  icon={item.icon}
+                  onClick={item.onClick}
+                >
+                  {item.text}
+                </MenuItem>
+              ))}
+            </MenuList>
+          </MenuPopover>
+        </Menu>
+      </div>
     </header>
   );
 };

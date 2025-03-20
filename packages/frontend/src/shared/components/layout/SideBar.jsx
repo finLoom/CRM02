@@ -1,158 +1,178 @@
+// File: packages/frontend/src/shared/components/layout/SideBar.jsx
 import React from 'react';
-import { Nav } from '@fluentui/react/lib/Nav';
+import {
+  makeStyles,
+  tokens,
+  mergeClasses
+} from '@fluentui/react-components';
+import {
+  Home24Regular,
+  DocumentBulletList24Regular,
+  Person24Regular,
+  Trophy24Regular,
+  List24Regular,
+  ChartBar24Regular,
+  Settings24Regular
+} from '@fluentui/react-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { mergeStyles } from '@fluentui/react/lib/Styling';
 
-const sidebarStyles = (collapsed) => mergeStyles({
-  height: '100%',
-  width: collapsed ? '48px' : '250px',
-  backgroundColor: '#f3f2f1',
-  borderRight: '1px solid #edebe9',
-  transition: 'width 0.2s',
-  overflow: collapsed ? 'visible' : 'auto',
-  position: 'fixed',
-  left: 0,
-  top: '48px',
-  bottom: 0,
-  zIndex: 100
-});
-
-const navStyles = {
-  root: {
-    width: '100%',
+// Styles for the sidebar component
+const useStyles = makeStyles({
+  sidebar: {
     height: '100%',
-    boxSizing: 'border-box',
-    overflowY: 'auto'
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderRight: `1px solid ${tokens.colorNeutralStroke2}`,
+    transition: 'width 0.2s',
+    overflow: 'auto',
+    position: 'fixed',
+    left: 0,
+    top: '48px',
+    bottom: 0,
+    zIndex: 100
   },
-  navItem: {
-    padding: '0 20px'
-  }
-};
-
-const collapsedNavStyles = {
-  root: {
+  sidebarExpanded: {
+    width: '250px'
+  },
+  sidebarCollapsed: {
     width: '48px',
-    height: '100%',
-    boxSizing: 'border-box',
-    overflowY: 'auto'
+    overflow: 'visible'
   },
-  navItems: {
+  nav: {
+    width: '100%',
+    padding: tokens.spacingVerticalS
+  },
+  navList: {
+    listStyle: 'none',
+    padding: 0,
     margin: 0
   },
-  compositeLink: {
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
-    '& button': {
-      width: '48px',
-      height: '48px',
-      padding: 0,
-      textAlign: 'center'
+  navItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    cursor: 'pointer',
+    borderRadius: tokens.borderRadiusMedium,
+    marginBottom: tokens.spacingVerticalXS,
+    color: tokens.colorNeutralForeground1,
+    transition: 'all 0.1s ease',
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground1Hover,
     }
   },
-  chevronButton: {
-    display: 'none'
+  navItemSelected: {
+    backgroundColor: tokens.colorNeutralBackground1Selected,
+    color: tokens.colorBrandForeground1,
+    fontWeight: tokens.fontWeightSemibold,
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground1Selected,
+    }
   },
-  chevronIcon: {
-    display: 'none'
+  navIcon: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: tokens.spacingHorizontalM
   },
-  link: {
-    paddingLeft: '0px',
-    textAlign: 'center',
-    whiteSpace: 'nowrap',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden'
+  navText: {
+    fontSize: tokens.fontSizeBase300
   },
-  linkText: {
+  navTextHidden: {
     display: 'none'
   }
-};
+});
 
+/**
+ * SideBar component - Main navigation for the application
+ */
 const SideBar = ({ collapsed }) => {
+  const styles = useStyles();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const navLinkGroups = [
+  // Navigation items configuration
+  const navItems = [
     {
-      links: [
-        {
-          name: 'Dashboard',
-          url: '/dashboard',
-          key: 'dashboard',
-          iconProps: {
-            iconName: 'ViewDashboard'
-          }
-        },
-        {
-          name: 'Leads',
-          url: '/leads',
-          key: 'leads',
-          iconProps: {
-            iconName: 'FunnelChart'
-          }
-        },
-        {
-          name: 'Contacts',
-          url: '/contacts',
-          key: 'contacts',
-          iconProps: {
-            iconName: 'ContactList'
-          }
-        },
-        {
-          name: 'Opportunities',
-          url: '/opportunities',
-          key: 'opportunities',
-          iconProps: {
-            iconName: 'SplitObject'  // Changed from BuildQueueLength to a registered icon
-          }
-        },
-        {
-          name: 'Tasks',
-          url: '/tasks',
-          key: 'tasks',
-          iconProps: {
-            iconName: 'CheckList'
-          }
-        },
-        {
-          name: 'Reports',  // New Reports item
-          url: '/reports',
-          key: 'reports',
-          iconProps: {
-            iconName: 'BarChart4'
-          }
-        },
-        {
-          name: 'Settings',
-          url: '/settings',
-          key: 'settings',
-          iconProps: {
-            iconName: 'Settings'
-          }
-        }
-      ]
+      name: 'Dashboard',
+      path: '/dashboard',
+      key: 'dashboard',
+      icon: <Home24Regular />
+    },
+    {
+      name: 'Leads',
+      path: '/leads',
+      key: 'leads',
+      icon: <DocumentBulletList24Regular />
+    },
+    {
+      name: 'Contacts',
+      path: '/contacts',
+      key: 'contacts',
+      icon: <Person24Regular />
+    },
+    {
+      name: 'Opportunities',
+      path: '/opportunities',
+      key: 'opportunities',
+      icon: <Trophy24Regular />
+    },
+    {
+      name: 'Tasks',
+      path: '/tasks',
+      key: 'tasks',
+      icon: <List24Regular />
+    },
+    {
+      name: 'Reports',
+      path: '/reports',
+      key: 'reports',
+      icon: <ChartBar24Regular />
+    },
+    {
+      name: 'Settings',
+      path: '/settings',
+      key: 'settings',
+      icon: <Settings24Regular />
     }
   ];
 
-  const onNavLinkClick = (ev, item) => {
-    ev.preventDefault();
-    navigate(item.url);
+  // Determine active navigation item
+  const getIsActive = (path) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-// Determine the selected key based on current location
-const selectedKey = navLinkGroups[0].links.find(
-  link => location.pathname === link.url
-)?.key || (location.pathname === '/' ? 'dashboard' : 'dashboard');
+  // Handle navigation item click
+  const handleNavClick = (path) => {
+    navigate(path);
+  };
 
   return (
-    <div className={sidebarStyles(collapsed)}>
-      <Nav
-        selectedKey={selectedKey}
-        groups={navLinkGroups}
-        onLinkClick={onNavLinkClick}
-        styles={collapsed ? collapsedNavStyles : navStyles}
-      />
+    <div className={mergeClasses(
+      styles.sidebar,
+      collapsed ? styles.sidebarCollapsed : styles.sidebarExpanded
+    )}>
+      <nav className={styles.nav}>
+        <ul className={styles.navList}>
+          {navItems.map((item) => (
+            <li
+              key={item.key}
+              className={mergeClasses(
+                styles.navItem,
+                getIsActive(item.path) && styles.navItemSelected
+              )}
+              onClick={() => handleNavClick(item.path)}
+              title={collapsed ? item.name : undefined}
+            >
+              <span className={styles.navIcon}>{item.icon}</span>
+              <span className={mergeClasses(
+                styles.navText,
+                collapsed && styles.navTextHidden
+              )}>
+                {item.name}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
 };

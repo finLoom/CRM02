@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Spinner } from '@fluentui/react';
+import { Spinner } from '@fluentui/react-components';
 import Layout from '../shared/components/layout/Layout';
 import routes from './routes';
 import { useAuth } from '../hooks/useAuth';

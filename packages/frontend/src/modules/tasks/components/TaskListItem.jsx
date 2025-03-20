@@ -3,41 +3,36 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {
   Text,
-  Stack,
-  IconButton,
-  mergeStyleSets,
-  useTheme,
-  ContextualMenu,
-  Persona,
-  PersonaSize
-} from '@fluentui/react';
+  makeStyles,
+  tokens,
+  Button,
+  Avatar,
+  AvatarGroup
+} from '@fluentui/react-components';
+import {
+  Edit24Regular,
+  MoreHorizontal24Regular
+} from '@fluentui/react-icons';
 import { format, isValid, parseISO } from 'date-fns';
-import TaskStatusBadge from './common/TaskStatusBadge';
-import TaskPriorityIndicator from './common/TaskPriorityIndicator';
+import { TaskStatusBadge, TaskPriorityIndicator } from './common';
 
-/**
- * Get styles for the component
- *
- * @param {object} theme - Fluent UI theme
- * @param {boolean} isOverdue - Whether the task is overdue
- * @returns {object} Style sets
- */
-const getStyles = (theme, isOverdue = false) => mergeStyleSets({
+// Styles for the component using Fluent UI v9 makeStyles
+const useStyles = makeStyles({
   container: {
     display: 'flex',
     alignItems: 'center',
-    padding: '12px 16px',
-    borderBottom: `1px solid ${theme.palette.neutralLight}`,
-    backgroundColor: theme.palette.white,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    backgroundColor: tokens.colorNeutralBackground1,
     cursor: 'pointer',
     transition: 'background-color 0.1s ease',
     '&:hover': {
-      backgroundColor: theme.palette.neutralLighterAlt,
+      backgroundColor: tokens.colorNeutralBackground1Hover,
     }
   },
   title: {
-    fontWeight: isOverdue ? '600' : 'normal',
-    color: isOverdue ? theme.palette.red : theme.palette.neutralPrimary,
+    fontWeight: ({ isOverdue }) => isOverdue ? tokens.fontWeightSemibold : tokens.fontWeightRegular,
+    color: ({ isOverdue }) => isOverdue ? tokens.colorPaletteRedForeground1 : tokens.colorNeutralForeground1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
@@ -47,13 +42,13 @@ const getStyles = (theme, isOverdue = false) => mergeStyleSets({
     }
   },
   metadata: {
-    color: theme.palette.neutralSecondary,
-    fontSize: '12px',
-    marginTop: '4px'
+    color: tokens.colorNeutralForeground2,
+    fontSize: tokens.fontSizeBase200,
+    marginTop: tokens.spacingVerticalXS
   },
   description: {
-    fontSize: '12px',
-    color: theme.palette.neutralSecondary,
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground2,
     maxHeight: '32px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -64,7 +59,7 @@ const getStyles = (theme, isOverdue = false) => mergeStyleSets({
   statusColumn: {
     width: '110px',
     flexShrink: 0,
-    marginRight: '8px',
+    marginRight: tokens.spacingHorizontalS,
     display: 'flex',
     justifyContent: 'flex-start'
   },
@@ -76,32 +71,29 @@ const getStyles = (theme, isOverdue = false) => mergeStyleSets({
   assigneeColumn: {
     width: '150px',
     flexShrink: 0,
-    marginLeft: '8px'
+    marginLeft: tokens.spacingHorizontalS
   },
   dueDateColumn: {
     width: '110px',
     flexShrink: 0,
-    marginLeft: '8px',
+    marginLeft: tokens.spacingHorizontalS,
     textAlign: 'right'
   },
   actionsColumn: {
     width: '80px',
     flexShrink: 0,
-    marginLeft: '16px',
+    marginLeft: tokens.spacingHorizontalM,
     display: 'flex',
     justifyContent: 'flex-end'
   },
   overdue: {
-    fontWeight: '600',
-    color: theme.palette.red
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorPaletteRedForeground1
   }
 });
 
 /**
  * Format a date string for display
- *
- * @param {string} dateString - ISO date string
- * @returns {string} Formatted date
  */
 const formatDate = (dateString) => {
   if (!dateString) return '-';
@@ -119,9 +111,6 @@ const formatDate = (dateString) => {
 
 /**
  * Check if a task is overdue
- *
- * @param {object} task - Task object
- * @returns {boolean} Is overdue
  */
 const isTaskOverdue = (task) => {
   if (!task.dueDate || task.status === 'COMPLETED') return false;
@@ -137,9 +126,7 @@ const isTaskOverdue = (task) => {
 };
 
 /**
- * Task list item component
- *
- * @component
+ * Task list item component (migrated to Fluent UI v9)
  */
 const TaskListItem = ({
   task,
@@ -150,9 +137,8 @@ const TaskListItem = ({
   onContextMenu,
   showDescription = true
 }) => {
-  const theme = useTheme();
   const isOverdue = isTaskOverdue(task);
-  const styles = getStyles(theme, isOverdue);
+  const styles = useStyles({ isOverdue });
 
   // Handle item click
   const handleClick = () => {
@@ -199,7 +185,7 @@ const TaskListItem = ({
         )}
 
         <div className={styles.metadata}>
-          <TaskPriorityIndicator priority={task.priority} iconOnly />
+          <TaskPriorityIndicator priority={task.priority} iconOnly tooltipDisabled />
           {' '}
           {task.module && `${task.module} • `}
           {task.completionPercentage > 0 && `${task.completionPercentage}% complete`}
@@ -209,10 +195,16 @@ const TaskListItem = ({
       {/* Assignee column */}
       <div className={styles.assigneeColumn}>
         {task.assignedTo ? (
-          <Persona
-            text={task.assignedTo.name || 'Unknown'}
-            size={PersonaSize.size24}
-            imageInitials={task.assignedTo.name ? task.assignedTo.name.charAt(0) : 'U'}
+          <Avatar
+            name={task.assignedTo.name || 'Unknown'}
+            size="small"
+            color="colorful"
+          />
+        ) : task.assignedToName ? (
+          <Avatar
+            name={task.assignedToName}
+            size="small"
+            color="colorful"
           />
         ) : (
           <Text>Unassigned</Text>
@@ -228,16 +220,16 @@ const TaskListItem = ({
 
       {/* Actions column */}
       <div className={styles.actionsColumn} onClick={e => e.stopPropagation()}>
-        <IconButton
-          iconProps={{ iconName: 'Edit' }}
-          title="Edit"
-          ariaLabel="Edit"
+        <Button
+          appearance="subtle"
+          icon={<Edit24Regular />}
+          aria-label="Edit"
           onClick={handleEdit}
         />
-        <IconButton
-          iconProps={{ iconName: 'MoreVertical' }}
-          title="More options"
-          ariaLabel="More options"
+        <Button
+          appearance="subtle"
+          icon={<MoreHorizontal24Regular />}
+          aria-label="More options"
           onClick={handleContextMenu}
         />
       </div>
@@ -259,6 +251,7 @@ TaskListItem.propTypes = {
       id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       name: PropTypes.string
     }),
+    assignedToName: PropTypes.string,
     module: PropTypes.string
   }).isRequired,
   /** Click handler for the entire item */

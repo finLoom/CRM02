@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { Spinner } from '@fluentui/react';
+import { Spinner } from '@fluentui/react-components';
 
 /**
  * RouteGuard component for handling protected routes

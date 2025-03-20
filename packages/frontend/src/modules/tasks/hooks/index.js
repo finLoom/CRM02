@@ -1,6 +1,6 @@
-// File: packages/frontend/src/modules/tasks/hooks/index.js
-import useTaskData from './useTaskData';
+// Export all hooks from the tasks module
+export { default as useTaskData } from './useTaskData';
+export { default as useTaskFilters } from './useTaskFilters';
+export { default as useTaskActions } from './useTaskActions';
 
-export {
-  useTaskData
-};
+// Add additional hook exports as they are created

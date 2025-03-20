@@ -1,154 +1,84 @@
-// File: packages/frontend/src/modules/tasks/components/common/TaskPriorityIndicator.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Icon,
-  TooltipHost,
-  DirectionalHint,
-  mergeStyleSets,
-  useTheme
-} from '@fluentui/react';
+  makeStyles,
+  mergeClasses,
+  Text,
+  tokens,
+  Tooltip
+} from '@fluentui/react-components';
+import {
+  ArrowCircleUp24Filled,
+  ArrowCircleRight24Filled,
+  ArrowCircleDown24Filled
+} from '@fluentui/react-icons';
 
-/**
- * Get the style for a priority indicator based on priority value
- *
- * @param {object} theme - Fluent UI theme
- * @param {string} priority - Task priority
- * @returns {object} Style object
- */
-const getPriorityStyles = (theme, priority) => {
-  const baseStyle = {
+// Priority indicator styles
+const usePriorityStyles = makeStyles({
+  container: {
     display: 'inline-flex',
     alignItems: 'center',
-    fontWeight: '600',
-    padding: '2px 6px',
-    borderRadius: '3px',
-    fontSize: '12px',
-  };
+    gap: tokens.spacingHorizontalXS,
+  },
+  icon: {
+    display: 'flex',
+  },
+  high: {
+    color: tokens.colorPaletteRedForeground1,
+  },
+  medium: {
+    color: tokens.colorPaletteYellowForeground1,
+  },
+  low: {
+    color: tokens.colorPaletteGreenForeground1,
+  },
+});
 
-  const iconStyle = {
-    marginRight: '4px',
-    fontSize: '14px',
-  };
-
-  switch (priority) {
-    case 'CRITICAL':
+/**
+ * Get priority configuration (icon and color)
+ */
+const getPriorityConfig = (priority) => {
+  switch (priority?.toLowerCase()) {
+    case 'high':
       return {
-        container: {
-          ...baseStyle,
-          backgroundColor: theme.palette.redDark,
-          color: theme.palette.white,
-        },
-        icon: {
-          ...iconStyle,
-          color: theme.palette.white,
-        }
+        icon: <ArrowCircleUp24Filled />,
+        label: 'High',
+        className: 'high',
+        description: 'High priority - address as soon as possible'
       };
-    case 'HIGH':
+    case 'low':
       return {
-        container: {
-          ...baseStyle,
-          backgroundColor: theme.semanticColors.errorBackground,
-          color: theme.semanticColors.errorText,
-        },
-        icon: {
-          ...iconStyle,
-        }
+        icon: <ArrowCircleDown24Filled />,
+        label: 'Low',
+        className: 'low',
+        description: 'Low priority - can be addressed when time permits'
       };
-    case 'MEDIUM':
-      return {
-        container: {
-          ...baseStyle,
-          backgroundColor: theme.semanticColors.warningBackground,
-          color: theme.semanticColors.warningText,
-        },
-        icon: {
-          ...iconStyle,
-        }
-      };
-    case 'LOW':
-      return {
-        container: {
-          ...baseStyle,
-          backgroundColor: theme.semanticColors.infoBackground,
-          color: theme.semanticColors.infoText,
-        },
-        icon: {
-          ...iconStyle,
-        }
-      };
+    case 'medium':
     default:
       return {
-        container: {
-          ...baseStyle,
-          backgroundColor: theme.palette.neutralLighter,
-          color: theme.palette.neutralPrimary,
-        },
-        icon: {
-          ...iconStyle,
-        }
+        icon: <ArrowCircleRight24Filled />,
+        label: 'Medium',
+        className: 'medium',
+        description: 'Medium priority - regular scheduling'
       };
   }
 };
 
 /**
- * Get icon for priority
- *
- * @param {string} priority - Priority level
- * @returns {string} Icon name
+ * TaskPriorityIndicator component - displays the task priority with an icon and optional label
  */
-const getPriorityIcon = (priority) => {
-  switch (priority) {
-    case 'CRITICAL':
-      return 'Important';
-    case 'HIGH':
-      return 'TriangleSolidUp12';
-    case 'MEDIUM':
-      return 'CircleFill';
-    case 'LOW':
-      return 'TriangleSolidDown12';
-    default:
-      return 'CircleRing';
-  }
-};
-
-/**
- * Get description for priority
- *
- * @param {string} priority - Priority level
- * @returns {string} Description
- */
-const getPriorityDescription = (priority) => {
-  switch (priority) {
-    case 'CRITICAL':
-      return 'Critical priority - requires immediate attention';
-    case 'HIGH':
-      return 'High priority - address as soon as possible';
-    case 'MEDIUM':
-      return 'Medium priority - regular scheduling';
-    case 'LOW':
-      return 'Low priority - can be addressed when time permits';
-    default:
-      return 'Unspecified priority';
-  }
-};
-
-/**
- * Consistent priority indicator component for tasks
- *
- * @component
- */
-const TaskPriorityIndicator = ({ priority, className, iconOnly, tooltipDisabled }) => {
-  const theme = useTheme();
-  const styles = getPriorityStyles(theme, priority);
-  const iconName = getPriorityIcon(priority);
-  const priorityText = priority ? priority.charAt(0) + priority.slice(1).toLowerCase() : '';
-  const description = getPriorityDescription(priority);
+const TaskPriorityIndicator = ({ priority, showLabel, tooltipDisabled, iconOnly }) => {
+  const styles = usePriorityStyles();
+  const priorityConfig = getPriorityConfig(priority);
 
   const content = (
-    <div className={className} style={styles.container}>
-      <Icon iconName={iconName} style={styles.icon} />
-      {!iconOnly && priorityText}
+    <div className={styles.container}>
+      <span className={mergeClasses(styles.icon, styles[priorityConfig.className])}>
+        {priorityConfig.icon}
+      </span>
+      {showLabel && !iconOnly && (
+        <Text size={200}>{priorityConfig.label} Priority</Text>
+      )}
     </div>
   );
 
@@ -157,30 +87,31 @@ const TaskPriorityIndicator = ({ priority, className, iconOnly, tooltipDisabled 
   }
 
   return (
-    <TooltipHost
-      content={description}
-      directionalHint={DirectionalHint.bottomCenter}
+    <Tooltip
+      content={priorityConfig.description}
+      relationship="description"
+      positioning="below"
     >
       {content}
-    </TooltipHost>
+    </Tooltip>
   );
 };
 
 TaskPriorityIndicator.propTypes = {
-  /** Task priority code */
-  priority: PropTypes.string.isRequired,
-  /** Additional CSS class name */
-  className: PropTypes.string,
-  /** Show only icon without text */
-  iconOnly: PropTypes.bool,
+  /** Task priority */
+  priority: PropTypes.string,
+  /** Show label text */
+  showLabel: PropTypes.bool,
   /** Disable tooltip */
-  tooltipDisabled: PropTypes.bool
+  tooltipDisabled: PropTypes.bool,
+  /** Show only icon without text */
+  iconOnly: PropTypes.bool
 };
 
 TaskPriorityIndicator.defaultProps = {
-  className: '',
-  iconOnly: false,
-  tooltipDisabled: false
+  showLabel: false,
+  tooltipDisabled: false,
+  iconOnly: false
 };
 
 export default TaskPriorityIndicator;

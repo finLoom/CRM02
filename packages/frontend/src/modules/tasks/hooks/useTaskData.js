@@ -1,12 +1,11 @@
-// File: packages/frontend/src/modules/tasks/hooks/useTaskData.js
 import { useState, useEffect, useCallback } from 'react';
 import TaskService from '../services/TaskService';
 
 /**
- * Hook for fetching and managing task data
- *
+ * Custom hook for fetching and managing task data
+ * 
  * @param {Object} options - Hook options
- * @param {string|number} options.taskId - Task ID to fetch (optional)
+ * @param {number} options.taskId - Task ID to fetch (optional)
  * @param {Object} options.filter - Initial filter criteria (optional)
  * @param {Object} options.pageable - Pagination parameters (optional)
  * @param {boolean} options.loadOnMount - Whether to load data on mount (default: true)
@@ -22,41 +21,39 @@ const useTaskData = ({
   const [task, setTask] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [subtasks, setSubtasks] = useState([]);
-
+  
   // State for API operations
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // State for pagination metadata
   const [meta, setMeta] = useState({
     totalElements: 0,
     totalPages: 0,
     page: 0,
     size: 20
   });
-
+  
   // State for filtering and pagination
   const [currentFilter, setCurrentFilter] = useState(filter);
   const [currentPageable, setCurrentPageable] = useState(pageable);
-
+  
   /**
    * Load a single task by ID
-   *
-   * @param {string|number} id - Task ID to load
-   * @returns {Promise<Object>} Task data
    */
   const loadTask = useCallback(async (id) => {
     if (!id) {
       setError(new Error('Task ID is required'));
       return null;
     }
-
+    
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await TaskService.getTaskById(id);
-      const taskData = response.data;
-      setTask(taskData);
-      return taskData;
+      const data = await TaskService.getTaskById(id);
+      setTask(data);
+      return data;
     } catch (err) {
       setError(err);
       return null;
@@ -64,33 +61,34 @@ const useTaskData = ({
       setLoading(false);
     }
   }, []);
-
+  
   /**
-   * Load tasks with filter and pagination
-   *
-   * @param {Object} taskFilter - Filter criteria
-   * @param {Object} taskPageable - Pagination parameters
-   * @returns {Promise<Array>} Tasks array
+   * Load tasks with filtering and pagination
    */
   const loadTasks = useCallback(async (taskFilter = currentFilter, taskPageable = currentPageable) => {
     setLoading(true);
     setError(null);
-
+    
     try {
       const response = await TaskService.fetchTasks(taskFilter, taskPageable);
-      const tasksData = response.data || [];
-      const metaData = response.meta || {
-        totalElements: tasksData.length,
-        totalPages: 1,
-        page: 0,
-        size: taskPageable.size
+      
+      // Extract tasks and pagination metadata from the API response
+      const tasksData = response.content || [];
+      const metaData = {
+        totalElements: response.totalElements || 0,
+        totalPages: response.totalPages || 1,
+        page: response.number || taskPageable.page,
+        size: response.size || taskPageable.size,
+        first: response.first,
+        last: response.last,
+        empty: response.empty
       };
-
+      
       setTasks(tasksData);
       setMeta(metaData);
       setCurrentFilter(taskFilter);
       setCurrentPageable(taskPageable);
-
+      
       return tasksData;
     } catch (err) {
       setError(err);
@@ -99,21 +97,17 @@ const useTaskData = ({
       setLoading(false);
     }
   }, [currentFilter, currentPageable]);
-
+  
   /**
    * Load subtasks for a parent task
-   *
-   * @param {string|number} parentId - Parent task ID
-   * @returns {Promise<Array>} Subtasks array
    */
   const loadSubtasks = useCallback(async (parentId) => {
     if (!parentId) return [];
-
+    
     setLoading(true);
-
+    
     try {
-      const response = await TaskService.getSubtasks(parentId);
-      const subtasksData = response.data || [];
+      const subtasksData = await TaskService.getSubtasks(parentId);
       setSubtasks(subtasksData);
       return subtasksData;
     } catch (err) {
@@ -123,63 +117,66 @@ const useTaskData = ({
       setLoading(false);
     }
   }, []);
-
+  
   /**
    * Create a new task
-   *
-   * @param {Object} taskData - Task data
-   * @returns {Promise<Object>} Created task
    */
   const createTask = useCallback(async (taskData) => {
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await TaskService.createTask(taskData);
-      return response.data;
+      const createdTask = await TaskService.createTask(taskData);
+      
+      // Refresh tasks list if this isn't a subtask
+      if (!taskData.parentTaskId) {
+        loadTasks(currentFilter, currentPageable);
+      } 
+      // If it's a subtask and we have the parent loaded, update subtasks
+      else if (task && task.id === taskData.parentTaskId) {
+        loadSubtasks(taskData.parentTaskId);
+      }
+      
+      return createdTask;
     } catch (err) {
       setError(err);
       throw err;
     } finally {
       setLoading(false);
     }
-  }, []);
-
+  }, [currentFilter, currentPageable, loadTasks, loadSubtasks, task]);
+  
   /**
    * Update an existing task
-   *
-   * @param {string|number} id - Task ID
-   * @param {Object} taskData - Updated task data
-   * @returns {Promise<Object>} Updated task
    */
   const updateTask = useCallback(async (id, taskData) => {
     if (!id) {
       setError(new Error('Task ID is required for update'));
       throw new Error('Task ID is required for update');
     }
-
+    
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await TaskService.updateTask(id, taskData);
-
+      const updatedTask = await TaskService.updateTask(id, taskData);
+      
       // Update local state if this is the currently loaded task
       if (task && task.id === id) {
-        setTask(response.data);
+        setTask(updatedTask);
       }
-
+      
       // Update in tasks list if present
-      setTasks(prevTasks =>
-        prevTasks.map(t => t.id === id ? response.data : t)
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === id ? updatedTask : t)
       );
-
+      
       // Update in subtasks list if present
-      setSubtasks(prevSubtasks =>
-        prevSubtasks.map(t => t.id === id ? response.data : t)
+      setSubtasks(prevSubtasks => 
+        prevSubtasks.map(t => t.id === id ? updatedTask : t)
       );
-
-      return response.data;
+      
+      return updatedTask;
     } catch (err) {
       setError(err);
       throw err;
@@ -187,37 +184,34 @@ const useTaskData = ({
       setLoading(false);
     }
   }, [task]);
-
+  
   /**
    * Delete a task
-   *
-   * @param {string|number} id - Task ID to delete
-   * @returns {Promise<Object>} Deletion result
    */
   const deleteTask = useCallback(async (id) => {
     if (!id) {
       setError(new Error('Task ID is required for deletion'));
       throw new Error('Task ID is required for deletion');
     }
-
+    
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await TaskService.deleteTask(id);
-
+      await TaskService.deleteTask(id);
+      
       // Remove from tasks list if present
       setTasks(prevTasks => prevTasks.filter(t => t.id !== id));
-
+      
       // Remove from subtasks list if present
       setSubtasks(prevSubtasks => prevSubtasks.filter(t => t.id !== id));
-
+      
       // Clear task if this is the currently loaded task
       if (task && task.id === id) {
         setTask(null);
       }
-
-      return response.data;
+      
+      return true;
     } catch (err) {
       setError(err);
       throw err;
@@ -225,42 +219,38 @@ const useTaskData = ({
       setLoading(false);
     }
   }, [task]);
-
+  
   /**
    * Update task status
-   *
-   * @param {string|number} id - Task ID
-   * @param {string} status - New status
-   * @returns {Promise<Object>} Updated task
    */
   const updateTaskStatus = useCallback(async (id, status) => {
     if (!id || !status) {
       setError(new Error('Task ID and status are required'));
       throw new Error('Task ID and status are required');
     }
-
+    
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await TaskService.updateTaskStatus(id, status);
-
+      const updatedTask = await TaskService.updateTaskStatus(id, status);
+      
       // Update local state if this is the currently loaded task
       if (task && task.id === id) {
-        setTask(response.data);
+        setTask(updatedTask);
       }
-
+      
       // Update in tasks list if present
-      setTasks(prevTasks =>
-        prevTasks.map(t => t.id === id ? response.data : t)
+      setTasks(prevTasks => 
+        prevTasks.map(t => t.id === id ? updatedTask : t)
       );
-
+      
       // Update in subtasks list if present
-      setSubtasks(prevSubtasks =>
-        prevSubtasks.map(t => t.id === id ? response.data : t)
+      setSubtasks(prevSubtasks => 
+        prevSubtasks.map(t => t.id === id ? updatedTask : t)
       );
-
-      return response.data;
+      
+      return updatedTask;
     } catch (err) {
       setError(err);
       throw err;
@@ -268,33 +258,27 @@ const useTaskData = ({
       setLoading(false);
     }
   }, [task]);
-
+  
   /**
    * Change current page
-   *
-   * @param {number} page - Page number
    */
   const goToPage = useCallback((page) => {
     const newPageable = { ...currentPageable, page };
     setCurrentPageable(newPageable);
     loadTasks(currentFilter, newPageable);
   }, [currentFilter, currentPageable, loadTasks]);
-
+  
   /**
    * Change page size
-   *
-   * @param {number} size - Page size
    */
   const setPageSize = useCallback((size) => {
     const newPageable = { ...currentPageable, size, page: 0 };
     setCurrentPageable(newPageable);
     loadTasks(currentFilter, newPageable);
   }, [currentFilter, currentPageable, loadTasks]);
-
+  
   /**
    * Apply new filter
-   *
-   * @param {Object} newFilter - New filter criteria
    */
   const applyFilter = useCallback((newFilter) => {
     const newPageable = { ...currentPageable, page: 0 };
@@ -302,7 +286,7 @@ const useTaskData = ({
     setCurrentFilter(newFilter);
     loadTasks(newFilter, newPageable);
   }, [currentPageable, loadTasks]);
-
+  
   // Load data on mount if requested
   useEffect(() => {
     if (loadOnMount) {
@@ -312,8 +296,8 @@ const useTaskData = ({
         loadTasks(filter, pageable);
       }
     }
-  }, [taskId, filter, pageable, loadOnMount, loadTask, loadTasks]);
-
+  }, [taskId, loadTask, loadTasks, filter, pageable, loadOnMount]);
+  
   return {
     // Data
     task,
@@ -324,7 +308,7 @@ const useTaskData = ({
     error,
     filter: currentFilter,
     pageable: currentPageable,
-
+    
     // Operations
     loadTask,
     loadTasks,
@@ -333,12 +317,12 @@ const useTaskData = ({
     updateTask,
     deleteTask,
     updateTaskStatus,
-
+    
     // Pagination helpers
     goToPage,
     setPageSize,
     applyFilter,
-
+    
     // State setters
     setTask,
     setTasks,

@@ -1,83 +1,117 @@
 // File: packages/frontend/src/modules/tasks/pages/TasksPage.jsx
 import React, { useState, useEffect } from 'react';
 import {
-  Stack,
-  Pivot,
-  PivotItem,
-  CommandBar,
-  SearchBox,
-  Breadcrumb,
+  Button,
+  Card,
+  makeStyles,
+  Spinner,
+  Tab,
+  TabList,
   Text,
-  mergeStyleSets,
-  useTheme,
-  Panel,
-  PanelType
-} from '@fluentui/react';
+  tokens,
+  Input
+} from '@fluentui/react-components';
+import {
+  Add24Regular,
+  ArrowClockwise24Regular,
+  Filter24Regular,
+  Search24Regular
+} from '@fluentui/react-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import TaskList from '../components/TaskList';
-import TaskFilterComponent from '../components/TaskFilterComponent';
-import UserService from '../../../services/UserService';
-import { fetchTasks } from '../services/TaskService';
+import { useTaskData } from '../hooks';
+import { TaskList, TaskFilterComponent } from '../components';
 import { useQueryParams } from '../../../hooks/useQueryParams';
+import UserService from '../../../services/UserService';
 
 // Styles for the component
-const getStyles = (theme) => mergeStyleSets({
+const useStyles = makeStyles({
   container: {
+    padding: `${tokens.spacingVerticalL} ${tokens.spacingHorizontalL}`,
     height: '100%',
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'column'
   },
   header: {
-    padding: '12px 24px',
-    borderBottom: `1px solid ${theme.palette.neutralLight}`,
-    backgroundColor: theme.palette.white,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacingVerticalM
   },
   title: {
-    fontSize: '24px',
-    fontWeight: '600',
-    marginBottom: '12px',
+    fontSize: tokens.fontSizeBase700,
+    fontWeight: tokens.fontWeightSemibold
   },
-  content: {
-    flex: 1,
-    overflow: 'auto',
-    backgroundColor: theme.palette.neutralLighterAlt,
+  actions: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS
   },
-  commandBarContainer: {
-    marginBottom: '12px',
+  searchContainer: {
+    width: '300px',
+    marginRight: tokens.spacingHorizontalM
+  },
+  contentContainer: {
+    display: 'flex',
+    flexGrow: 1,
+    height: 'calc(100% - 120px)',
+    overflow: 'hidden'
+  },
+  mainContent: {
+    flexGrow: 1,
+    height: '100%',
+    overflow: 'auto'
+  },
+  tabsContainer: {
+    marginBottom: tokens.spacingVerticalM
   }
 });
 
 /**
- * Tasks Page component that displays tasks in various views.
+ * TasksPage component - Main page for task management
  */
 const TasksPage = () => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles();
   const navigate = useNavigate();
   const location = useLocation();
-  const queryParams = useQueryParams();
+  const { getQueryParams, setQueryParams } = useQueryParams();
 
-  // State for filtering and data
+  // State for page
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [users, setUsers] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [teams, setTeams] = useState([]);
+  const [modules, setModules] = useState([]);
+  const [searchText, setSearchText] = useState('');
 
   // Parse query params for initial filter
   const initialFilter = {
-    status: queryParams.getAll('status') || [],
-    startDate: queryParams.get('startDate') ? new Date(queryParams.get('startDate')) : null,
-    endDate: queryParams.get('endDate') ? new Date(queryParams.get('endDate')) : null,
-    assignee: queryParams.get('assignee') || null,
-    showCompleted: queryParams.get('showCompleted') !== 'false',
-    priority: queryParams.getAll('priority') || [],
-    searchText: queryParams.get('searchText') || ''
+    status: getQueryParams('status') || [],
+    startDate: getQueryParams('startDate') ? new Date(getQueryParams('startDate')) : null,
+    endDate: getQueryParams('endDate') ? new Date(getQueryParams('endDate')) : null,
+    assignee: getQueryParams('assignee') || null,
+    showCompleted: getQueryParams('showCompleted') !== 'false',
+    priority: getQueryParams('priority') || [],
+    searchText: getQueryParams('searchText') || ''
   };
 
-  const [filter, setFilter] = useState(initialFilter);
+  // Use task data hook
+  const {
+    tasks,
+    loading,
+    error,
+    loadTasks,
+    applyFilter,
+    filter
+  } = useTaskData({
+    filter: initialFilter,
+    loadOnMount: true
+  });
+
+  // Set initial search text from query params
+  useEffect(() => {
+    setSearchText(initialFilter.searchText || '');
+  }, [initialFilter.searchText]);
 
   // Determine the current view from the URL
-  const getSelectedKey = () => {
+  const getSelectedTab = () => {
     const path = location.pathname;
     if (path.includes('/my-tasks')) return 'my';
     if (path.includes('/due-today')) return 'today';
@@ -86,14 +120,13 @@ const TasksPage = () => {
     return 'all';
   };
 
-  // Selected pivot key
-  const selectedKey = getSelectedKey();
+  // Selected tab
+  const selectedTab = getSelectedTab();
 
   // Load users for assignee filter
   useEffect(() => {
     const loadUsers = async () => {
       try {
-        // Fix: Using UserService instead of undefined fetchUsers
         const response = await UserService.getAllUsers();
         setUsers(response.data || []);
       } catch (err) {
@@ -102,119 +135,72 @@ const TasksPage = () => {
     };
 
     loadUsers();
+
+    // Set modules (this could be from an API in a real implementation)
+    setModules(['CRM', 'OPERATIONS', 'SALES', 'MARKETING', 'SUPPORT', 'HR', 'FINANCE']);
   }, []);
 
-  // Load tasks based on filter and selected view
-  useEffect(() => {
-    const loadTasks = async () => {
-      setLoading(true);
-      try {
-        // Combine filter with view-specific filters
-        let viewFilter = {};
-
-        switch (selectedKey) {
-          case 'my':
-            // Current user ID would come from auth context in a real app
-            viewFilter = { assigneeId: 'currentUserId' };
-            break;
-          case 'today':
-            // For due today, we need to set both start and end date to today
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            viewFilter = { startDate: today.toISOString(), endDate: tomorrow.toISOString() };
-            break;
-          case 'overdue':
-            const now = new Date();
-            viewFilter = { endDate: now.toISOString(), completed: false };
-            break;
-          case 'unassigned':
-            viewFilter = { assigneeId: null };
-            break;
-          default:
-            viewFilter = {};
-        }
-
-        // Convert filter to API-compatible format and combine with view filter
-        const apiFilter = {
-          ...viewFilter,
-          status: filter.status.length > 0 ? filter.status : undefined,
-          startDate: filter.startDate ? filter.startDate.toISOString() : viewFilter.startDate,
-          endDate: filter.endDate ? filter.endDate.toISOString() : viewFilter.endDate,
-          assigneeId: viewFilter.assigneeId !== undefined ? viewFilter.assigneeId : filter.assignee,
-          includeCompleted: filter.showCompleted,
-          priority: filter.priority.length > 0 ? filter.priority : undefined,
-          search: filter.searchText || undefined
-        };
-
-        const response = await fetchTasks(apiFilter);
-        setTasks(response.data || []);
-      } catch (err) {
-        console.error('Error loading tasks:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTasks();
-
-    // Update URL with filter parameters
-    const searchParams = new URLSearchParams();
-
-    // Only add params that have values
-    if (filter.status.length > 0) {
-      filter.status.forEach(status => searchParams.append('status', status));
-    }
-
-    if (filter.priority.length > 0) {
-      filter.priority.forEach(priority => searchParams.append('priority', priority));
-    }
-
-    if (filter.startDate) {
-      searchParams.set('startDate', filter.startDate.toISOString().split('T')[0]);
-    }
-
-    if (filter.endDate) {
-      searchParams.set('endDate', filter.endDate.toISOString().split('T')[0]);
-    }
-
-    if (filter.assignee) {
-      searchParams.set('assignee', filter.assignee);
-    }
-
-    if (!filter.showCompleted) {
-      searchParams.set('showCompleted', 'false');
-    }
-
-    if (filter.searchText) {
-      searchParams.set('searchText', filter.searchText);
-    }
-
-    const queryString = searchParams.toString();
-    const newUrl = `${location.pathname}${queryString ? `?${queryString}` : ''}`;
-
-    // Update URL without reloading the page
-    navigate(newUrl, { replace: true });
-  }, [filter, navigate, location.pathname, selectedKey]);
-
   // Handle search text change
-  const handleSearchChange = (_, value) => {
-    setFilter(prevFilter => ({
-      ...prevFilter,
-      searchText: value || ''
-    }));
+  const handleSearchChange = (_, data) => {
+    setSearchText(data.value);
+
+    // Update filter after a small delay to avoid excessive API calls
+    const timeoutId = setTimeout(() => {
+      applyFilter({
+        ...filter,
+        searchText: data.value
+      });
+
+      // Update URL query params
+      setQueryParams({ ...getQueryParams(), searchText: data.value });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
   };
 
   // Handle filter changes
   const handleFilterChange = (newFilter) => {
-    setFilter(newFilter);
+    applyFilter(newFilter);
     setIsFilterPanelOpen(false);
+
+    // Update URL with filter parameters
+    const queryParams = {};
+
+    // Only add params that have values
+    if (newFilter.status?.length > 0) {
+      queryParams.status = newFilter.status;
+    }
+
+    if (newFilter.priority?.length > 0) {
+      queryParams.priority = newFilter.priority;
+    }
+
+    if (newFilter.startDate) {
+      queryParams.startDate = newFilter.startDate.toISOString().split('T')[0];
+    }
+
+    if (newFilter.endDate) {
+      queryParams.endDate = newFilter.endDate.toISOString().split('T')[0];
+    }
+
+    if (newFilter.assignee) {
+      queryParams.assignee = newFilter.assignee;
+    }
+
+    if (!newFilter.showCompleted) {
+      queryParams.showCompleted = 'false';
+    }
+
+    if (newFilter.searchText) {
+      queryParams.searchText = newFilter.searchText;
+    }
+
+    setQueryParams(queryParams);
   };
 
-  // Handle pivot change
-  const handlePivotChange = (item) => {
-    switch (item.props.itemKey) {
+  // Handle tab changes
+  const handleTabChange = (_, data) => {
+    switch (data.value) {
       case 'my':
         navigate('/tasks/my-tasks');
         break;
@@ -232,98 +218,83 @@ const TasksPage = () => {
     }
   };
 
-  // Command bar items
-  const commandBarItems = [
-    {
-      key: 'newTask',
-      text: 'New Task',
-      iconProps: { iconName: 'Add' },
-      onClick: () => navigate('/tasks/new')
-    },
-    {
-      key: 'refresh',
-      text: 'Refresh',
-      iconProps: { iconName: 'Refresh' },
-      onClick: () => window.location.reload()
-    },
-    {
-      key: 'filter',
-      text: 'Filter',
-      iconProps: { iconName: 'Filter' },
-      onClick: () => setIsFilterPanelOpen(true)
-    }
-  ];
-
-  // Command bar far items (right side)
-  const commandBarFarItems = [
-    {
-      key: 'search',
-      onRender: () => (
-        <SearchBox
-          placeholder="Search tasks..."
-          value={filter.searchText}
-          onChange={handleSearchChange}
-          onSearch={(value) => handleSearchChange(null, value)}
-          styles={{ root: { width: 300 } }}
-        />
-      )
-    }
-  ];
-
-  // Breadcrumb items
-  const breadcrumbItems = [
-    { text: 'Home', key: 'home', onClick: () => navigate('/') },
-    { text: 'Tasks', key: 'tasks' }
-  ];
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <Breadcrumb items={breadcrumbItems} />
         <Text className={styles.title}>Tasks</Text>
 
-        <div className={styles.commandBarContainer}>
-          <CommandBar
-            items={commandBarItems}
-            farItems={commandBarFarItems}
+        <div className={styles.actions}>
+          <div className={styles.searchContainer}>
+            <Input
+              placeholder="Search tasks..."
+              value={searchText}
+              onChange={handleSearchChange}
+              contentBefore={<Search24Regular />}
+              clearable
+            />
+          </div>
+
+          <Button
+            appearance="secondary"
+            icon={<ArrowClockwise24Regular />}
+            onClick={() => loadTasks(filter)}
+          >
+            Refresh
+          </Button>
+
+          <Button
+            appearance={isFilterPanelOpen ? "primary" : "secondary"}
+            icon={<Filter24Regular />}
+            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+          >
+            Filters
+          </Button>
+
+          <Button
+            appearance="primary"
+            icon={<Add24Regular />}
+            onClick={() => navigate('/tasks/new')}
+          >
+            New Task
+          </Button>
+        </div>
+      </div>
+
+      <div className={styles.tabsContainer}>
+        <TabList selectedValue={selectedTab} onTabSelect={handleTabChange}>
+          <Tab value="all">All Tasks</Tab>
+          <Tab value="my">My Tasks</Tab>
+          <Tab value="today">Due Today</Tab>
+          <Tab value="overdue">Overdue</Tab>
+          <Tab value="unassigned">Unassigned</Tab>
+        </TabList>
+      </div>
+
+      <div className={styles.contentContainer}>
+        <div className={styles.mainContent}>
+          <TaskList
+            tasks={tasks}
+            loading={loading}
+            onTaskSelect={(taskId) => navigate(`/tasks/${taskId}`)}
+            view={selectedTab}
+            emptyStateAction={{
+              text: "Create Task",
+              onClick: () => navigate('/tasks/new')
+            }}
           />
         </div>
 
-        <Pivot
-          selectedKey={selectedKey}
-          onLinkClick={handlePivotChange}
-        >
-          <PivotItem headerText="All Tasks" itemKey="all" />
-          <PivotItem headerText="My Tasks" itemKey="my" />
-          <PivotItem headerText="Due Today" itemKey="today" />
-          <PivotItem headerText="Overdue" itemKey="overdue" />
-          <PivotItem headerText="Unassigned" itemKey="unassigned" />
-        </Pivot>
+        {isFilterPanelOpen && (
+          <TaskFilterComponent
+            isOpen={isFilterPanelOpen}
+            onDismiss={() => setIsFilterPanelOpen(false)}
+            onFilterChange={handleFilterChange}
+            users={users}
+            teams={teams}
+            modules={modules}
+          />
+        )}
       </div>
-
-      <div className={styles.content}>
-        <TaskList
-          tasks={tasks}
-          loading={loading}
-          onTaskSelect={(taskId) => navigate(`/tasks/${taskId}`)}
-          view={selectedKey}
-        />
-      </div>
-
-      {/* Filter Panel */}
-      <Panel
-        isOpen={isFilterPanelOpen}
-        onDismiss={() => setIsFilterPanelOpen(false)}
-        headerText="Filter Tasks"
-        closeButtonAriaLabel="Close"
-        type={PanelType.medium}
-      >
-        <TaskFilterComponent
-          filter={filter}
-          onFilterChange={handleFilterChange}
-          users={users}
-        />
-      </Panel>
     </div>
   );
 };

@@ -1,510 +1,571 @@
-// File: frontend/src/components/tasks/TaskForm.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+// File: packages/frontend/src/modules/tasks/components/TaskForm.jsx
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import {
-  Stack,
-  TextField,
+  Button,
+  Card,
+  Checkbox,
   Dropdown,
-  DatePicker,
-  PrimaryButton,
-  DefaultButton,
-  MessageBar,
-  MessageBarType,
-  Separator,
+  Field,
+  Input,
   Label,
-  ProgressIndicator,
+  makeStyles,
+  MessageBar,
+  MessageBarBody,
+  Option,
   Spinner,
-  SpinnerSize,
-  ComboBox,
   Text,
-  Dialog,
-  DialogType,
-  DialogFooter,
-  mergeStyleSets
-} from '@fluentui/react';
-import { useQueryParams } from '../../../hooks/useQueryParams';
-import TaskService from '../services/TaskService';
+  Textarea,
+  tokens,
+  Divider
+} from '@fluentui/react-components';
+import { DatePicker } from '@fluentui/react-datepicker-compat';
+//import { useTaskData } from '../hooks/useTaskData';
+import useTaskData from '../hooks/useTaskData'; // Fixed import - import the default export
 import UserService from '../../../services/UserService';
 import TeamService from '../../../services/TeamService';
+import { PersonaAvatar } from './common';
 
-// Styles for the component
-const styles = mergeStyleSets({
+/**
+ * Styles for the component
+ */
+const useStyles = makeStyles({
   container: {
+    padding: `0 ${tokens.spacingHorizontalL} ${tokens.spacingHorizontalL} ${tokens.spacingHorizontalL}`,
     maxWidth: '800px',
-    margin: '0 auto',
-    padding: '20px',
+    margin: '0 auto'
   },
-  title: {
-    fontSize: '24px',
-    fontWeight: '600',
-    marginBottom: '24px',
+  section: {
+    marginBottom: tokens.spacingVerticalL
   },
-  formSection: {
-    marginBottom: '24px',
+  formRow: {
+    display: 'grid',
+    gridTemplateColumns: 'minmax(150px, 1fr) 2fr',
+    gap: tokens.spacingHorizontalM,
+    marginBottom: tokens.spacingVerticalM
   },
-  buttonContainer: {
+  buttons: {
     display: 'flex',
     justifyContent: 'flex-end',
-    marginTop: '32px',
-    gap: '8px',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalL
   },
-  twoColumn: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    columnGap: '16px',
+  parentTaskInfo: {
+    padding: tokens.spacingHorizontalM,
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderRadius: tokens.borderRadiusMedium,
+    marginBottom: tokens.spacingVerticalL
   },
+  loadingContainer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px'
+  },
+  fullWidth: {
+    width: '100%'
+  }
 });
 
 /**
- * Task Form component for creating or editing tasks.
+ * Status options for dropdown
  */
-const TaskForm = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { id } = useParams();
-  const queryParams = useQueryParams();
-  const parentId = queryParams.get('parentId');
-  const isEditMode = !!id;
-  
-  // Form state
+const statusOptions = [
+  { key: 'NOT_STARTED', text: 'Not Started' },
+  { key: 'IN_PROGRESS', text: 'In Progress' },
+  { key: 'ON_HOLD', text: 'On Hold' },
+  { key: 'COMPLETED', text: 'Completed' },
+  { key: 'CANCELLED', text: 'Cancelled' }
+];
+
+/**
+ * Priority options for dropdown
+ */
+const priorityOptions = [
+  { key: 'LOW', text: 'Low' },
+  { key: 'MEDIUM', text: 'Medium' },
+  { key: 'HIGH', text: 'High' },
+  { key: 'URGENT', text: 'Urgent' }
+];
+
+/**
+ * Module options for dropdown
+ */
+const moduleOptions = [
+  { key: 'CRM', text: 'CRM' },
+  { key: 'OPERATIONS', text: 'Operations' },
+  { key: 'SALES', text: 'Sales' },
+  { key: 'MARKETING', text: 'Marketing' },
+  { key: 'SUPPORT', text: 'Support' },
+  { key: 'HR', text: 'HR' },
+  { key: 'FINANCE', text: 'Finance' }
+];
+
+/**
+ * TaskForm component - form for creating and editing tasks
+ */
+const TaskForm = ({
+  task,
+  parentTask,
+  parentTaskId,
+  isEditMode = false,
+  onSave,
+  onCancel,
+  onChange
+}) => {
+  const styles = useStyles();
+
+  // Use the task data hook at the component level
+  const { loadTask } = useTaskData({ loadOnMount: false });
+
+  // State for data sources
+  const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [loadingData, setLoadingData] = useState(false);
+  const [dataError, setDataError] = useState(null);
+
+  // State for form data
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    dueDate: null,
+    status: 'NOT_STARTED',
     priority: 'MEDIUM',
-    module: 'OPERATIONS',
-    assignedToId: null,
-    teamId: null,
-    parentTaskId: parentId || null,
-    estimatedHours: null,
+    dueDate: null,
     reminderTime: null,
     completionPercentage: 0,
-    status: 'NOT_STARTED',
+    estimatedHours: null,
+    actualHours: null,
+    assignedToId: null,
+    teamId: null,
+    module: 'CRM',
+    parentTaskId: null
   });
-  
-  // Additional state
-  const [loading, setLoading] = useState(isEditMode);
+
+  // State for validation
+  const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [teams, setTeams] = useState([]);
-  const [error, setError] = useState(null);
-  const [parentTask, setParentTask] = useState(null);
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
-  const [nextRoute, setNextRoute] = useState(null);
-  
-  // Fetch task data if in edit mode
+  const [saveError, setSaveError] = useState(null);
+
+  // Load parent task if ID is provided but not the task object
+  const [loadingParent, setLoadingParent] = useState(false);
+  const [parentTaskData, setParentTaskData] = useState(null);
+
+  // Initialize form data from task prop
   useEffect(() => {
-    const fetchTaskData = async () => {
-      if (!isEditMode) return;
-      
-      try {
-        const response = await TaskService.getTaskById(id);
-        setFormData(response.data);
-        
-        // If this is a subtask, fetch parent task info
-        if (response.data.parentTaskId) {
-          fetchParentTask(response.data.parentTaskId);
-        }
-      } catch (err) {
-        console.error('Error fetching task:', err);
-        setError('Failed to load task data. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchTaskData();
-  }, [id, isEditMode]);
-  
-  // Fetch parent task info if parentId is provided
-  useEffect(() => {
-    if (parentId && !isEditMode) {
-      fetchParentTask(parentId);
+    if (task) {
+      setFormData({
+        title: task.title || '',
+        description: task.description || '',
+        status: task.status || 'NOT_STARTED',
+        priority: task.priority || 'MEDIUM',
+        dueDate: task.dueDate ? new Date(task.dueDate) : null,
+        reminderTime: task.reminderTime ? new Date(task.reminderTime) : null,
+        completionPercentage: task.completionPercentage || 0,
+        estimatedHours: task.estimatedHours || null,
+        actualHours: task.actualHours || null,
+        assignedToId: task.assignedToId || null,
+        teamId: task.teamId || null,
+        module: task.module || 'CRM',
+        parentTaskId: task.parentTaskId || null
+      });
+    } else if (parentTaskId) {
+      // If creating a subtask
+      setFormData(prevData => ({
+        ...prevData,
+        parentTaskId,
+        module: parentTask?.module || prevData.module
+      }));
     }
-  }, [parentId, isEditMode]);
-  
-  // Fetch users and teams for assignment dropdowns
+  }, [task, parentTask, parentTaskId]);
+
+  // Load users and teams for dropdowns
   useEffect(() => {
-    const fetchData = async () => {
+    const loadDropdownData = async () => {
+      setLoadingData(true);
+      setDataError(null);
+
       try {
-        // Fetch users
+        // Load users
         const usersResponse = await UserService.getAllUsers();
-        setUsers(usersResponse.data.map(user => ({
-          key: user.id,
-          text: user.name,
-          data: user
-        })));
-        
-        // Fetch teams
-        const teamsResponse = await TeamService.getActiveTeams();
-        setTeams(teamsResponse.data.map(team => ({
-          key: team.id,
-          text: team.name,
-          data: team
-        })));
-      } catch (err) {
-        console.error('Error fetching users or teams:', err);
-        setError('Failed to load users or teams. Some dropdown options may be unavailable.');
+        setUsers(usersResponse.data || []);
+
+        // Load teams
+        const teamsResponse = await TeamService.getAllTeams();
+        setTeams(teamsResponse.data || []);
+      } catch (error) {
+        console.error('Error loading dropdown data:', error);
+        setDataError('Failed to load users and teams. Some form fields may be unavailable.');
+      } finally {
+        setLoadingData(false);
       }
     };
-    
-    fetchData();
+
+    loadDropdownData();
   }, []);
-  
-  // Fetch parent task details
-  const fetchParentTask = async (parentTaskId) => {
-    try {
-      const response = await TaskService.getTaskById(parentTaskId);
-      setParentTask(response.data);
-      
-      // Pre-fill some values from parent task if this is a new subtask
-      if (!isEditMode) {
-        setFormData(prev => ({
-          ...prev,
-          parentTaskId,
-          module: response.data.module,
-          teamId: response.data.teamId
-        }));
+
+  // Load parent task if needed
+  useEffect(() => {
+    const fetchParentTask = async () => {
+      if (parentTaskId && !parentTask) {
+        setLoadingParent(true);
+        try {
+          const parentData = await loadTask(parentTaskId);
+          setParentTaskData(parentData);
+        } catch (error) {
+          console.error('Error loading parent task:', error);
+        } finally {
+          setLoadingParent(false);
+        }
+      } else if (parentTask) {
+        setParentTaskData(parentTask);
       }
-    } catch (err) {
-      console.error('Error fetching parent task:', err);
-    }
-  };
-  
+    };
+
+    fetchParentTask();
+  }, [parentTaskId, parentTask, loadTask]);
+
   // Handle form field changes
-  const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+  const handleFieldChange = (field, value) => {
+    setFormData(prevData => ({
+      ...prevData,
       [field]: value
     }));
-    setUnsavedChanges(true);
+
+    // Clear field-specific error if any
+    if (errors[field]) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [field]: null
+      }));
+    }
+
+    // Notify parent component of change
+    if (onChange) {
+      onChange();
+    }
   };
-  
-  // Handle dropdown changes
-  const handleDropdownChange = (field) => (_, option) => {
-    handleChange(field, option.key);
-  };
-  
-  // Handle saving the task
-  const handleSave = async () => {
-    // Validate required fields
+
+  // Validate form before submission
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Required fields
     if (!formData.title.trim()) {
-      setError('Task title is required.');
+      newErrors.title = 'Title is required';
+    }
+
+    // Numeric validation
+    if (formData.estimatedHours && isNaN(formData.estimatedHours)) {
+      newErrors.estimatedHours = 'Estimated hours must be a number';
+    }
+
+    if (formData.actualHours && isNaN(formData.actualHours)) {
+      newErrors.actualHours = 'Actual hours must be a number';
+    }
+
+    if (formData.completionPercentage && (isNaN(formData.completionPercentage) || formData.completionPercentage < 0 || formData.completionPercentage > 100)) {
+      newErrors.completionPercentage = 'Completion percentage must be between 0 and 100';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
-    
+
     setSaving(true);
-    setError(null);
-    
+    setSaveError(null);
+
     try {
-      let response;
-      
-      if (isEditMode) {
-        response = await TaskService.updateTask(id, formData);
-      } else {
-        response = await TaskService.createTask(formData);
-      }
-      
-      setUnsavedChanges(false);
-      navigate(`/tasks/${response.data.id}`);
-    } catch (err) {
-      console.error('Error saving task:', err);
-      setError('An error occurred while saving the task. Please try again later.');
+      // Prepare data for API
+      const apiData = {
+        ...formData,
+        // Convert assignedToId from string to number or null
+        assignedToId: formData.assignedToId === 'unassigned' ? null :
+                      formData.assignedToId ? Number(formData.assignedToId) : null,
+        // Convert teamId from string to number or null
+        teamId: formData.teamId === 'none' ? null :
+                formData.teamId ? Number(formData.teamId) : null,
+        // Convert parentTaskId from string to number or null
+        parentTaskId: formData.parentTaskId ? Number(formData.parentTaskId) : null
+      };
+
+      // Call save handler from parent component
+      await onSave(apiData);
+    } catch (error) {
+      console.error('Error saving task:', error);
+      setSaveError(error.message || 'An error occurred while saving the task');
     } finally {
       setSaving(false);
     }
   };
-  
-  // Handle cancel
-  const handleCancel = () => {
-    if (unsavedChanges) {
-      setShowUnsavedDialog(true);
-      setNextRoute('/tasks');
-    } else {
-      navigate('/tasks');
-    }
-  };
-  
-  // Handle navigation with unsaved changes check
-  const handleNavigation = useCallback((path) => {
-    if (unsavedChanges) {
-      setShowUnsavedDialog(true);
-      setNextRoute(path);
-    } else {
-      navigate(path);
-    }
-  }, [unsavedChanges, navigate]);
-  
-  // Continue navigation after dialog
-  const continueNavigation = () => {
-    setUnsavedChanges(false);
-    setShowUnsavedDialog(false);
-    navigate(nextRoute);
-  };
-  
-  // Module options for the dropdown
-  const moduleOptions = [
-    { key: 'CRM', text: 'CRM' },
-    { key: 'ACCOUNTING', text: 'Accounting' },
-    { key: 'HR', text: 'HR' },
-    { key: 'OPERATIONS', text: 'Operations' },
-    { key: 'GLOBAL', text: 'Global' }
-  ];
-  
-  // Priority options for the dropdown
-  const priorityOptions = [
-    { key: 'LOW', text: 'Low' },
-    { key: 'MEDIUM', text: 'Medium' },
-    { key: 'HIGH', text: 'High' },
-    { key: 'CRITICAL', text: 'Critical' }
-  ];
-  
-  // Status options for the dropdown
-  const statusOptions = [
-    { key: 'NOT_STARTED', text: 'Not Started' },
-    { key: 'IN_PROGRESS', text: 'In Progress' },
-    { key: 'COMPLETED', text: 'Completed' },
-    { key: 'DEFERRED', text: 'Deferred' },
-    { key: 'BLOCKED', text: 'Blocked' }
-  ];
-  
-  if (loading) {
+
+  const effectiveParentTask = parentTaskData || parentTask;
+
+  // Loading state
+  if (loadingParent) {
     return (
-      <Stack horizontalAlign="center" verticalAlign="center" style={{ height: '100%', padding: '40px' }}>
-        <Spinner size={SpinnerSize.large} label={`Loading task...`} />
-      </Stack>
+      <div className={styles.loadingContainer}>
+        <Spinner size="large" label="Loading parent task information..." />
+      </div>
     );
   }
-  
+
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>
-        {isEditMode ? 'Edit Task' : (parentTask ? 'Create Subtask' : 'Create Task')}
-      </h1>
-      
-      {error && (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={false}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { marginBottom: '16px' } }}
-        >
-          {error}
-        </MessageBar>
-      )}
-      
-      {parentTask && (
-        <MessageBar
-          messageBarType={MessageBarType.info}
-          isMultiline={false}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { marginBottom: '16px' } }}
-        >
-          Creating a subtask for: <b>{parentTask.title}</b>
-        </MessageBar>
-      )}
-      
-      <div className={styles.formSection}>
-        <TextField
-          label="Task Title"
-          value={formData.title}
-          onChange={(_, value) => handleChange('title', value)}
-          required
-          placeholder="Enter task title"
-        />
-      </div>
-      
-      <div className={styles.formSection}>
-        <TextField
-          label="Description"
-          value={formData.description || ''}
-          onChange={(_, value) => handleChange('description', value)}
-          multiline
-          rows={4}
-          placeholder="Enter task description"
-        />
-      </div>
-      
-      <div className={styles.formSection}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
-            <Dropdown
-              label="Module"
-              selectedKey={formData.module}
-              onChange={handleDropdownChange('module')}
-              options={moduleOptions}
-              required
+      <form onSubmit={handleSubmit}>
+        <div className={styles.section}>
+          <Text size={700} weight="semibold">{isEditMode ? 'Edit Task' : 'Create Task'}</Text>
+
+          {/* Display parent task info if this is a subtask */}
+          {effectiveParentTask && (
+            <Card className={styles.parentTaskInfo}>
+              <Label>Parent Task</Label>
+              <Text weight="semibold">
+                {effectiveParentTask.title}
+              </Text>
+              {effectiveParentTask.module && (
+                <Text size={200}>
+                  Module: {effectiveParentTask.module}
+                </Text>
+              )}
+            </Card>
+          )}
+
+          {dataError && (
+            <MessageBar intent="warning">
+              <MessageBarBody>{dataError}</MessageBarBody>
+            </MessageBar>
+          )}
+
+          {saveError && (
+            <MessageBar intent="error" onDismiss={() => setSaveError(null)}>
+              <MessageBarBody>{saveError}</MessageBarBody>
+            </MessageBar>
+          )}
+        </div>
+
+        <div className={styles.section}>
+          <Field
+            label="Title"
+            required
+            validationMessage={errors.title}
+            className={styles.fullWidth}
+          >
+            <Input
+              value={formData.title}
+              onChange={(_, data) => handleFieldChange('title', data.value)}
             />
-          </Stack.Item>
-          <Stack.Item grow={1}>
-            <Dropdown
-              label="Priority"
-              selectedKey={formData.priority}
-              onChange={handleDropdownChange('priority')}
-              options={priorityOptions}
-              required
+          </Field>
+
+          <Field
+            label="Description"
+            className={styles.fullWidth}
+          >
+            <Textarea
+              rows={4}
+              value={formData.description}
+              onChange={(_, data) => handleFieldChange('description', data.value)}
             />
-          </Stack.Item>
-        </Stack>
-      </div>
-      
-      <div className={styles.formSection}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
-            <DatePicker
-              label="Due Date"
-              value={formData.dueDate ? new Date(formData.dueDate) : null}
-              onSelectDate={(date) => handleChange('dueDate', date)}
-              placeholder="Select a date..."
-              allowTextInput
-            />
-          </Stack.Item>
-          {isEditMode && (
-            <Stack.Item grow={1}>
+          </Field>
+        </div>
+
+        <Divider />
+
+        <div className={styles.section}>
+          <Text weight="semibold" size={500}>Task Details</Text>
+
+          <div className={styles.formRow}>
+            <Field label="Status">
               <Dropdown
-                label="Status"
-                selectedKey={formData.status}
-                onChange={handleDropdownChange('status')}
-                options={statusOptions}
-                required
-              />
-            </Stack.Item>
-          )}
-        </Stack>
-      </div>
-      
-      <Separator>Assignment</Separator>
-      
-      <div className={styles.formSection}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
-            <ComboBox
-              label="Assigned To"
-              selectedKey={formData.assignedToId}
-              onChange={(_, option) => handleChange('assignedToId', option ? option.key : null)}
-              options={users}
-              allowFreeform={false}
-              autoComplete="on"
-              placeholder="Select a user..."
-            />
-          </Stack.Item>
-          <Stack.Item grow={1}>
-            <ComboBox
-              label="Team"
-              selectedKey={formData.teamId}
-              onChange={(_, option) => handleChange('teamId', option ? option.key : null)}
-              options={teams}
-              allowFreeform={false}
-              autoComplete="on"
-              placeholder="Select a team..."
-            />
-          </Stack.Item>
-        </Stack>
-      </div>
-      
-      <Separator>Time Tracking</Separator>
-      
-      <div className={styles.formSection}>
-        <Stack horizontal tokens={{ childrenGap: 16 }}>
-          <Stack.Item grow={1}>
-            <TextField
-              label="Estimated Hours"
-              type="number"
-              value={formData.estimatedHours?.toString() || ''}
-              onChange={(_, value) => handleChange('estimatedHours', value ? parseFloat(value) : null)}
-              min={0}
-              step={0.5}
-              placeholder="0.0"
-              suffix="hours"
-            />
-          </Stack.Item>
-          {isEditMode && (
-            <Stack.Item grow={1}>
-              <TextField
-                label="Actual Hours"
-                type="number"
-                value={formData.actualHours?.toString() || ''}
-                onChange={(_, value) => handleChange('actualHours', value ? parseFloat(value) : null)}
-                min={0}
-                step={0.5}
-                placeholder="0.0"
-                suffix="hours"
-              />
-            </Stack.Item>
-          )}
-        </Stack>
-      </div>
-      
-      {isEditMode && (
-        <>
-          <Separator>Completion</Separator>
-          
-          <div className={styles.formSection}>
-            <Label>Completion Percentage</Label>
-            <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 10 }}>
-              <Stack.Item grow={1}>
-                <ProgressIndicator 
-                  percentComplete={formData.completionPercentage / 100} 
-                  barHeight={8}
-                  styles={{
-                    progressBar: { 
-                      backgroundColor: formData.completionPercentage === 100 ? '#107c10' : '#0078d4' 
-                    }
-                  }}
-                />
-              </Stack.Item>
-              <Stack.Item>
-                <TextField
-                  type="number"
-                  value={formData.completionPercentage?.toString() || '0'}
-                  onChange={(_, value) => handleChange('completionPercentage', value ? parseInt(value) : 0)}
-                  min={0}
-                  max={100}
-                  step={5}
-                  styles={{ root: { width: 70 } }}
-                  suffix="%"
-                />
-              </Stack.Item>
-            </Stack>
+                value={formData.status}
+                onOptionSelect={(_, data) => handleFieldChange('status', data.optionValue)}
+              >
+                {statusOptions.map(option => (
+                  <Option key={option.key} value={option.key}>
+                    {option.text}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
+
+            <Field label="Priority">
+              <Dropdown
+                value={formData.priority}
+                onOptionSelect={(_, data) => handleFieldChange('priority', data.optionValue)}
+              >
+                {priorityOptions.map(option => (
+                  <Option key={option.key} value={option.key}>
+                    {option.text}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
           </div>
-        </>
-      )}
-      
-      <div className={styles.buttonContainer}>
-        <DefaultButton 
-          text="Cancel" 
-          onClick={handleCancel}
-          disabled={saving}
-        />
-        <PrimaryButton 
-          text={saving ? 'Saving...' : 'Save'} 
-          onClick={handleSave}
-          disabled={saving}
-        />
-      </div>
-      
-      {/* Unsaved changes dialog */}
-      <Dialog
-        hidden={!showUnsavedDialog}
-        onDismiss={() => setShowUnsavedDialog(false)}
-        dialogContentProps={{
-          type: DialogType.normal,
-          title: 'Unsaved Changes',
-          subText: 'You have unsaved changes. Are you sure you want to leave this page?'
-        }}
-        modalProps={{
-          isBlocking: true,
-          styles: { main: { maxWidth: 450 } }
-        }}
-      >
-        <DialogFooter>
-          <PrimaryButton onClick={continueNavigation} text="Leave Page" />
-          <DefaultButton onClick={() => setShowUnsavedDialog(false)} text="Stay" />
-        </DialogFooter>
-      </Dialog>
+
+          <div className={styles.formRow}>
+            <Field label="Due Date">
+              <DatePicker
+                placeholder="Select a due date"
+                value={formData.dueDate}
+                onSelectDate={(date) => handleFieldChange('dueDate', date)}
+              />
+            </Field>
+
+            <Field label="Reminder Date">
+              <DatePicker
+                placeholder="Select a reminder date"
+                value={formData.reminderTime}
+                onSelectDate={(date) => handleFieldChange('reminderTime', date)}
+              />
+            </Field>
+          </div>
+
+          <div className={styles.formRow}>
+            <Field
+              label="Estimated Hours"
+              validationMessage={errors.estimatedHours}
+            >
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.estimatedHours?.toString() || ''}
+                onChange={(_, data) => handleFieldChange('estimatedHours', data.value ? parseFloat(data.value) : null)}
+              />
+            </Field>
+
+            {isEditMode && (
+              <Field
+                label="Actual Hours"
+                validationMessage={errors.actualHours}
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={formData.actualHours?.toString() || ''}
+                  onChange={(_, data) => handleFieldChange('actualHours', data.value ? parseFloat(data.value) : null)}
+                />
+              </Field>
+            )}
+          </div>
+
+          {isEditMode && (
+            <div className={styles.formRow}>
+              <Field
+                label="Completion Percentage"
+                validationMessage={errors.completionPercentage}
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={formData.completionPercentage?.toString() || '0'}
+                  onChange={(_, data) => handleFieldChange('completionPercentage', data.value ? parseInt(data.value, 10) : 0)}
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+
+        <Divider />
+
+        <div className={styles.section}>
+          <Text weight="semibold" size={500}>Assignment</Text>
+
+          <div className={styles.formRow}>
+            <Field label="Module">
+              <Dropdown
+                value={formData.module}
+                onOptionSelect={(_, data) => handleFieldChange('module', data.optionValue)}
+              >
+                {moduleOptions.map(option => (
+                  <Option key={option.key} value={option.key}>
+                    {option.text}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
+
+            <Field label="Assigned To">
+              <Dropdown
+                value={formData.assignedToId || 'unassigned'}
+                onOptionSelect={(_, data) => handleFieldChange('assignedToId', data.optionValue === 'unassigned' ? null : data.optionValue)}
+                disabled={loadingData}
+              >
+                <Option value="unassigned">Unassigned</Option>
+                {users.map(user => (
+                  <Option key={user.id.toString()} value={user.id.toString()}>
+                    {user.name || `${user.firstName} ${user.lastName}`}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
+          </div>
+
+          <div className={styles.formRow}>
+            <Field label="Team">
+              <Dropdown
+                value={formData.teamId || 'none'}
+                onOptionSelect={(_, data) => handleFieldChange('teamId', data.optionValue === 'none' ? null : data.optionValue)}
+                disabled={loadingData}
+              >
+                <Option value="none">None</Option>
+                {teams.map(team => (
+                  <Option key={team.id.toString()} value={team.id.toString()}>
+                    {team.name}
+                  </Option>
+                ))}
+              </Dropdown>
+            </Field>
+          </div>
+        </div>
+
+        <div className={styles.buttons}>
+          <Button
+            appearance="secondary"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            appearance="primary"
+            type="submit"
+            disabled={saving}
+            icon={saving ? <Spinner size="tiny" /> : undefined}
+          >
+            {saving ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
+};
+
+TaskForm.propTypes = {
+  /** Task object (for edit mode) */
+  task: PropTypes.object,
+  /** Parent task object (for subtasks) */
+  parentTask: PropTypes.object,
+  /** Parent task ID (for subtasks) */
+  parentTaskId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  /** Whether the form is in edit mode */
+  isEditMode: PropTypes.bool,
+  /** Save handler */
+  onSave: PropTypes.func.isRequired,
+  /** Cancel handler */
+  onCancel: PropTypes.func.isRequired,
+  /** Change handler */
+  onChange: PropTypes.func
 };
 
 export default TaskForm;

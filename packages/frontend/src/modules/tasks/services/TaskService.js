@@ -1,196 +1,212 @@
-// File: packages/frontend/src/modules/tasks/services/TaskService.js
-import axios from 'axios'; // Direct import for consistent API access
-
-// Base API path for tasks
-const API_URL = '/api/tasks';
+import api from '../../../services/api/apiClient';
 
 /**
- * Fetch tasks with optional filtering
- *
- * @param {Object} filter - Task filter criteria
- * @param {Object} pageable - Pagination parameters
- * @returns {Promise} - Promise that resolves to the API response
+ * TaskService
+ * Service for managing tasks in the CRM
  */
-export const fetchTasks = async (filter = {}, pageable = { page: 0, size: 20 }) => {
-  try {
-    console.log('Fetching tasks with filter:', filter);
-    const params = {
-      ...pageable
-    };
-
-    if (filter.status && filter.status.length > 0) {
-      params.status = filter.status;
+class TaskService {
+  /**
+   * Get tasks with optional filtering
+   * 
+   * @param {Object} filters - Filter criteria
+   * @param {number} page - Page number (0-based)
+   * @param {number} size - Page size
+   * @param {string} sort - Sort field and direction (e.g., "dueDate,desc")
+   * @returns {Promise<Object>} - Paginated task data
+   */
+  async fetchTasks(filters = {}, pageable = { page: 0, size: 20, sort: '' }) {
+    try {
+      const params = { ...pageable };
+      
+      // Apply filters to params
+      if (filters.status) params.status = filters.status;
+      if (filters.priority) params.priority = filters.priority;
+      if (filters.module) params.module = filters.module;
+      if (filters.assignedToId) params.assignedToId = filters.assignedToId;
+      if (filters.teamId) params.teamId = filters.teamId;
+      if (filters.search) params.search = filters.search;
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+      if (filters.parentTaskId) params.parentTaskId = filters.parentTaskId;
+      if (filters.showCompleted !== undefined) params.showCompleted = filters.showCompleted;
+      
+      const response = await api.get('/tasks', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching tasks:', error);
+      throw error;
     }
+  }
 
-    if (filter.priority && filter.priority.length > 0) {
-      params.priority = filter.priority;
+  /**
+   * Get a task by ID
+   * 
+   * @param {number} id - Task ID 
+   * @returns {Promise<Object>} - Task data
+   */
+  async getTaskById(id) {
+    try {
+      const response = await api.get(`/tasks/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching task ${id}:`, error);
+      throw error;
     }
+  }
 
-    if (filter.startDate) {
-      params.startDate = filter.startDate;
+  /**
+   * Create a new task
+   * 
+   * @param {Object} taskData - Task data 
+   * @returns {Promise<Object>} - Created task
+   */
+  async createTask(taskData) {
+    try {
+      const response = await api.post('/tasks', taskData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating task:', error);
+      throw error;
     }
+  }
 
-    if (filter.endDate) {
-      params.endDate = filter.endDate;
+  /**
+   * Update an existing task
+   * 
+   * @param {number} id - Task ID 
+   * @param {Object} taskData - Updated task data
+   * @returns {Promise<Object>} - Updated task
+   */
+  async updateTask(id, taskData) {
+    try {
+      const response = await api.put(`/tasks/${id}`, taskData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating task ${id}:`, error);
+      throw error;
     }
+  }
 
-    if (filter.assigneeId !== undefined) {
-      params.assigneeId = filter.assigneeId === null ? 'unassigned' : filter.assigneeId;
+  /**
+   * Delete a task
+   * 
+   * @param {number} id - Task ID
+   * @returns {Promise<void>}
+   */
+  async deleteTask(id) {
+    try {
+      await api.delete(`/tasks/${id}`);
+    } catch (error) {
+      console.error(`Error deleting task ${id}:`, error);
+      throw error;
     }
+  }
 
-    if (filter.includeCompleted !== undefined) {
-      params.includeCompleted = filter.includeCompleted;
+  /**
+   * Get subtasks for a parent task
+   * 
+   * @param {number} parentTaskId - Parent task ID
+   * @returns {Promise<Array>} - List of subtasks
+   */
+  async getSubtasks(parentTaskId) {
+    try {
+      const response = await api.get('/tasks', {
+        params: { parentTaskId }
+      });
+      return response.data.content || [];
+    } catch (error) {
+      console.error(`Error fetching subtasks for task ${parentTaskId}:`, error);
+      throw error;
     }
+  }
 
-    if (filter.search) {
-      params.query = filter.search;
+  /**
+   * Update task status
+   * 
+   * @param {number} id - Task ID
+   * @param {string} status - New task status
+   * @returns {Promise<Object>} - Updated task
+   */
+  async updateTaskStatus(id, status) {
+    try {
+      const response = await api.patch(`/tasks/${id}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating task ${id} status:`, error);
+      throw error;
     }
-
-    // Use direct axios call for consistent behavior
-    const response = await axios.get('http://localhost:8080/api/tasks', { params });
-    console.log('Tasks response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Failed to fetch tasks:', error);
-    throw error;
   }
-};
 
-/**
- * Get a task by ID
- *
- * @param {number|string} id - Task ID
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const getTaskById = async (id) => {
-  try {
-    console.log('Getting task by ID:', id);
-    const response = await axios.get(`http://localhost:8080/api/tasks/${id}`);
-    console.log('Task by ID response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to fetch task details:', error);
-    throw error;
+  /**
+   * Update task priority
+   * 
+   * @param {number} id - Task ID
+   * @param {string} priority - New task priority
+   * @returns {Promise<Object>} - Updated task
+   */
+  async updateTaskPriority(id, priority) {
+    try {
+      const response = await api.patch(`/tasks/${id}/priority`, { priority });
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating task ${id} priority:`, error);
+      throw error;
+    }
   }
-};
 
-/**
- * Create a new task
- *
- * @param {Object} taskData - Task data
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const createTask = async (taskData) => {
-  try {
-    console.log('Creating task with data:', taskData);
-    const response = await axios.post('http://localhost:8080/api/tasks', taskData);
-    console.log('Task create response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to create task:', error);
-    throw error;
+  /**
+   * Get all available task modules
+   * 
+   * @returns {Promise<Array>} - List of module names
+   */
+  async getTaskModules() {
+    try {
+      const response = await api.get('/tasks/modules');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task modules:', error);
+      // Return default modules in case of error
+      return ['CRM', 'OPERATIONS', 'SALES', 'SUPPORT', 'MARKETING'];
+    }
   }
-};
 
-/**
- * Update a task
- *
- * @param {number|string} id - Task ID
- * @param {Object} taskData - Updated task data
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const updateTask = async (id, taskData) => {
-  try {
-    console.log('Updating task:', id, taskData);
-    const response = await axios.put(`http://localhost:8080/api/tasks/${id}`, taskData);
-    console.log('Task update response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to update task:', error);
-    throw error;
+  /**
+   * Get task statistics
+   * 
+   * @returns {Promise<Object>} - Task statistics
+   */
+  async getTaskStats() {
+    try {
+      const response = await api.get('/tasks/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching task stats:', error);
+      return {
+        total: 0,
+        completed: 0,
+        inProgress: 0,
+        notStarted: 0,
+        overdue: 0
+      };
+    }
   }
-};
 
-/**
- * Delete a task
- *
- * @param {number|string} id - Task ID
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const deleteTask = async (id) => {
-  try {
-    console.log('Deleting task:', id);
-    const response = await axios.delete(`http://localhost:8080/api/tasks/${id}`);
-    console.log('Task delete response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to delete task:', error);
-    throw error;
+  /**
+   * Assign task to user
+   * 
+   * @param {number} taskId - Task ID
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} - Updated task
+   */
+  async assignTask(taskId, userId) {
+    try {
+      const response = await api.patch(`/tasks/${taskId}/assign`, { userId });
+      return response.data;
+    } catch (error) {
+      console.error(`Error assigning task ${taskId}:`, error);
+      throw error;
+    }
   }
-};
+}
 
-/**
- * Get subtasks of a parent task
- *
- * @param {number|string} parentTaskId - Parent task ID
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const getSubtasks = async (parentTaskId) => {
-  try {
-    console.log('Getting subtasks for parent:', parentTaskId);
-    const response = await axios.get(`http://localhost:8080/api/tasks/${parentTaskId}/subtasks`);
-    console.log('Subtasks response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to fetch subtasks:', error);
-    throw error;
-  }
-};
-
-/**
- * Update task status
- *
- * @param {string|number} taskId - Task ID
- * @param {string} status - New status
- * @returns {Promise} - Promise that resolves to the API response
- */
-export const updateTaskStatus = async (taskId, status) => {
-  try {
-    console.log('Updating task status:', taskId, status);
-    const response = await axios.put(`http://localhost:8080/api/tasks/${taskId}/status/${status}`);
-    console.log('Status update response:', response.data);
-    return { data: response.data };
-  } catch (error) {
-    console.error('Failed to update task status:', error);
-    throw error;
-  }
-};
-
-/**
- * Placeholder function for stats - returning empty data
- *
- * @returns {Promise} Empty stats object
- */
-export const getTaskStats = async () => {
-  return {
-    total: 0,
-    completed: 0,
-    overdue: 0,
-    dueToday: 0,
-    unassigned: 0
-  };
-};
-
-// Export both individual functions and a default object
-const TaskService = {
-  fetchTasks,
-  getTaskById,
-  createTask,
-  updateTask,
-  deleteTask,
-  getSubtasks,
-  updateTaskStatus,
-  getTaskStats
-};
-
-export default TaskService;
+export default new TaskService();

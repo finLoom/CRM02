@@ -1,85 +1,105 @@
 // File: packages/frontend/src/modules/tasks/components/TaskFilterComponent.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import {
-  Stack,
-  TextField,
-  DatePicker,
+  Button,
   Dropdown,
-  PrimaryButton,
-  DefaultButton,
-  StackItem,
-  Checkbox,
+  Input,
   Label,
-  mergeStyleSets,
-  useTheme
-} from '@fluentui/react';
-import { useId } from '@fluentui/react-hooks';
+  Option,
+  Text,
+  Divider,
+  makeStyles,
+  tokens,
+  DatePicker,
+  Field
+} from '@fluentui/react-components';
+import {
+  Search24Regular,
+  Dismiss24Regular,
+  Filter24Regular
+} from '@fluentui/react-icons';
+import { useQueryParams } from '../../../hooks/useQueryParams';
+import { format } from 'date-fns';
 
 // Styles for the component
-const getStyles = (theme) => mergeStyleSets({
+const useStyles = makeStyles({
   container: {
-    padding: '16px 0',
+    width: '100%',
+    maxWidth: '320px',
+    borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+    backgroundColor: tokens.colorNeutralBackground1,
+    overflow: 'auto',
+    height: '100%',
+    padding: tokens.spacingHorizontalM
   },
-  footer: {
-    marginTop: '24px',
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: tokens.spacingVerticalM
   },
-  checkboxStyles: {
-    root: {
-      marginTop: '28px',
+  section: {
+    marginBottom: tokens.spacingVerticalL
+  },
+  field: {
+    marginBottom: tokens.spacingVerticalS
+  },
+  dateContainer: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS,
+    '& > *': {
+      flex: 1
     }
+  },
+  actionContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    gap: tokens.spacingHorizontalS,
+    marginTop: tokens.spacingVerticalL
   }
 });
 
 /**
- * TaskFilterComponent
+ * TaskFilterComponent - A filter panel for tasks with search, status, priority, date range, and assignee filtering
  *
- * Filter component for tasks with status, date range, and assignee filters
- *
- * @param {Object} props - Component properties
- * @param {Object} props.filter - Current filter state
- * @param {Function} props.onFilterChange - Filter change handler
+ * @param {Object} props
+ * @param {Function} props.onFilterChange - Callback fired when filters change
+ * @param {boolean} props.isOpen - Whether the filter panel is open
+ * @param {Function} props.onDismiss - Callback to dismiss the filter panel
  * @param {Array} props.users - List of users for assignee filter
- * @returns {JSX.Element}
+ * @param {Array} props.teams - List of teams for team filter
+ * @param {Array} props.modules - List of modules for module filter
  */
 const TaskFilterComponent = ({
-  filter,
   onFilterChange,
-  users = []
+  isOpen,
+  onDismiss,
+  users = [],
+  teams = [],
+  modules = []
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles();
+  const { getQueryParam, setQueryParams } = useQueryParams();
 
-  // Generate unique IDs for form elements
-  const dropdownId = useId('status-dropdown');
-  const startDateId = useId('start-date');
-  const endDateId = useId('end-date');
-  const assigneeId = useId('assignee-dropdown');
-  const priorityId = useId('priority-dropdown');
-
-  // Default filter state
-  const defaultFilter = {
-    status: [],
-    startDate: null,
-    endDate: null,
-    assignee: null,
-    showCompleted: true,
-    priority: [],
-    searchText: ''
-  };
-
-  // Local filter state
-  const [localFilter, setLocalFilter] = useState(filter || defaultFilter);
-
-  // Update local state when props change
-  useEffect(() => {
-    if (filter) {
-      setLocalFilter(filter);
-    }
-  }, [filter]);
+  // Initialize filter state from URL query params
+  const [filters, setFilters] = useState({
+    searchText: getQueryParam('search') || '',
+    status: getQueryParam('status') || null,
+    priority: getQueryParam('priority') || null,
+    module: getQueryParam('module') || null,
+    assignedToId: getQueryParam('assignedToId') || null,
+    teamId: getQueryParam('teamId') || null,
+    startDate: getQueryParam('startDate') ? new Date(getQueryParam('startDate')) : null,
+    endDate: getQueryParam('endDate') ? new Date(getQueryParam('endDate')) : null,
+    parentTaskId: getQueryParam('parentTaskId') || null,
+    showCompleted: getQueryParam('showCompleted') === 'true'
+  });
 
   // Status options
   const statusOptions = [
-    { key: 'NEW', text: 'New' },
+    { key: 'ALL', text: 'All Statuses' },
+    { key: 'NOT_STARTED', text: 'Not Started' },
     { key: 'IN_PROGRESS', text: 'In Progress' },
     { key: 'ON_HOLD', text: 'On Hold' },
     { key: 'COMPLETED', text: 'Completed' },
@@ -88,152 +108,301 @@ const TaskFilterComponent = ({
 
   // Priority options
   const priorityOptions = [
-    { key: 'HIGH', text: 'High' },
+    { key: 'ALL', text: 'All Priorities' },
+    { key: 'LOW', text: 'Low' },
     { key: 'MEDIUM', text: 'Medium' },
-    { key: 'LOW', text: 'Low' }
+    { key: 'HIGH', text: 'High' },
+    { key: 'URGENT', text: 'Urgent' }
   ];
 
-  // Convert users array to dropdown options
-  const userOptions = users.map(user => ({
-    key: user.id,
-    text: `${user.firstName} ${user.lastName}`
-  }));
+  // Build user options from props
+  const userOptions = [
+    { key: 'ALL', text: 'All Users' },
+    { key: 'UNASSIGNED', text: 'Unassigned' },
+    { key: 'CURRENT_USER', text: 'Assigned to Me' },
+    ...users.map(user => ({
+      key: user.id.toString(),
+      text: user.name || `${user.firstName} ${user.lastName}`
+    }))
+  ];
 
-  // Handle single field change
-  const handleChange = (field, value) => {
-    const newFilter = { ...localFilter, [field]: value };
-    setLocalFilter(newFilter);
-  };
+  // Build team options from props
+  const teamOptions = [
+    { key: 'ALL', text: 'All Teams' },
+    ...teams.map(team => ({
+      key: team.id.toString(),
+      text: team.name
+    }))
+  ];
 
-  // Handle form submission
-  const handleApplyFilter = () => {
-    if (onFilterChange) {
-      onFilterChange(localFilter);
+  // Build module options from props
+  const moduleOptions = [
+    { key: 'ALL', text: 'All Modules' },
+    ...modules.map(module => ({
+      key: module,
+      text: module.charAt(0) + module.slice(1).toLowerCase()
+    }))
+  ];
+
+  // Apply filters
+  const applyFilters = useCallback(() => {
+    // Build query params object
+    const queryParams = {};
+
+    if (filters.searchText) queryParams.search = filters.searchText;
+    if (filters.status && filters.status !== 'ALL') queryParams.status = filters.status;
+    if (filters.priority && filters.priority !== 'ALL') queryParams.priority = filters.priority;
+    if (filters.module && filters.module !== 'ALL') queryParams.module = filters.module;
+    if (filters.assignedToId && filters.assignedToId !== 'ALL') {
+      queryParams.assignedToId = filters.assignedToId;
     }
-  };
+    if (filters.teamId && filters.teamId !== 'ALL') queryParams.teamId = filters.teamId;
 
-  // Reset filters to default
-  const handleResetFilter = () => {
-    setLocalFilter(defaultFilter);
+    if (filters.startDate) {
+      queryParams.startDate = format(filters.startDate, 'yyyy-MM-dd');
+    }
+    if (filters.endDate) {
+      queryParams.endDate = format(filters.endDate, 'yyyy-MM-dd');
+    }
+
+    if (filters.parentTaskId) queryParams.parentTaskId = filters.parentTaskId;
+    if (filters.showCompleted) queryParams.showCompleted = filters.showCompleted;
+
+    // Update URL and notify parent
+    setQueryParams(queryParams);
 
     if (onFilterChange) {
-      onFilterChange(defaultFilter);
+      onFilterChange(filters);
     }
+
+    if (onDismiss) {
+      onDismiss();
+    }
+  }, [filters, onFilterChange, onDismiss, setQueryParams]);
+
+  // Reset all filters
+  const resetFilters = () => {
+    setFilters({
+      searchText: '',
+      status: null,
+      priority: null,
+      module: null,
+      assignedToId: null,
+      teamId: null,
+      startDate: null,
+      endDate: null,
+      parentTaskId: null,
+      showCompleted: false
+    });
   };
+
+  // Update a specific filter
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  // If panel is not open, don't render
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className={styles.container}>
-      <Stack tokens={{ childrenGap: 16 }}>
-        <TextField
-          label="Search"
-          placeholder="Enter keywords..."
-          value={localFilter.searchText || ''}
-          onChange={(_, newValue) => handleChange('searchText', newValue)}
-          iconProps={{ iconName: 'Search' }}
+      <div className={styles.header}>
+        <Text size={500} weight="semibold">Task Filters</Text>
+        <Button
+          appearance="subtle"
+          icon={<Dismiss24Regular />}
+          aria-label="Close filters"
+          onClick={onDismiss}
         />
+      </div>
 
-        <Stack horizontal tokens={{ childrenGap: 16 }} wrap>
-          <StackItem grow={1}>
-            <Dropdown
-              id={dropdownId}
-              label="Status"
-              placeholder="Select status"
-              multiSelect
-              selectedKeys={localFilter.status}
-              options={statusOptions}
-              onChange={(_, item) => {
-                if (item) {
-                  const newStatus = item.selected
-                    ? [...localFilter.status, item.key]
-                    : localFilter.status.filter(key => key !== item.key);
-                  handleChange('status', newStatus);
-                }
-              }}
-            />
-          </StackItem>
+      <Divider />
 
-          <StackItem grow={1}>
-            <Dropdown
-              id={priorityId}
-              label="Priority"
-              placeholder="Select priority"
-              multiSelect
-              selectedKeys={localFilter.priority}
-              options={priorityOptions}
-              onChange={(_, item) => {
-                if (item) {
-                  const newPriority = item.selected
-                    ? [...localFilter.priority, item.key]
-                    : localFilter.priority.filter(key => key !== item.key);
-                  handleChange('priority', newPriority);
-                }
-              }}
-            />
-          </StackItem>
-        </Stack>
+      <div className={styles.section}>
+        <Field
+          label="Search"
+          className={styles.field}
+        >
+          <Input
+            placeholder="Search tasks..."
+            value={filters.searchText}
+            onChange={(_, data) => updateFilter('searchText', data.value)}
+            contentBefore={<Search24Regular />}
+          />
+        </Field>
+      </div>
 
-        <Stack horizontal tokens={{ childrenGap: 16 }} wrap>
-          <StackItem grow={1}>
-            <Dropdown
-              id={assigneeId}
-              label="Assignee"
-              placeholder="Select assignee"
-              selectedKey={localFilter.assignee}
-              options={[
-                { key: 'unassigned', text: 'Unassigned' },
-                ...userOptions
-              ]}
-              onChange={(_, item) => {
-                if (item) {
-                  handleChange('assignee', item.key === 'unassigned' ? null : item.key);
-                }
-              }}
-            />
-          </StackItem>
+      <div className={styles.section}>
+        <Field
+          label="Status"
+          className={styles.field}
+        >
+          <Dropdown
+            placeholder="Select a status"
+            value={filters.status}
+            onOptionSelect={(_, data) => updateFilter('status', data.optionValue)}
+          >
+            {statusOptions.map(option => (
+              <Option key={option.key} value={option.key}>
+                {option.text}
+              </Option>
+            ))}
+          </Dropdown>
+        </Field>
+      </div>
 
-          <StackItem grow={1}>
-            <Checkbox
-              label="Show completed tasks"
-              checked={localFilter.showCompleted}
-              onChange={(_, checked) => handleChange('showCompleted', checked)}
-              styles={styles.checkboxStyles}
-            />
-          </StackItem>
-        </Stack>
+      <div className={styles.section}>
+        <Field
+          label="Priority"
+          className={styles.field}
+        >
+          <Dropdown
+            placeholder="Select a priority"
+            value={filters.priority}
+            onOptionSelect={(_, data) => updateFilter('priority', data.optionValue)}
+          >
+            {priorityOptions.map(option => (
+              <Option key={option.key} value={option.key}>
+                {option.text}
+              </Option>
+            ))}
+          </Dropdown>
+        </Field>
+      </div>
 
+      <div className={styles.section}>
+        <Field
+          label="Module"
+          className={styles.field}
+        >
+          <Dropdown
+            placeholder="Select a module"
+            value={filters.module}
+            onOptionSelect={(_, data) => updateFilter('module', data.optionValue)}
+          >
+            {moduleOptions.map(option => (
+              <Option key={option.key} value={option.key}>
+                {option.text}
+              </Option>
+            ))}
+          </Dropdown>
+        </Field>
+      </div>
+
+      <div className={styles.section}>
+        <Field
+          label="Assigned To"
+          className={styles.field}
+        >
+          <Dropdown
+            placeholder="Select a user"
+            value={filters.assignedToId}
+            onOptionSelect={(_, data) => updateFilter('assignedToId', data.optionValue)}
+          >
+            {userOptions.map(option => (
+              <Option key={option.key} value={option.key}>
+                {option.text}
+              </Option>
+            ))}
+          </Dropdown>
+        </Field>
+      </div>
+
+      <div className={styles.section}>
+        <Field
+          label="Team"
+          className={styles.field}
+        >
+          <Dropdown
+            placeholder="Select a team"
+            value={filters.teamId}
+            onOptionSelect={(_, data) => updateFilter('teamId', data.optionValue)}
+          >
+            {teamOptions.map(option => (
+              <Option key={option.key} value={option.key}>
+                {option.text}
+              </Option>
+            ))}
+          </Dropdown>
+        </Field>
+      </div>
+
+<div className={styles.section}>
         <Label>Due Date Range</Label>
-        <Stack horizontal tokens={{ childrenGap: 16 }} wrap>
-          <StackItem grow={1}>
-            <DatePicker
-              id={startDateId}
-              label="From"
-              placeholder="Select a date..."
-              value={localFilter.startDate}
-              onSelectDate={(date) => handleChange('startDate', date)}
-              allowTextInput
+        <div className={styles.dateContainer}>
+          <Field
+            className={styles.field}
+            label="Start date"
+          >
+            <Input
+              type="date"
+              value={filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : ''}
+              onChange={(_, data) => {
+                if (data.value) {
+                  updateFilter('startDate', new Date(data.value));
+                } else {
+                  updateFilter('startDate', null);
+                }
+              }}
             />
-          </StackItem>
-
-          <StackItem grow={1}>
-            <DatePicker
-              id={endDateId}
-              label="To"
-              placeholder="Select a date..."
-              value={localFilter.endDate}
-              onSelectDate={(date) => handleChange('endDate', date)}
-              minDate={localFilter.startDate}
-              allowTextInput
+          </Field>
+          <Field
+            className={styles.field}
+            label="End date"
+          >
+            <Input
+              type="date"
+              value={filters.endDate ? format(filters.endDate, 'yyyy-MM-dd') : ''}
+              onChange={(_, data) => {
+                if (data.value) {
+                  updateFilter('endDate', new Date(data.value));
+                } else {
+                  updateFilter('endDate', null);
+                }
+              }}
+              min={filters.startDate ? format(filters.startDate, 'yyyy-MM-dd') : undefined}
             />
-          </StackItem>
-        </Stack>
+          </Field>
+        </div>
+      </div>
 
-        <Stack horizontal horizontalAlign="end" tokens={{ childrenGap: 8 }} className={styles.footer}>
-          <DefaultButton text="Reset" onClick={handleResetFilter} />
-          <PrimaryButton text="Apply Filters" onClick={handleApplyFilter} />
-        </Stack>
-      </Stack>
+      <div className={styles.actionContainer}>
+        <Button appearance="primary" onClick={applyFilters}>
+          Apply Filters
+        </Button>
+        <Button appearance="secondary" onClick={resetFilters}>
+          Reset
+        </Button>
+      </div>
     </div>
   );
+};
+
+TaskFilterComponent.propTypes = {
+  /** Callback when filters change */
+  onFilterChange: PropTypes.func,
+  /** Whether the filter panel is open */
+  isOpen: PropTypes.bool,
+  /** Callback to dismiss the filter panel */
+  onDismiss: PropTypes.func,
+  /** List of users for assignee filter */
+  users: PropTypes.array,
+  /** List of teams for team filter */
+  teams: PropTypes.array,
+  /** List of modules for module filter */
+  modules: PropTypes.array
+};
+
+TaskFilterComponent.defaultProps = {
+  isOpen: false,
+  users: [],
+  teams: [],
+  modules: []
 };
 
 export default TaskFilterComponent;

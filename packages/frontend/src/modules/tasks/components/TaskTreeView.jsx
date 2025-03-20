@@ -1,488 +1,315 @@
-// File: frontend/src/components/tasks/TaskTreeView.jsx
 import React, { useState, useEffect, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import {
-  DetailsList,
-  DetailsListLayoutMode,
-  SelectionMode,
-  DetailsRow,
-  Icon,
-  IconButton,
-  Stack,
+  makeStyles,
   Text,
   Spinner,
-  SpinnerSize,
+  Button,
   MessageBar,
-  MessageBarType,
-  ProgressIndicator,
-  TooltipHost,
-  Checkbox,
-  mergeStyleSets,
-  useTheme
-} from '@fluentui/react';
-import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
-import TaskService from '../services/TaskService';
+  MessageBarBody,
+  tokens
+} from '@fluentui/react-components';
+import {
+  ChevronRight16Filled,
+  ChevronDown16Filled,
+  Circle16Regular,
+  ArrowMaximize24Regular,
+  ArrowMinimize24Regular
+} from '@fluentui/react-icons';
+import { TaskStatusBadge, TaskPriorityIndicator } from './common';
 
-// Styles for the component
-const getStyles = (theme) => mergeStyleSets({
+/**
+ * Styles for the component
+ */
+const useStyles = makeStyles({
   container: {
-    display: 'flex',
-    flexDirection: 'column',
+    padding: `0 ${tokens.spacingHorizontalL} ${tokens.spacingHorizontalL} ${tokens.spacingHorizontalL}`,
     height: '100%',
-    overflow: 'auto',
+    overflowY: 'auto'
   },
-  headerContainer: {
-    padding: '16px',
-    borderBottom: `1px solid ${theme.palette.neutralLight}`,
+  noTasks: {
+    padding: `${tokens.spacingVerticalXXL} 0`,
+    textAlign: 'center',
+    color: tokens.colorNeutralForeground3
   },
-  treeContainer: {
-    flex: 1,
-    padding: '16px',
-  },
-  noResults: {
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '40px 0',
-  },
-  taskRow: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '8px 0',
-    cursor: 'pointer',
-    '&:hover': {
-      backgroundColor: theme.palette.neutralLighter,
-    }
-  },
-  expander: {
-    cursor: 'pointer',
-    fontSize: 12,
-    padding: '4px',
-    marginRight: '4px',
-  },
-  indentedRow: {
+  treeNode: {
+    padding: `${tokens.spacingVerticalXS} 0`,
     marginLeft: (level) => `${level * 24}px`
   },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: '50%',
-    marginRight: 8,
-  },
-  completed: {
-    backgroundColor: theme.semanticColors.successBackground,
-  },
-  inProgress: {
-    backgroundColor: theme.semanticColors.infoBackground,
-  },
-  notStarted: {
-    backgroundColor: theme.semanticColors.warningBackground,
-  },
-  blocked: {
-    backgroundColor: theme.semanticColors.errorBackground,
-  },
-  taskInfo: {
+  nodeContent: {
     display: 'flex',
-    flexDirection: 'column',
+    alignItems: 'center',
+    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`,
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    borderRadius: tokens.borderRadiusSmall,
+    cursor: 'pointer',
+    backgroundColor: tokens.colorNeutralBackground1,
+    '&:hover': {
+      backgroundColor: tokens.colorNeutralBackground1Hover
+    }
+  },
+  expandButton: {
+    marginRight: tokens.spacingHorizontalXS,
+    padding: 0,
+    minWidth: 'auto'
+  },
+  nodeTitle: {
+    fontWeight: tokens.fontWeightSemibold,
     flex: 1,
+    marginLeft: tokens.spacingHorizontalXS
   },
-  taskTitle: {
-    fontWeight: 600,
-  },
-  taskMeta: {
+  metaInfo: {
     display: 'flex',
     alignItems: 'center',
-    fontSize: 12,
-    color: theme.palette.neutralSecondary,
-    marginTop: 4,
+    gap: tokens.spacingHorizontalXS
   },
-  metaItem: {
+  childrenContainer: {
+    marginLeft: tokens.spacingHorizontalL,
+    borderLeft: `1px solid ${tokens.colorNeutralStroke2}`,
+    paddingLeft: tokens.spacingHorizontalL
+  },
+  toolbar: {
     display: 'flex',
+    gap: tokens.spacingHorizontalS,
+    marginBottom: tokens.spacingVerticalM
+  },
+  spinnerContainer: {
+    display: 'flex',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
-  },
-  metaIcon: {
-    fontSize: 12,
-    marginRight: 4,
-  },
-  taskActions: {
-    opacity: 0,
-    transition: 'opacity 0.2s',
-    '$:hover &': {
-      opacity: 1,
-    },
-  },
-  taskProgress: {
-    width: 100,
-    marginRight: 16,
-  },
-  statusBadge: {
-    padding: '2px 8px',
-    borderRadius: 3,
-    fontSize: 12,
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    marginRight: 16,
-  },
-  statusNotStarted: {
-    backgroundColor: theme.palette.neutralLighter,
-    color: theme.palette.neutralPrimary,
-  },
-  statusInProgress: {
-    backgroundColor: theme.semanticColors.infoBackground,
-    color: theme.semanticColors.infoText,
-  },
-  statusCompleted: {
-    backgroundColor: theme.semanticColors.successBackground,
-    color: theme.semanticColors.successText,
-  },
-  statusBlocked: {
-    backgroundColor: theme.semanticColors.errorBackground,
-    color: theme.semanticColors.errorText,
-  },
-  statusDeferred: {
-    backgroundColor: theme.semanticColors.warningBackground,
-    color: theme.semanticColors.warningText,
-  },
+    height: '100%',
+    minHeight: '200px'
+  }
 });
 
 /**
- * Renders a hierarchical tree view of tasks with parent-child relationships.
- * Allows for expanding/collapsing task hierarchies.
+ * Process task data into tree structure
  */
-const TaskTreeView = ({ teamId, moduleFilter }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
-  const navigate = useNavigate();
-  
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [expandedTasks, setExpandedTasks] = useState({});
-  const [taskHierarchy, setTaskHierarchy] = useState([]);
-  
-  // Fetch tasks
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      setError(null);
-      
-      try {
-        let response;
-        
-        // Fetch tasks based on filters
-        if (teamId) {
-          response = await TaskService.getTasksByTeam(teamId, { size: 1000 });
-        } else if (moduleFilter) {
-          response = await TaskService.getTasksByModule(moduleFilter, { size: 1000 });
-        } else {
-          response = await TaskService.getAllTasks({ size: 1000 });
-        }
-        
-        const fetchedTasks = response.data.content || response.data;
-        setTasks(fetchedTasks);
-        
-        // Build the task hierarchy
-        buildTaskHierarchy(fetchedTasks);
-      } catch (err) {
-        console.error('Error fetching tasks for tree view:', err);
-        setError('Failed to load tasks. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchTasks();
-  }, [teamId, moduleFilter]);
-  
-  // Build a hierarchical structure from flat tasks array
-  const buildTaskHierarchy = (taskList) => {
-    // Map of task ID to children
-    const taskMap = {};
-    const rootTasks = [];
-    
-    // First pass: map out all tasks by ID
-    taskList.forEach(task => {
-      taskMap[task.id] = {
-        ...task,
-        children: []
-      };
+const processTasksIntoTree = (tasks) => {
+  // Create map of all tasks
+  const taskMap = new Map();
+  tasks.forEach(task => {
+    taskMap.set(task.id, {
+      ...task,
+      children: []
     });
-    
-    // Second pass: build the hierarchy
-    taskList.forEach(task => {
-      if (task.parentTaskId && taskMap[task.parentTaskId]) {
-        // This is a child task, add it to its parent
-        taskMap[task.parentTaskId].children.push(taskMap[task.id]);
-      } else {
-        // This is a root task
-        rootTasks.push(taskMap[task.id]);
-      }
-    });
-    
-    // Sort root tasks by due date, then by title
-    rootTasks.sort((a, b) => {
-      if (!a.dueDate && !b.dueDate) return a.title.localeCompare(b.title);
-      if (!a.dueDate) return 1;
-      if (!b.dueDate) return -1;
-      
-      const dateA = new Date(a.dueDate);
-      const dateB = new Date(b.dueDate);
-      return dateA - dateB;
-    });
-    
-    setTaskHierarchy(rootTasks);
-    
-    // Auto-expand tasks with in-progress subtasks
-    const newExpanded = {};
-    const markExpanded = (tasks) => {
-      tasks.forEach(task => {
-        if (task.children && task.children.length > 0) {
-          const hasInProgressChild = task.children.some(
-            child => child.status === 'IN_PROGRESS'
-          );
-          
-          if (hasInProgressChild) {
-            newExpanded[task.id] = true;
-            markExpanded(task.children);
-          }
-        }
-      });
-    };
-    
-    markExpanded(rootTasks);
-    setExpandedTasks(newExpanded);
+  });
+
+  // Build tree structure
+  const rootTasks = [];
+
+  tasks.forEach(task => {
+    const taskWithChildren = taskMap.get(task.id);
+
+    // If task has parent and parent exists in our map
+    if (task.parentTaskId && taskMap.has(task.parentTaskId)) {
+      const parent = taskMap.get(task.parentTaskId);
+      parent.children.push(taskWithChildren);
+    } else {
+      // No parent or parent not in our dataset, this is a root task
+      rootTasks.push(taskWithChildren);
+    }
+  });
+
+  return rootTasks;
+};
+
+/**
+ * Individual tree node component
+ */
+const TreeNode = ({ node, level = 0, onNodeSelect, styles }) => {
+  const [expanded, setExpanded] = useState(false);
+  const hasChildren = node.children && node.children.length > 0;
+
+  const toggleExpand = (e) => {
+    e.stopPropagation();
+    setExpanded(!expanded);
   };
-  
-  // Toggle task expansion
-  const toggleTaskExpansion = (taskId) => {
-    setExpandedTasks(prev => ({
-      ...prev,
-      [taskId]: !prev[taskId]
-    }));
-  };
-  
-  // Get the status color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'COMPLETED':
-        return styles.statusCompleted;
-      case 'IN_PROGRESS':
-        return styles.statusInProgress;
-      case 'NOT_STARTED':
-        return styles.statusNotStarted;
-      case 'BLOCKED':
-        return styles.statusBlocked;
-      case 'DEFERRED':
-        return styles.statusDeferred;
-      default:
-        return styles.statusNotStarted;
+
+  const handleNodeClick = () => {
+    if (onNodeSelect) {
+      onNodeSelect(node);
     }
   };
-  
-  // Get the status indicator style
-  const getStatusDotStyle = (status) => {
-    switch (status) {
-      case 'COMPLETED':
-        return styles.completed;
-      case 'IN_PROGRESS':
-        return styles.inProgress;
-      case 'NOT_STARTED':
-      case 'DEFERRED':
-        return styles.notStarted;
-      case 'BLOCKED':
-        return styles.blocked;
-      default:
-        return styles.notStarted;
-    }
-  };
-  
-  // Format the status text
-  const formatStatus = (status) => {
-    return status.replace('_', ' ');
-  };
-  
-  // Function to update task status directly from tree view
-  const updateTaskStatus = async (taskId, newStatus, event) => {
-    event.stopPropagation();
-    
-    try {
-      await TaskService.updateTaskStatus(taskId, newStatus);
-      
-      // Update the local state
-      setTasks(prevTasks => {
-        return prevTasks.map(task => {
-          if (task.id === taskId) {
-            return { ...task, status: newStatus };
-          }
-          return task;
-        });
-      });
-      
-      // Update the task hierarchy
-      const updateHierarchy = (tasks) => {
-        return tasks.map(task => {
-          if (task.id === taskId) {
-            return { ...task, status: newStatus };
-          }
-          if (task.children.length > 0) {
-            return {
-              ...task,
-              children: updateHierarchy(task.children)
-            };
-          }
-          return task;
-        });
-      };
-      
-      setTaskHierarchy(updateHierarchy(taskHierarchy));
-    } catch (err) {
-      console.error('Error updating task status:', err);
-      // You could add a toast notification here
-    }
-  };
-  
-  // Recursive function to render task tree
-  const renderTaskTree = (tasks, level = 0) => {
-    return tasks.map(task => (
-      <React.Fragment key={task.id}>
-        <div 
-          className={styles.taskRow}
-          onClick={() => navigate(`/tasks/${task.id}`)}
-        >
-          <div style={styles.indentedRow(level)}>
-            {task.children && task.children.length > 0 ? (
-              <IconButton
-                className={styles.expander}
-                iconProps={{ 
-                  iconName: expandedTasks[task.id] ? 'ChevronDown' : 'ChevronRight' 
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleTaskExpansion(task.id);
-                }}
-              />
-            ) : (
-              <div style={{ width: 24 }} />
+
+  return (
+    <div>
+      <div
+        className={styles.treeNode}
+        style={{ marginLeft: `${level * 24}px` }}
+      >
+        <div className={styles.nodeContent} onClick={handleNodeClick}>
+          <Button
+            className={styles.expandButton}
+            appearance="subtle"
+            size="small"
+            icon={hasChildren
+              ? (expanded ? <ChevronDown16Filled /> : <ChevronRight16Filled />)
+              : <Circle16Regular />
+            }
+            onClick={hasChildren ? toggleExpand : undefined}
+            disabled={!hasChildren}
+          />
+
+          <Text className={styles.nodeTitle}>{node.title}</Text>
+
+          <div className={styles.metaInfo}>
+            <TaskStatusBadge status={node.status} compact />
+            <TaskPriorityIndicator priority={node.priority} iconOnly tooltipDisabled />
+            {node.assignedToName && (
+              <Text size={200}>{node.assignedToName}</Text>
             )}
-            
-            <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
-              <div 
-                className={`${styles.statusDot} ${getStatusDotStyle(task.status)}`}
-              />
-              
-              <div className={styles.taskInfo}>
-                <Text className={styles.taskTitle}>{task.title}</Text>
-                <div className={styles.taskMeta}>
-                  {task.dueDate && (
-                    <div className={styles.metaItem}>
-                      <Icon className={styles.metaIcon} iconName="Calendar" />
-                      <span>{format(new Date(task.dueDate), 'MMM d, yyyy')}</span>
-                    </div>
-                  )}
-                  
-                  {task.assignedToName && (
-                    <div className={styles.metaItem}>
-                      <Icon className={styles.metaIcon} iconName="Contact" />
-                      <span>{task.assignedToName}</span>
-                    </div>
-                  )}
-                  
-                  {task.module && (
-                    <div className={styles.metaItem}>
-                      <Icon className={styles.metaIcon} iconName="ViewList" />
-                      <span>{task.module}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className={styles.taskProgress}>
-                <TooltipHost content={`${task.completionPercentage}% complete`}>
-                  <ProgressIndicator 
-                    percentComplete={task.completionPercentage / 100}
-                    barHeight={4}
-                  />
-                </TooltipHost>
-              </div>
-              
-              <div 
-                className={`${styles.statusBadge} ${getStatusColor(task.status)}`}
-              >
-                {formatStatus(task.status)}
-              </div>
-              
-              <div className={styles.taskActions}>
-                <IconButton
-                  iconProps={{ iconName: 'Edit' }}
-                  title="Edit Task"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/tasks/${task.id}/edit`);
-                  }}
-                />
-              </div>
-            </div>
           </div>
         </div>
-        
-        {expandedTasks[task.id] && task.children && task.children.length > 0 && (
-          <div>
-            {renderTaskTree(task.children, level + 1)}
-          </div>
-        )}
-      </React.Fragment>
-    ));
-  };
-  
-  if (loading) {
-    return (
-      <Stack horizontalAlign="center" verticalAlign="center" style={{ height: '100%' }}>
-        <Spinner size={SpinnerSize.large} label="Loading task tree..." />
-      </Stack>
-    );
-  }
-  
-  if (error) {
-    return (
-      <MessageBar
-        messageBarType={MessageBarType.error}
-        isMultiline={false}
-        dismissButtonAriaLabel="Close"
-        styles={{ root: { margin: '16px' } }}
-      >
-        {error}
-      </MessageBar>
-    );
-  }
-  
-  return (
-    <div className={styles.container}>
-      <div className={styles.headerContainer}>
-        <Text variant="large" block>
-          Task Hierarchy
-        </Text>
-        <Text variant="smallPlus">
-          Showing {taskHierarchy.length} root tasks with their subtasks
-        </Text>
       </div>
-      
-      <div className={styles.treeContainer}>
-        {taskHierarchy.length === 0 ? (
-          <div className={styles.noResults}>
-            <Stack horizontalAlign="center">
-              <Icon iconName="TaskList" style={{ fontSize: 42, marginBottom: 16, color: '#8a8886' }} />
-              <Text variant="large">No tasks found</Text>
-              <Text variant="medium" style={{ marginTop: 8, color: '#605e5c' }}>
-                Create tasks to see them in the tree view
-              </Text>
-            </Stack>
-          </div>
-        ) : (
-          renderTaskTree(taskHierarchy)
-        )}
-      </div>
+
+      {expanded && hasChildren && (
+        <div className={styles.childrenContainer}>
+          {node.children.map(child => (
+            <TreeNode
+              key={child.id}
+              node={child}
+              level={level + 1}
+              onNodeSelect={onNodeSelect}
+              styles={styles}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
+};
+
+/**
+ * TaskTreeView component - displays tasks in a hierarchical tree structure
+ */
+const TaskTreeView = ({
+  tasks = [],
+  loading = false,
+  error = null,
+  onTaskSelect,
+  moduleFilter
+}) => {
+  const styles = useStyles();
+
+  // Process tasks into tree structure
+  const [treeData, setTreeData] = useState([]);
+
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      const processedTasks = processTasksIntoTree(tasks);
+      setTreeData(processedTasks);
+    } else {
+      setTreeData([]);
+    }
+  }, [tasks]);
+
+  // Handle node selection
+  const handleNodeSelect = useCallback((node) => {
+    if (onTaskSelect) {
+      onTaskSelect(node.id);
+    }
+  }, [onTaskSelect]);
+
+  // Expand all nodes
+  const expandAll = () => {
+    // Implementation would require state for each node's expanded status
+    console.log('Expand all functionality would be implemented here');
+  };
+
+  // Collapse all nodes
+  const collapseAll = () => {
+    // Implementation would require state for each node's expanded status
+    console.log('Collapse all functionality would be implemented here');
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className={styles.spinnerContainer}>
+        <Spinner size="large" label="Loading tasks..." />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <MessageBar intent="error">
+          <MessageBarBody>
+            {error.message || 'Failed to load task hierarchy.'}
+          </MessageBarBody>
+        </MessageBar>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (!treeData || treeData.length === 0) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.noTasks}>
+          <Text size={500}>No tasks found</Text>
+          <Text>There are no tasks to display in the hierarchy view.</Text>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.toolbar}>
+        <Button
+          appearance="secondary"
+          icon={<ArrowMaximize24Regular />}
+          onClick={expandAll}
+        >
+          Expand All
+        </Button>
+        <Button
+          appearance="secondary"
+          icon={<ArrowMinimize24Regular />}
+          onClick={collapseAll}
+        >
+          Collapse All
+        </Button>
+      </div>
+      
+      {treeData.map(node => (
+        <TreeNode
+          key={node.id}
+          node={node}
+          onNodeSelect={handleNodeSelect}
+          styles={styles}
+        />
+      ))}
+    </div>
+  );
+};
+
+TreeNode.propTypes = {
+  /** Tree node data */
+  node: PropTypes.object.isRequired,
+  /** Nesting level */
+  level: PropTypes.number,
+  /** Node selection handler */
+  onNodeSelect: PropTypes.func,
+  /** Component styles */
+  styles: PropTypes.object.isRequired
+};
+
+TaskTreeView.propTypes = {
+  /** Tasks array */
+  tasks: PropTypes.array,
+  /** Loading state */
+  loading: PropTypes.bool,
+  /** Error object */
+  error: PropTypes.object,
+  /** Task selection handler */
+  onTaskSelect: PropTypes.func,
+  /** Module filter */
+  moduleFilter: PropTypes.string
 };
 
 export default TaskTreeView;
