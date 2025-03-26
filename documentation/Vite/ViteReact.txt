@@ -1,0 +1,56 @@
+
+##Vite + React Project Setup
+
+Step 1: Create a new Vite project with React and TypeScript
+bashCopy# Create a new project with npm
+	npm create vite@latest fevite -- --template react-ts
+	
+	pnpm create vite
+	 
+# Navigate to project directory
+	cd fevite
+
+# Install dependencies
+	npm install
+	
+Step 2: Install required dependencies
+bashCopy# Install Fluent UI React components
+	npm install @fluentui/react-components @fluentui/react-icons
+
+# Install React Router
+	npm install react-router-dom
+
+# Install additional development dependencies
+	npm install -D @types/node
+	
+Step 3: Configure path aliases
+	Create or update vite.config.ts:
+	
+	
+	
+# Install Fluent UI React components
+	pnpm install @fluentui/react-components @fluentui/react-icons
+
+# Install React Router
+	pnpm install react-router-dom
+
+# Install additional development dependencies
+	pnpm install -D @types/node
+	
+
+-------------------------
+
+C:\Apps\Anto\CRM02\packages\iconsTest>
+
+
+pnpm create vite iconsTest --template react-ts
+cd iconsTest
+
+pnpm install
+pnpm add @fluentui/react-icons
+pnpm dev
+
+
+Update src/App.tsx
+
+
